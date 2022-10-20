@@ -109,10 +109,27 @@ DATABASES = {
 for db in DATABASES:
     DATABASES[db]['NAME'] = 'warehouse2'
     DATABASES[db]['ENGINE'] = 'django.db.backends.postgresql'
-    DATABASES[db]['PORT'] = '5434'
+    DATABASES[db]['PORT'] = '5432'
     DATABASES[db]['CONN_MAX_AGE'] = 600 # Persist DB connections
     DATABASES[db]['OPTIONS'] = {'options': '-c search_path=django,public'}
 
+#DATABASE_ROUTERS = ['xsede_warehouse.router.ModelDatabaseRouter',]
+#from xsede_warehouse.router import *
+
+if CONF.get('ELASTIC_HOSTS'):
+    import elasticsearch_dsl.connections
+    from elasticsearch import Elasticsearch, RequestsHttpConnection
+    ELASTICSEARCH_DSL = {
+        'default': {
+            'hosts': CONF.get('ELASTIC_HOSTS', None)
+        },
+    }
+    ESCON = elasticsearch_dsl.connections.create_connection( \
+        hosts = CONF['ELASTIC_HOSTS'], \
+        connection_class = RequestsHttpConnection, \
+        timeout = 10)
+else:
+    ESCON = None
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
