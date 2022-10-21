@@ -1,2 +1,5 @@
+3.0.0-rc6 JP
+  - Reference renamed ProcessingStatus model
+
 3.0.0-rc5 JP
   - Add missing warehouse_state/processing.py

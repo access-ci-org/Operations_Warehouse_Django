@@ -16,7 +16,7 @@ class ProcessingActivity():
         self.Application = Application
         self.Function = Function
         self.ID = ID
-        obj, created = ProcessingRecord.objects.update_or_create(
+        obj, created = ProcessingStatus.objects.update_or_create(
                             ID=ID,
                             defaults = {
                                 'Topic': Topic,
