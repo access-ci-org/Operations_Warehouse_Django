@@ -20,13 +20,12 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 urlpatterns = [
     path('accounts/', include('allauth.urls') ),
     path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(url=django_settings.LOGIN_URL) )
+    path('', RedirectView.as_view(url=django_settings.LOGIN_URL) ),
 #
     path('cider/', include('cider.urls') ),
 #
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
 # Optional UI:
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc')
 ]
