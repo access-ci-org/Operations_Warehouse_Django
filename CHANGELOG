@@ -1,3 +1,6 @@
+3.0.0-rc16 JP
+  - Fully implement ciderinfrastructure detail view
+
 3.0.0-rc15 JP
   - Several fixes, including to cider active serializer
 

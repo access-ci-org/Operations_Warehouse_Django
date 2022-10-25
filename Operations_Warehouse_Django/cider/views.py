@@ -23,3 +23,25 @@ class CiderInfrastructure_v1_ACCESSActiveList(APIView):
         objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='ALL', result='OBJECTS')
         serializer = CiderInfrastructure_Serializer(objects, many=True)
         return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v1_Detail(APIView):
+    '''
+        An ACCESS Resource Detail
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    def get(self, request, format=None, **kwargs):
+        if self.kwargs.get('cider_resource_id'):
+            try:
+                objects = [CiderInfrastructure.objects.get(pk=self.kwargs['cider_resource_id'])]
+            except CiderInfrastructure.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified cider_resource_id not found')
+        elif self.kwargs.get('info_resourceid'):
+            try:
+                objects = CiderInfrastructure.objects.filter(info_resourceid__exact=self.kwargs['info_resourceid'])
+            except CiderInfrastructure.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_resourceid not found')
+        else:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        serializer = CiderInfrastructure_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'result_set': serializer.data})
