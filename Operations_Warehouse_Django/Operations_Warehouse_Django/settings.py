@@ -94,12 +94,12 @@ READ_HOSTNAME = CONF.get('DB_HOSTNAME_READ', 'localhost')
 
 DATABASES = {
     'default': {
-        'USER': 'django_owner',
+        'USER': CONF['DJANGO_USER'],
         'PASSWORD': CONF['DJANGO_PASS'],
         'HOST': WRITE_HOSTNAME,
     },
     'default.read': {
-        'USER': 'django_owner',
+        'USER': CONF['DJANGO_USER'],
         'PASSWORD': CONF['DJANGO_PASS'],
         'HOST': READ_HOSTNAME,
     }
@@ -332,5 +332,5 @@ if SETTINGS_MODE == 'SERVER':
         'PAGINATE_BY': 10,
     }
 
-    LOGIN_URL = 'login'
-    LOGIN_REDIRECT_URL = 'home'
+    LOGIN_URL = '/accounts/cilogon/login/'
+    LOGIN_REDIRECT_URL = '/admin/'
