@@ -246,6 +246,9 @@ if SETTINGS_MODE == 'SERVER':
     CORS_ALLOW_METHODS = (
         'GET'
     )
+    CSRF_TRUSTED_ORIGINS = (
+        'https://*.access-ci.org',
+    )
 
     SPECTACULAR_SETTINGS = {
         'TITLE': 'ACCESS Operations Information Services API',
