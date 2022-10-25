@@ -107,7 +107,7 @@ DATABASES = {
 for db in DATABASES:
     DATABASES[db]['NAME'] = 'warehouse2'
     DATABASES[db]['ENGINE'] = 'django.db.backends.postgresql'
-    DATABASES[db]['PORT'] = '5432'
+    DATABASES[db]['PORT'] = CONF.get('DB_PORT', '5432')
     DATABASES[db]['CONN_MAX_AGE'] = 600 # Persist DB connections
     DATABASES[db]['OPTIONS'] = {'options': '-c search_path=django,public'}
 

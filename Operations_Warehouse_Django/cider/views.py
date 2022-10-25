@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from cider.models import *
+from cider.filters import *
 from cider.serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
@@ -19,9 +20,6 @@ class CiderInfrastructure_v1_ACCESSActiveList(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     def get(self, request, format=None, **kwargs):
-        if 'resourceid' in self.kwargs:
-            objects = CiderInfrastructure.objects.filter(info_resourceid__exact=self.kwargs['resourceid'])
-        else:
-            objects = CiderInfrastructure.objects.all()
+        objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='ALL', result='OBJECTS')
         serializer = CiderInfrastructure_Serializer(objects, many=True)
-        return MyAPIResponse({'results': [serializer.data]})
+        return MyAPIResponse({'results': serializer.data})
