@@ -162,7 +162,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+#STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -312,7 +312,7 @@ if SETTINGS_MODE == 'SERVER':
         
     # Static files (CSS, JavaScript, Images)
 
-    STATIC_URL = '/static/'
+    STATIC_URL = API_BASE . '/static/'
 
     STATIC_ROOT = CONF.get('STATIC_ROOT', None)
 
@@ -335,5 +335,5 @@ if SETTINGS_MODE == 'SERVER':
         'PAGINATE_BY': 10,
     }
 
-    LOGIN_URL = '/accounts/cilogon/login/'
-    LOGIN_REDIRECT_URL = '/admin/'
+    LOGIN_URL = API_BASE . '/accounts/cilogon/login/'
+    LOGIN_REDIRECT_URL = API_BASE . '/admin/'
