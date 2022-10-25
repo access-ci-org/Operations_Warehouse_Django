@@ -16,16 +16,16 @@ class CiderInfrastructure_Serializer(serializers.ModelSerializer):
             return None
     def get_organization_name(self, CiderInfrastructure):
         try:
-            return CiderInfrastructure.other_attributes.organizations[0].organization_name
+            return CiderInfrastructure.other_attributes['organizations'][0]['organization_name']
         except:
             return None
     def get_organization_url(self, CiderInfrastructure):
         try:
-            return CiderInfrastructure.other_attributes.organizations[0].organization_url
+            return CiderInfrastructure.other_attributes['organizations'][0]['organization_url']
         except:
             return None
     def get_organization_logo_url(self, CiderInfrastructure):
         try:
-            return CiderInfrastructure.other_attributes.organizations[0].organization_logo_url
+            return CiderInfrastructure.other_attributes['organizations'][0]['organization_logo_url']
         except:
             return None
