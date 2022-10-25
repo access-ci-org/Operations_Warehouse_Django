@@ -312,7 +312,7 @@ if SETTINGS_MODE == 'SERVER':
         
     # Static files (CSS, JavaScript, Images)
 
-    STATIC_URL = API_BASE . '/static/'
+    STATIC_URL = API_BASE + '/static/'
 
     STATIC_ROOT = CONF.get('STATIC_ROOT', None)
 
@@ -335,5 +335,5 @@ if SETTINGS_MODE == 'SERVER':
         'PAGINATE_BY': 10,
     }
 
-    LOGIN_URL = API_BASE . '/accounts/cilogon/login/'
-    LOGIN_REDIRECT_URL = API_BASE . '/admin/'
+    LOGIN_URL = API_BASE + '/accounts/cilogon/login/'
+    LOGIN_REDIRECT_URL = API_BASE + '/admin/'
