@@ -39,8 +39,9 @@ from itertools import chain
 
 # Not Active_Sub or Active_All
 
-def CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='SUB', result='OBJECTS'):
+def CiderInfrastructure_Active(affiliation='ACCESS', allocated=True, type='SUB', result='OBJECTS'):
     # Active base resources
+    #  Q(cider_type='resource') & # removed 10-25-2022 by JP
     if allocated:
         parent_resources = CiderInfrastructure.objects.filter(
                                                 Q(cider_type='resource') &
@@ -104,12 +105,16 @@ def CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='SUB', 
     if result.upper() == 'RESOURCEID':
         if type.upper() == 'SUB':
             return(list(child_resource.values_list('info_resourceid', flat=True)))
+        elif type.upper() == 'BASE':
+            return(list(parent_resources.values_list('info_resourceid', flat=True)))
         else:
             return(list(chain(parent_resources.values_list('info_resourceid', flat=True), \
                               child_resource.values_list('info_resourceid', flat=True))))
     else: # Model objects
         if type.upper() == 'SUB':
             return(child_resource)
+        elif type.upper() == 'BASE':
+            return(parent_resources)
         else:
             return(parent_resources | child_resource)
 

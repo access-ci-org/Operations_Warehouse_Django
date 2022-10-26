@@ -20,8 +20,8 @@ class CiderInfrastructure_v1_ACCESSActiveList(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='ALL', result='OBJECTS')
-        serializer = CiderInfrastructure_Serializer(objects, many=True)
+        objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='BASE', result='OBJECTS')
+        serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_Detail(APIView):
@@ -43,5 +43,5 @@ class CiderInfrastructure_v1_Detail(APIView):
                 raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_resourceid not found')
         else:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
-        serializer = CiderInfrastructure_Serializer(objects, context={'request': request}, many=True)
+        serializer = CiderInfrastructure_Detail_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'result_set': serializer.data})

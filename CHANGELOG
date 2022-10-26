@@ -1,3 +1,6 @@
+3.0.0-rc17 JP
+  - CiDeR improvements, better filter, new separate summary and full serializers, active view only returns base resources
+
 3.0.0-rc16 JP
   - Fully implement ciderinfrastructure detail view
 
