@@ -20,15 +20,15 @@ import json
 import os
 import sys
 
-if 'DJANGO_CONF' not in os.environ:
-    print('Missing DJANGO_CONF environment variable')
+if 'APP_CONFIG' not in os.environ:
+    print('Missing APP_CONFIG environment variable')
     sys.exit(1)
 try:
-    with open(os.environ['DJANGO_CONF'], 'r') as file:
+    with open(os.environ['APP_CONFIG'], 'r') as file:
         conf=file.read()
     CONF = json.loads(conf)
 except (ValueError, IOError) as e:
-    print('Failed to load DJANGO_CONF={}'.format(os.environ['DJANGO_CONF']))
+    print('Failed to load APP_CONFIG={}'.format(os.environ['APP_CONFIG']))
     raise
 
 SETTINGS_MODE = CONF.get('SETTINGS_MODE', 'SERVER')
