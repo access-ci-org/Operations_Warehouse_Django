@@ -1,4 +1,7 @@
-v3.0.1 2020-10-30 JP
+v3.1.0 2022-11-15 JP
+  - Upgrade CiderInfrastructure_v1_Detail and related serializers to return base and compute sub-resource information
+
+v3.0.1 2022-10-30 JP
   - Switch from DJANGO_CONF to APP_CONFIG environment variable
 
 3.0.0-rc17 JP
