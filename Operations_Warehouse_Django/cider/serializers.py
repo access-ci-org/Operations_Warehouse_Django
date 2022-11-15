@@ -40,6 +40,7 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             return None
 
 class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
+    access_description = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
     cpu_type = serializers.SerializerMethodField()
     operating_system = serializers.SerializerMethodField()
@@ -56,69 +57,76 @@ class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
     cpu_count_per_node = serializers.SerializerMethodField()
     xsedenet_participation = serializers.SerializerMethodField()
     supports_senstitive_data = serializers.SerializerMethodField()
+    sensitive_data_support_description = serializers.SerializerMethodField()
     local_storage_per_node_gb = serializers.SerializerMethodField()
     
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'recommended_use', 'access_description', 'user_guide_url', 'cpu_type', 'operating_system', 'gpu_description', 'job_manager', 'batch_system', 'interconnect', 'storage_network', 'machine_type', 'manufacturer', 'cpu_speed_ghz', 'platform_name', 'memory_per_cpu_gb', 'cpu_count_per_node', 'xsedenet_participation', 'supports_senstitive_data', 'local_storage_per_node_gb')
+        fields = ('cider_resource_id', 'recommended_use', 'access_description', 'user_guide_url', 'cpu_type', 'operating_system', 'gpu_description', 'job_manager', 'batch_system', 'interconnect', 'storage_network', 'machine_type', 'manufacturer', 'cpu_speed_ghz', 'platform_name', 'memory_per_cpu_gb', 'cpu_count_per_node', 'xsedenet_participation', 'supports_senstitive_data', 'sensitive_data_support_description', 'local_storage_per_node_gb')
+
+    def get_access_description(self, object):
+        try:
+            return str(object.access_description) or None
+        except:
+            return None
 
     def get_user_guide_url(self, object):
         try:
-            return object.other_attributes['user_guide_url']
+            return str(object.other_attributes['user_guide_url']) or None
         except:
             return None
             
     def get_cpu_type(self, object):
         try:
-            return object.other_attributes['cpu_type']
+            return str(object.other_attributes['cpu_type']) or None
         except:
             return None
             
     def get_operating_system(self, object):
         try:
-            return object.other_attributes['operating_system']
+            return str(object.other_attributes['operating_system']) or None
         except:
             return None
 
     def get_gpu_description(self, object):
         try:
-            return object.other_attributes['gpu_description']
+            return str(object.other_attributes['gpu_description']) or None
         except:
             return None
             
     def get_job_manager(self, object):
         try:
-            return object.other_attributes['job_manager']
+            return str(object.other_attributes['job_manager']) or None
         except:
             return None
             
     def get_batch_system(self, object):
         try:
-            return object.other_attributes['batch_system']
+            return str(object.other_attributes['batch_system']) or None
         except:
             return None
             
     def get_interconnect(self, object):
         try:
-            return object.other_attributes['interconnect']
+            return str(object.other_attributes['interconnect']) or None
         except:
             return None
             
     def get_storage_network(self, object):
         try:
-            return object.other_attributes['storage_network']
+            return str(object.other_attributes['storage_network']) or None
         except:
             return None
             
     def get_machine_type(self, object):
         try:
-            return object.other_attributes['machine_type']
+            return str(object.other_attributes['machine_type']) or None
         except:
             return None
             
     def get_manufacturer(self, object):
         try:
-            return object.other_attributes['manufacturer']
+            return str(object.other_attributes['manufacturer']) or None
         except:
             return None
             
@@ -130,7 +138,7 @@ class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
             
     def get_platform_name(self, object):
         try:
-            return object.other_attributes['platform_name']
+            return str(object.other_attributes['platform_name']) or None
         except:
             return None
             
@@ -158,6 +166,12 @@ class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
         except:
             return None
             
+    def get_sensitive_data_support_description(self, object):
+        try:
+            return str(object.other_attributes['sensitive_data_support_description']) or None
+        except:
+            return None
+            
     def get_local_storage_per_node_gb(self, object):
         try:
             return object.other_attributes['local_storage_per_node_gb']
@@ -175,13 +189,13 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
     
     class Meta:
         model = CiderInfrastructure
-        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level')
+        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
         
     def get_cider_type(self, object):
         return('compute')
     def get_cider_view_url(self, object):
         try:
-            return object.other_attributes['public_url']
+            return str(object.other_attributes['public_url']) or None
         except:
             return None
     def get__result_item_url(self, object):
@@ -197,17 +211,20 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
             return None
     def get_organization_url(self, object):
         try:
-            return object.other_attributes['organizations'][0]['organization_url']
+            return str(object.other_attributes['organizations'][0]['organization_url']) or None
         except:
             return None
     def get_organization_logo_url(self, object):
         try:
-            return object.other_attributes['organizations'][0]['organization_logo_url']
+            return str(object.other_attributes['organizations'][0]['organization_logo_url']) or None
         except:
             return None
     def get_compute(self, object):
-        try:
-            return CiderInfrastructure_Compute_Serializer(
-                CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='compute')).data
+        try:    # Gracefully ignore missing compute
+            compute = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='compute')
         except:
+            return None
+        if compute:
+            return CiderInfrastructure_Compute_Serializer(compute).data
+        else:
             return None
