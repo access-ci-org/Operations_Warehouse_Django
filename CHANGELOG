@@ -1,3 +1,6 @@
+v3.1.2 2022-11-16 JP
+  - Add resource_description to access-active view
+
 v3.1.1 2022-11-15 JP
   - Improve None/Null handling other minor improvement
 

@@ -11,7 +11,7 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     organization_logo_url = serializers.SerializerMethodField()
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
+        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'resource_description', 'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
     def get_cider_view_url(self, CiderInfrastructure):
         try:
             return CiderInfrastructure.other_attributes['public_url']
