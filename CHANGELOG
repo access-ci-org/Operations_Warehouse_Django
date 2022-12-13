@@ -1,3 +1,6 @@
+v3.2.0 2022-12-13 JP
+  - Convert CiderInfrastructure project_affiliation to hold multiple comma separated values
+
 v3.1.2 2022-11-16 JP
   - Add resource_description to access-active view
 

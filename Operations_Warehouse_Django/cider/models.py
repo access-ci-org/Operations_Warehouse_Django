@@ -15,7 +15,7 @@ class CiderInfrastructure(models.Model):
     parent_resource = models.IntegerField(db_index=True, null=True)
     recommended_use = models.CharField(max_length=4000, null=True)
     access_description = models.CharField(max_length=4000, null=True)
-    project_affiliation = models.CharField(max_length=16, null=True)
+    project_affiliation = models.CharField(max_length=64, null=True)
     provider_level = models.CharField(max_length=16, null=True)
     other_attributes = models.JSONField()
     updated_at = models.DateTimeField(null=True)

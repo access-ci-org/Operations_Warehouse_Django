@@ -45,7 +45,7 @@ def CiderInfrastructure_Active(affiliation='ACCESS', allocated=True, type='SUB',
     if allocated:
         parent_resources = CiderInfrastructure.objects.filter(
                                                 Q(cider_type='resource') &
-                                                Q(project_affiliation=affiliation) &
+                                                Q(project_affiliation__icontains=affiliation) &
                                                 Q(other_attributes__xsede_services_only=False) &
                                                 (Q(provider_level='XSEDE Level 1') |
                                                  Q(provider_level='XSEDE Level 2')) &
@@ -62,7 +62,7 @@ def CiderInfrastructure_Active(affiliation='ACCESS', allocated=True, type='SUB',
     else:
         parent_resources = CiderInfrastructure.objects.filter(
                                                 Q(cider_type='resource') &
-                                                Q(project_affiliation=affiliation) &
+                                                Q(project_affiliation__icontains=affiliation) &
                                                 Q(other_attributes__xsede_services_only=False) &
                                                 ~Q(info_resourceid='stand-alone.tg.teragrid.org') &
                                                 ~Q(info_resourceid='futuregrid0.futuregrid.xsede.org') &
@@ -127,7 +127,7 @@ def CiderInfrastructure_Active_V2(affiliation='XSEDE', allocated=True, type='SUB
     if allocated:
         parent_resources = CiderInfrastructure.objects.filter(
                                                 Q(cider_type='resource') &
-                                                Q(project_affiliation=affiliation) &
+                                                Q(project_affiliation__icontains=affiliation) &
                                                 Q(other_attributes__xsede_services_only=False) &
 #                                                (Q(provider_level='XSEDE Level 1') |
 #                                                 Q(provider_level='XSEDE Level 2')) &
@@ -143,7 +143,7 @@ def CiderInfrastructure_Active_V2(affiliation='XSEDE', allocated=True, type='SUB
     else:
         parent_resources = CiderInfrastructure.objects.filter(
                                                 Q(cider_type='resource') &
-                                                Q(project_affiliation=affiliation) &
+                                                Q(project_affiliation__icontains=affiliation) &
                                                 Q(other_attributes__xsede_services_only=False) &
                                                 ~Q(info_resourceid='stand-alone.tg.teragrid.org') &
                                                 ~Q(info_resourceid='futuregrid0.futuregrid.xsede.org') &
