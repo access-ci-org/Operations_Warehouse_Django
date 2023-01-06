@@ -1,0 +1,27 @@
+{% extends "web/base_nav_none.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+{% load get_settings %}
+
+{% block title %}Operations API Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-4">
+        <div class="card text-center" style="width: 32rem; height: 8rem">
+            <div class="card-header"><p class="lead">Login to the API?</p></div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                    {% endif %}
+                    <a class="btn btn-secondary" href="/"  role="button">No</a>
+                    <button class="primaryAction btn btn-access-auth" type="submit">{% trans "Login to ACCESS CI" %}</button>
+                </form>
+            </div><!-- div card-body -->
+        </div><!-- div card -->
+    </div><!-- col -->
+</div><!-- row -->
+{% endblock %}

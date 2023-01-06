@@ -1,3 +1,9 @@
+v3.3.0 2023-01-06 JP
+  - Implement 'web' application with home page, navigation, etc. using bootstrap5 and design elements learned from ServiceIndex
+  - Implement ACCESS login/logoutn using CILogon and django-allauth
+  - Implement PGHOST, PGPORT environment variable override of config file
+  - Implement API documentation using drf-spectacilar
+
 v3.2.0 2022-12-13 JP
   - Convert CiderInfrastructure project_affiliation to hold multiple comma separated values
 

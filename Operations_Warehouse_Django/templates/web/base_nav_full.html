@@ -1,0 +1,67 @@
+{% extends "web/bootstrap.html" %}
+
+{# Load the tag library #}
+{% load bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Our application stuff #}
+{% load static %}
+{% load get_settings %}
+
+{% block bootstrap5_content %}
+
+{% block warehouse_global_header %}
+{{ block.super }}
+{% endblock %}
+
+<div class="container-fluid mb-3">
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+        {% if page == 'index' %}<a class="nav-link active" aria-current="page" href="#">
+        {% else %}<a class="nav-link" href="/">
+        {% endif %}API Home</a>
+        </li>
+
+        <li class="nav-item">
+        {% if page == 'swagger' %}<a class="nav-link active" aria-current="page" href="#">
+        {% else %}<a class="nav-link" href="{% url 'swagger-ui' %}" target="_blank">
+        {% endif %}API Swagger</a>
+        </li>
+
+        <li class="nav-item">
+        {% if page == 'redoc' %}<a class="nav-link active" aria-current="page" href="#">
+        {% else %}<a class="nav-link" href="{% url 'redoc' %}" target="_blank">
+        {% endif %}API Redoc</a>
+        </li>
+
+        <li class="nav-item">
+        {% if user.is_superuser %}
+        <a class="nav-link" href="/admin" target="_blank">Django Admin</a>
+        {% endif %}
+        </li>
+
+        <li class="nav-item">
+        {% if page == 'log_out' %}<a class="nav-link active" aria-current="page" href="#">
+        {% else %}
+            {% if user.is_authenticated or user.is_staff %}
+            <a class="nav-link" href="{% url 'account_logout' %}">Log Out ({{ user.username }})</a>
+            {% else %}
+            <a class="nav-link" href="{% settings_value "LOGIN_URL" %}">Login</a>
+            {% endif %}
+        {% endif %}
+        </li>
+    </ul>
+</div>
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
+
+<div class="container" role="main">
+{% block content %}
+{% endblock %}
+</div> <!-- container -->
+
+{% endblock %}

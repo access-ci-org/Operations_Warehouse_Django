@@ -1,0 +1,34 @@
+{% extends "web/base_nav_full.html" %}
+
+{% load get_settings %}
+
+{% block title %}{% settings_value "APP_NAME" %}{% endblock %}
+
+{% block content %}
+
+<p>The <i>ACCESS Operations API</i> provides information about ACCESS integrated infrastructure in a software consumable format.</p>
+
+<p>ACCESS resource providers, ACCESS awards, and any developer in the ACCESS community can use these APIs to discover infrastructure and build higher level services using accurated and up-to-date infrastructure information.<p>
+
+<p><b>Use the links above to view currently implemented Swagger and Redoc API documentation.</b></p>
+
+<h3>Information Types</h3>
+
+The API will provide access to ACCESS allocated compute, storage, and cloud resource information:
+<ul>
+    <li>Descriptions</li>
+    <li>Available software modules</li>
+    <li>Resource edge services (login/SSH, Globus Connect Server, Open OnDemand portal, etc.)</li>
+    <li>Batch scheduler configuration</li>
+    <li>Queued and running jobs</li>
+</ul>
+
+<p>The API will provide access to ACCESS online (i.e. central) services.</p>
+
+Other types of information:
+<ul>
+    <li>Which projects have access to each ACCESS allocated compute, storage, and cloud resource</li>
+    <li>Resource and software support contact information</li>
+</ul>
+
+{% endblock %}

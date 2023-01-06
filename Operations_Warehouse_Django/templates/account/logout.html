@@ -1,0 +1,29 @@
+{% extends "web/base_nav_none.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+{% load get_settings %}
+
+{% block title %}Operations API Logout{% endblock %}
+
+{% block content %}
+<div class="container-fluid row justify-content-center">
+    <div class="col-sm-4">
+        <div class="card text-center" style="width: 32rem; height: 8rem">
+            <div class="card-header">
+                <p class="lead">Logout?</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                    {% endif %}
+                    <a class="btn btn-secondary" href="/"  role="button">Back</a>
+                    <button class="primaryAction btn btn-access-auth" type="submit">{% trans "LOGOUT OF ACCESS CI" %}</button>
+                </form>
+            </div><!-- div card-body -->
+        </div><!-- div card -->
+    </div><!-- col -->
+</div><!-- row -->
+{% endblock %}

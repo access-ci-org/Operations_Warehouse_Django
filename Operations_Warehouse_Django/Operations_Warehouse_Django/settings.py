@@ -43,8 +43,7 @@ SECRET_KEY = CONF['DJANGO_SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = CONF['DEBUG']
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = CONF['ALLOWED_HOSTS']
 
 # Application definition
 
@@ -55,6 +54,7 @@ INSTALLED_APPS = [
     'resource_v3',
     'warehouse_state',
     'warehouse_tools',
+    'web',
 ]
 
 MIDDLEWARE = [
@@ -89,25 +89,22 @@ WSGI_APPLICATION = 'Operations_Warehouse_Django.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-WRITE_HOSTNAME = CONF.get('DB_HOSTNAME_WRITE', 'localhost')
-READ_HOSTNAME = CONF.get('DB_HOSTNAME_READ', 'localhost')
-
 DATABASES = {
     'default': {
         'USER': CONF['DJANGO_USER'],
         'PASSWORD': CONF['DJANGO_PASS'],
-        'HOST': WRITE_HOSTNAME,
+        'HOST': os.environ.get('PGHOST', CONF.get('DB_HOSTNAME_WRITE', 'localhost')),
     },
     'default.read': {
         'USER': CONF['DJANGO_USER'],
         'PASSWORD': CONF['DJANGO_PASS'],
-        'HOST': READ_HOSTNAME,
+        'HOST': os.environ.get('PGHOST', CONF.get('DB_HOSTNAME_READ', 'localhost')),
     }
 }
 for db in DATABASES:
     DATABASES[db]['NAME'] = 'warehouse2'
     DATABASES[db]['ENGINE'] = 'django.db.backends.postgresql'
-    DATABASES[db]['PORT'] = CONF.get('DB_PORT', '5432')
+    DATABASES[db]['PORT'] = os.environ.get('PGPORT', CONF.get('DB_PORT', '5432'))
     DATABASES[db]['CONN_MAX_AGE'] = 600 # Persist DB connections
     DATABASES[db]['OPTIONS'] = {'options': '-c search_path=django,public'}
 
@@ -169,15 +166,23 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+APP_NAME = 'ACCESS Operations API'
+APP_VERSION = CONF['APP_VERSION']
+
 ##### ACCESS-CI CUSTOMIZATIONS #####
 #
 # Server mode API settings
 #
 if SETTINGS_MODE == 'SERVER':
-    API_BASE = CONF.get('API_BASE', '')
+#    API_BASE = CONF.get('API_BASE', '')
 
     #ALLOWED_HOSTS = []
     ALLOWED_HOSTS = CONF['ALLOWED_HOSTS']
+
+    ACCOUNT_EMAIL_VERIFICATION = 'none'
+    ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/cilogon/login/'
+    LOGIN_URL = '/accounts/cilogon/login/'
+    LOGIN_REDIRECT_URL = '/'
 
     INSTALLED_APPS += (
         'corsheaders',
@@ -195,23 +200,24 @@ if SETTINGS_MODE == 'SERVER':
         'allauth.account',
         'allauth.socialaccount',
         'allauth.socialaccount.providers.cilogon',
+        'bootstrap5',
     )
     
     SITE_ID = 1
     
     # Provider specific settings
-    SOCIALACCOUNT_PROVIDERS = {
-        'cilogon': {
-            # For each OAuth based provider, either add a ``SocialApp``
-            # (``socialaccount`` app) containing the required client
-            # credentials, or list them here:
-            'APP': {
-                'client_id': '123',
-                'secret': '456',
-                'key': ''
-            }
-        }
-    }
+#    SOCIALACCOUNT_PROVIDERS = {
+#        'cilogon': {
+#            # For each OAuth based provider, either add a ``SocialApp``
+#            # (``socialaccount`` app) containing the required client
+#            # credentials, or list them here:
+#            'APP': {
+#                'client_id': '123',
+#                'secret': '456',
+#                'key': ''
+#            }
+#        }
+#    }
 
 #        'django.middleware.cache.UpdateCacheMiddleware',
 #        'django.middleware.cache.FetchFromCacheMiddleware',
@@ -247,11 +253,14 @@ if SETTINGS_MODE == 'SERVER':
         'GET'
     )
     CSRF_TRUSTED_ORIGINS = (
-        'https://*.access-ci.org',
+        'https://*.access-ci.org', 'https://localhost', 'https://localhost:8443'
     )
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
     SPECTACULAR_SETTINGS = {
-        'TITLE': 'ACCESS Operations Information Services API',
+        'TITLE': APP_NAME,
         'DESCRIPTION': 'ACCESS Operations (CONECT) Information Sharing Platform - Service Facing API',
         'VERSION': '1.0.0',
         'PREPROCESSING_HOOKS': ['warehouse_tools.hooks.remove_internal_apis'],
@@ -310,20 +319,21 @@ if SETTINGS_MODE == 'SERVER':
     else:
         CACHE_SERVER = 'default'
         
-    # Static files (CSS, JavaScript, Images)
-
-    STATIC_URL = API_BASE + '/static/'
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.1/howto/static-files/
 
     STATIC_ROOT = CONF.get('STATIC_ROOT', None)
+    STATIC_URL = 'static/'
 
     STATICFILES_DIRS = (
         os.path.join( os.path.dirname(__file__),  '../static' ),
     )
 
     #
+#            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
         'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
         ],
         'DEFAULT_RENDERER_CLASSES': [
            'rest_framework.renderers.JSONRenderer',
@@ -335,5 +345,48 @@ if SETTINGS_MODE == 'SERVER':
         'PAGINATE_BY': 10,
     }
 
-    LOGIN_URL = API_BASE + '/accounts/cilogon/login/'
-    LOGIN_REDIRECT_URL = API_BASE + '/admin/'
+#    REST_AUTH_REGISTER_PERMISSION_CLASSES = (
+#        'rest_framework.permissions.IsAuthenticated',
+#    )
+    
+    # Logging setup
+    import logging
+    from logging.handlers import SysLogHandler
+
+    if DEBUG or not os.path.exists('/dev/log'):
+        DEFAULT_LOG = 'console'
+    else:
+        DEFAULT_LOG = 'syslog'
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s'
+            }
+        },
+        'handlers': {
+            'file': {
+                'level': 'DEBUG',
+                'class': 'logging.FileHandler',
+                'filename': CONF['APP_LOG'],
+                'formatter': 'simple'
+            }
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file'],
+                'level': 'WARNING'
+            },
+            'django.server': {
+                'handlers': ['file'],
+    #            'propagate': True,
+                'level': 'DEBUG'
+            },
+            'services': {
+                'handlers': ['file'],
+                'level': 'DEBUG'
+            }
+        }
+    }
