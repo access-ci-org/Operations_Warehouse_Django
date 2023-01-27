@@ -26,6 +26,7 @@ urlpatterns = [
     path('docs/', include('web.urls') ),
 #
     path('wh2/cider/', include('cider.urls') ),
+    path('wh2/news/', include('news.urls') ),
     
 # Optional UI:
     path('wh2/api/schema/', SpectacularAPIView.as_view(), name='schema'),

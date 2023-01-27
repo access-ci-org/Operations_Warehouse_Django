@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'allocations',
     'cider',
     'glue2',
+    'news',
     'resource_v3',
     'warehouse_state',
     'warehouse_tools',

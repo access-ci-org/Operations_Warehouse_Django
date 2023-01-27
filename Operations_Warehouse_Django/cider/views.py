@@ -63,4 +63,4 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
         else:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
         serializer = CiderInfrastructure_Detail_Serializer(item, context={'request': request})
-        return MyAPIResponse({'result_set': serializer.data})
+        return MyAPIResponse({'results': serializer.data})

@@ -1,3 +1,7 @@
+v3.4.0 2023-01-27 JP
+  - New News models and views
+  - Other minor changes
+
 v3.3.0 2023-01-06 JP
   - Implement 'web' application with home page, navigation, etc. using bootstrap5 and design elements learned from ServiceIndex
   - Implement ACCESS login/logoutn using CILogon and django-allauth
