@@ -18,7 +18,7 @@ class News_v1_Detail(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (News_v1_Detail_Serializer,)
+    serializer_class = News_v1_Detail_Serializer
     def get(self, request, format=None, **kwargs):
         # We need the base resource to pass to the serializer
         if self.kwargs.get('ID'):
@@ -37,7 +37,7 @@ class News_v1_List(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (News_v1_Detail_Serializer,)
+    serializer_class = News_v1_Detail_Serializer
     def get(self, request, format=None, **kwargs):
         # We need the base resource to pass to the serializer
         if self.kwargs.get('affiliation'):
@@ -55,7 +55,7 @@ class Operations_Outages_v1(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (Operations_Outages_v1_List_Expand_Serializer,)
+    serializer_class = Operations_Outages_v1_List_Expand_Serializer
     def get(self, request, format=None, **kwargs):
         items = News.objects.filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])
         serializer = Operations_Outages_v1_List_Expand_Serializer(items, context={'request': request})
@@ -68,7 +68,7 @@ class News_v1_Current_Outages(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (News_v1_Outage_Serializer,)
+    serializer_class = News_v1_Outage_Serializer
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
@@ -85,7 +85,7 @@ class News_v1_Future_Outages(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (News_v1_Outage_Serializer,)
+    serializer_class = News_v1_Outage_Serializer
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
@@ -100,7 +100,7 @@ class News_v1_All_Outages(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (News_v1_Outage_Serializer,)
+    serializer_class = News_v1_Outage_Serializer
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\

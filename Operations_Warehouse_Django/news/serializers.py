@@ -37,13 +37,16 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
     OutageStart = serializers.DateTimeField(source='NewsStart')
     OutageEnd = serializers.DateTimeField(source='NewsEnd')
     OutageType = serializers.SerializerMethodField()
+    DistributionOptionsEmailSubscribers = serializers.SerializerMethodField()
+    DistributionOptionsEmailAll = serializers.SerializerMethodField()
     AffectedResources = News_Associations_Embedded_ResourceID_Serializer(source='Associations', many=True, read_only=True)
 
     class Meta:
         model = News
-        fields = ['URN', 'Subject', 'Content', 'OutageStart', 'OutageEnd', 'OutageType', 'DistributionOptions', 'AffectedResources']
+        fields = ['URN', 'Subject', 'Content', 'OutageStart', 'OutageEnd', 'OutageType', 'AffectedResources', \
+            'DistributionOptionsEmailSubscribers', 'DistributionOptionsEmailAll']
 
-    def get_OutageType(self, object):
+    def get_OutageType(self, object) -> str:
         if object.NewsType == 'Outage Full':
             return('Full')
         if object.NewsType == 'Outage Partial':
@@ -52,6 +55,14 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
             return('Reconfiguration')
         return('Unknown')
 
+    def get_DistributionOptionsEmailSubscribers(self, object) -> bool:
+        dops = [opt.strip().lower() for opt in object.DistributionOptions.split(',')]
+        return('email subscribers' in dops)
+
+    def get_DistributionOptionsEmailAll(self, object) -> bool:
+        dops = [opt.strip().lower() for opt in object.DistributionOptions.split(',')]
+        return('email everyone' in dops)
+        
 #class News_v1_List_Serializer(serializers.ModelSerializer):
 #    PublisherID = serializers.CharField(source='Publisher.OrganizationID')
 #    PublisherName = serializers.CharField(source='Publisher.OrganizationName')
@@ -72,7 +83,7 @@ class Operations_Outages_v1_List_Expand_Serializer(serializers.ModelSerializer):
         fields.append('Publisher_Name')
         fields.append('Affected_Infrastructure')
         
-    def get_Affected_Infrastructure(self, object):
+    def get_Affected_Infrastructure(self, object) -> dict:
         resources = self.newsassociations.filter(AssociatedType__exact='Resource')
         info_resourceids = resources.values_list('AssociatedID')
         cider_resources = CiderInfrastructure.objects.filter(info_resourceid__in=info_resourceids)

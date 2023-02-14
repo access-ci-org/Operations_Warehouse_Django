@@ -21,7 +21,7 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (CiderInfrastructure_Summary_Serializer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='BASE', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
@@ -33,7 +33,7 @@ class CiderInfrastructure_v1_ACCESSGatewayActiveList(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (CiderInfrastructure_Summary_Serializer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='BASE', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
@@ -45,7 +45,7 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_classes = (CiderInfrastructure_Detail_Serializer,)
+    serializer_class = CiderInfrastructure_Detail_Serializer
     def get(self, request, format=None, **kwargs):
         # We need the base resource to pass to the serializer
         if self.kwargs.get('cider_resource_id'):        # Whether base or sub resource, grab the other one also
