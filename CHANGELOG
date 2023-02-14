@@ -1,3 +1,6 @@
+v3.4.2 2023-02-14 JP
+  - Make and apply missing migration
+
 v3.4.1 2023-02-14 JP
   - New news/v1/affiliation/<affiliation>/*_outages views return outages in backward compatible format
   - Return boolean distribution options
