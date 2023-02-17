@@ -56,11 +56,12 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
         return('Unknown')
 
     def get_DistributionOptionsEmailSubscribers(self, object) -> bool:
-        dops = [opt.strip().lower() for opt in object.DistributionOptions.split(',')]
+        # The 'or' convert None to string so that split works
+        dops = [opt.strip().lower() for opt in (object.DistributionOptions or '').split(',')]
         return('email subscribers' in dops)
 
     def get_DistributionOptionsEmailAll(self, object) -> bool:
-        dops = [opt.strip().lower() for opt in object.DistributionOptions.split(',')]
+        dops = [opt.strip().lower() for opt in (object.DistributionOptions or '').split(',')]
         return('email everyone' in dops)
         
 #class News_v1_List_Serializer(serializers.ModelSerializer):
