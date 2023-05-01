@@ -1,3 +1,6 @@
+v3.5.0 2023-05-01 JP
+  - New access-online-services, access-allocated synonym to access-active for compute/cloud/storage, improved and simplified filters
+
 v3.4.3 2023-02-17 JP
   - Fix News_v1_Outage_Serializer handling of Null DistributionOptions
 

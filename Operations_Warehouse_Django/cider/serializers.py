@@ -41,7 +41,59 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
         except:
             return None
 
-class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
+class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
+    cider_type = serializers.SerializerMethodField()
+    cider_view_url = serializers.SerializerMethodField()
+    _result_item_url = serializers.SerializerMethodField()
+    organization_name = serializers.SerializerMethodField()
+    organization_url = serializers.SerializerMethodField()
+    organization_logo_url = serializers.SerializerMethodField()
+    compute = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CiderInfrastructure
+        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
+        
+    def get_cider_type(self, object) -> str:
+        return('compute')
+        
+    def get_cider_view_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['public_url']) or None
+        except:
+            return None
+    def get__result_item_url(self, object) -> str:
+        http_request = self.context.get('request')
+        if http_request:
+            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
+        else:
+            return ''
+    def get_organization_name(self, object) -> str:
+        try:
+            return object.other_attributes['organizations'][0]['organization_name']
+        except:
+            return None
+    def get_organization_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['organizations'][0]['organization_url']) or None
+        except:
+            return None
+    def get_organization_logo_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['organizations'][0]['organization_logo_url']) or None
+        except:
+            return None
+    def get_compute(self, object) -> dict:
+        try:    # Gracefully ignore missing compute
+            compute = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='compute')
+        except:
+            return None
+        if compute:
+            return CiderInfrastructure_Compute_Serializer(compute).data
+        else:
+            return None
+
+class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer):
     access_description = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
     cpu_type = serializers.SerializerMethodField()
@@ -178,55 +230,4 @@ class CiderInfrastructure_Compute_Serializer(serializers.ModelSerializer):
         try:
             return object.other_attributes['local_storage_per_node_gb']
         except:
-            return None
-
-class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
-    cider_type = serializers.SerializerMethodField()
-    cider_view_url = serializers.SerializerMethodField()
-    _result_item_url = serializers.SerializerMethodField()
-    organization_name = serializers.SerializerMethodField()
-    organization_url = serializers.SerializerMethodField()
-    organization_logo_url = serializers.SerializerMethodField()
-    compute = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = CiderInfrastructure
-        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
-        
-    def get_cider_type(self, object) -> str:
-        return('compute')
-    def get_cider_view_url(self, object) -> str:
-        try:
-            return str(object.other_attributes['public_url']) or None
-        except:
-            return None
-    def get__result_item_url(self, object) -> str:
-        http_request = self.context.get('request')
-        if http_request:
-            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
-        else:
-            return ''
-    def get_organization_name(self, object) -> str:
-        try:
-            return object.other_attributes['organizations'][0]['organization_name']
-        except:
-            return None
-    def get_organization_url(self, object) -> str:
-        try:
-            return str(object.other_attributes['organizations'][0]['organization_url']) or None
-        except:
-            return None
-    def get_organization_logo_url(self, object) -> str:
-        try:
-            return str(object.other_attributes['organizations'][0]['organization_logo_url']) or None
-        except:
-            return None
-    def get_compute(self, object) -> dict:
-        try:    # Gracefully ignore missing compute
-            compute = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='compute')
-        except:
-            return None
-        if compute:
-            return CiderInfrastructure_Compute_Serializer(compute).data
-        else:
             return None

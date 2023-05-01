@@ -15,33 +15,33 @@ from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
 # Create your views here.
 
-class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
+class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     '''
-        All ACCESS Active Resources
+        All ACCESS Allocated Resources
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='BASE', result='OBJECTS')
+        objects = CiderInfrastructure_AllocatedResources(affiliation='ACCESS', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
-class CiderInfrastructure_v1_ACCESSGatewayActiveList(GenericAPIView):
+class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
     '''
-        All ACCESS Active Resources
+        All ACCESS Online Services
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_Active(affiliation='XSEDE', allocated=True, type='BASE', result='OBJECTS')
+        objects = CiderInfrastructure_ActiveOnlineServices(affiliation='ACCESS', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_Detail(GenericAPIView):
     '''
-        An ACCESS Resource Detail
+        An ACCESS Generic Resource Detail
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -63,4 +63,27 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
         else:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
         serializer = CiderInfrastructure_Detail_Serializer(item, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
+    '''
+        An ACCESS Compute Resource Detail
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Detail_Serializer
+    def get(self, request, format=None, **kwargs):
+        # We need the base resource to pass to the serializer
+        if self.kwargs.get('cider_resource_id'):        # Whether base or sub resource, grab the other one also
+            try:
+                item = CiderInfrastructure.objects.get(pk=self.kwargs['cider_resource_id'])
+                if item.cider_type != 'compute':
+                    raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified cider_resource_id is of a different type')
+#                if item.parent_resource: # Serializer wants the parent, but will serialize both
+#                    item =  CiderInfrastructure.objects.get(pk=item.parent_resource)
+            except CiderInfrastructure.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified cider_resource_id not found')
+        else:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        serializer = CiderInfrastructure_Compute_Detail_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
