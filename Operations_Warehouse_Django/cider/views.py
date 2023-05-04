@@ -15,6 +15,18 @@ from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
 # Create your views here.
 
+class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
+    '''
+        All ACCESS Active Resources
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
+    def get(self, request, format=None, **kwargs):
+        objects = CiderInfrastructure_AllocatedResources(affiliation='ACCESS', result='OBJECTS')
+        serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     '''
         All ACCESS Allocated Resources
@@ -24,7 +36,7 @@ class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_AllocatedResources(affiliation='ACCESS', result='OBJECTS')
-        serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
+        serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
@@ -36,7 +48,7 @@ class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_ActiveOnlineServices(affiliation='ACCESS', result='OBJECTS')
-        serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
+        serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_Detail(GenericAPIView):

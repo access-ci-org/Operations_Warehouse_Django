@@ -1,3 +1,8 @@
+v3.6.0 2023-05-04 JP
+  - New /cider/v1/access-allocated summary view extends access-active by returning features, latitude, and longitude
+  - Expand cider detail view and serializer with latitude, longitude, features
+  - Expand cider detail view and serializer with storage multi-value dictionary
+
 v3.5.0 2023-05-01 JP
   - New access-online-services, access-allocated synonym to access-active for compute/cloud/storage, improved and simplified filters
 
