@@ -1,3 +1,6 @@
+v3.7.0 2023-05-15 JP
+  - Add a features_list of only descriptions to CiderInfrastructure_Summary_v2_Serializer
+
 v3.6.0 2023-05-04 JP
   - New /cider/v1/access-allocated summary view extends access-active by returning features, latitude, and longitude
   - Expand cider detail view and serializer with latitude, longitude, features

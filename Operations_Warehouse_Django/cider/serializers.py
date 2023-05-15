@@ -51,10 +51,12 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
+    features_list = serializers.SerializerMethodField()
     
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude', 'features', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'resource_description', 'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
+        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude', 'features', 'features_list', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'resource_description',
+            'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
         
     def get_cider_view_url(self, CiderInfrastructure) -> str:
         try:
@@ -103,6 +105,15 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     def get_features(self, object) -> dict:
         try:
             return object.other_attributes['features']
+        except:
+            return None
+    def get_features_list(self, object) -> dict:
+        try:
+            features_list = []
+            for item in object.other_attributes['features']:
+#                features_list.append('{}:{} ({})'.format(item['feature_category'], item['name'], item['description']))
+                features_list.append(item['description'])
+            return features_list
         except:
             return None
 
