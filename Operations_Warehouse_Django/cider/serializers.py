@@ -136,7 +136,6 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
         except:
             return None
     def get_features_list(self, object) -> dict:
-        import pdb;pdb.set_trace()
         try:
             features_list = []
             for item in object.other_attributes['features']:

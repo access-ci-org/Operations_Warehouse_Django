@@ -1,3 +1,6 @@
+v3.8.1 2023-06-16 JP
+  - Remove debugging pdb commands
+
 v3.8.0 2023-06-16 JP
   - Add fields and a couple of fixes to resource and online service serializer
 
