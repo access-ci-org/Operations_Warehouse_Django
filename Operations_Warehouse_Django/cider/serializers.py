@@ -4,6 +4,7 @@ from cider.models import *
 from rest_framework import serializers
 
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
+    cider_type = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -12,19 +13,21 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'resource_description', 'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
+        fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
+            'resource_descriptive_name', 'resource_description',
+            'latest_status', 'latest_status_begin', 'latest_status_end',
+            'organization_name', 'organization_url', 'organization_logo_url',
+            'cider_view_url', 'cider_data_url', 'updated_at')
         
-    def get_cider_view_url(self, CiderInfrastructure) -> str:
-        try:
-            return CiderInfrastructure.other_attributes['public_url']
+    def get_cider_type(self, object) -> str:
+        try: # Gracefully ignore
+            if object.cider_type == 'resource': # Type comes from sub-resource for now
+                type_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
+            else:
+                type_object = object
+            return type_object.cider_type
         except:
             return None
-    def get_cider_data_url(self, object) -> str:
-        http_request = self.context.get('request')
-        if http_request:
-            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
-        else:
-            return ''
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -40,35 +43,50 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             return object.other_attributes['organizations'][0]['organization_logo_url']
         except:
             return None
+    def get_cider_view_url(self, CiderInfrastructure) -> str:
+        try:
+            return CiderInfrastructure.other_attributes['public_url']
+        except:
+            return None
+    def get_cider_data_url(self, object) -> str:
+        http_request = self.context.get('request')
+        if http_request:
+            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
+        else:
+            return ''
 
 class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
+    cider_type = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
-    organization_url = serializers.SerializerMethodField()
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
     features_list = serializers.SerializerMethodField()
+    primary_service_url = serializers.SerializerMethodField()
+    user_guide_url = serializers.SerializerMethodField()
     
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'cider_view_url', 'cider_data_url', 'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude', 'features', 'features_list', 'cider_type', 'info_resourceid', 'resource_descriptive_name', 'resource_description',
-            'latest_status', 'latest_status_begin', 'latest_status_end', 'project_affiliation', 'updated_at')
+        fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
+            'resource_descriptive_name', 'resource_description', 'recommended_use', 'access_description',
+            'latest_status', 'latest_status_begin', 'latest_status_end',
+            'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
+            'features', 'features_list', 'primary_service_url', 'user_guide_url',
+            'cider_view_url', 'cider_data_url', 'updated_at')
         
-    def get_cider_view_url(self, CiderInfrastructure) -> str:
-        try:
-            return CiderInfrastructure.other_attributes['public_url']
+    def get_cider_type(self, object) -> str:
+        try: # Gracefully ignore
+            if object.cider_type == 'resource': # Type comes from sub-resource for now
+                type_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
+            else:
+                type_object = object
+            return type_object.cider_type
         except:
             return None
-    def get_cider_data_url(self, object) -> str:
-        http_request = self.context.get('request')
-        if http_request:
-            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
-        else:
-            return ''
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -82,6 +100,16 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     def get_organization_logo_url(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_logo_url']
+        except:
+            return None
+    def get_primary_service_url(self, object) -> str:
+        try:
+            return object.other_attributes['primary_service_url']
+        except:
+            return None
+    def get_user_guide_url(self, object) -> str:
+        try:
+            return object.other_attributes['user_guide_url']
         except:
             return None
     def get_latitude(self, object) -> float:
@@ -108,6 +136,7 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
         except:
             return None
     def get_features_list(self, object) -> dict:
+        import pdb;pdb.set_trace()
         try:
             features_list = []
             for item in object.other_attributes['features']:
@@ -116,6 +145,17 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
             return features_list
         except:
             return None
+    def get_cider_view_url(self, CiderInfrastructure) -> str:
+        try:
+            return CiderInfrastructure.other_attributes['public_url']
+        except:
+            return None
+    def get_cider_data_url(self, object) -> str:
+        http_request = self.context.get('request')
+        if http_request:
+            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
+        else:
+            return ''
 
 class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
 #    cider_type = serializers.SerializerMethodField()
