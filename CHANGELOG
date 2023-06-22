@@ -1,3 +1,6 @@
+v3.8.2 2023-06-22 JP
+  - Fix to extract online_service user_guide_url and primary_service_url from the sub-resource
+
 v3.8.1 2023-06-16 JP
   - Remove debugging pdb commands
 

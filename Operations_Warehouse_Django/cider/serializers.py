@@ -103,13 +103,21 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
         except:
             return None
     def get_primary_service_url(self, object) -> str:
-        try:
-            return object.other_attributes['primary_service_url']
+        try: # Gracefully ignore
+            if object.cider_type == 'resource': # URL comes from sub-resource for now
+                url_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
+            else:
+                url_object = object
+            return url_object.other_attributes['primary_service_url']
         except:
             return None
     def get_user_guide_url(self, object) -> str:
-        try:
-            return object.other_attributes['user_guide_url']
+        try: # Gracefully ignore
+            if object.cider_type == 'resource': # Geo comes from sub-resource for now
+                url_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
+            else:
+                url_object = object
+            return url_object.other_attributes['user_guide_url']
         except:
             return None
     def get_latitude(self, object) -> float:
