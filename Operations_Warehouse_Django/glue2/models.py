@@ -57,7 +57,7 @@ class ApplicationHandle(AbstractGlue2EntityModel):
                                                 on_delete=models.CASCADE,
                                                 null=True)
     Type = models.CharField(max_length=16)
-    Value = models.CharField(max_length=64)
+    Value = models.CharField(max_length=80)
 
 class AbstractService(AbstractGlue2EntityModel):
     ResourceID = models.CharField(db_index=True, max_length=40)

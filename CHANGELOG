@@ -1,3 +1,6 @@
+v3.10.0 2023-07-13 JP
+  - Expand ApplicationHandle Value attribute from 64 to 80 characters to support a PSC module
+ 
 v3.9.0 2023-07-13 JP
   - Implement glue2 views, including document processing used by the IPF glue2 router
 
