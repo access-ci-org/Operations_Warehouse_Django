@@ -1,3 +1,6 @@
+v3.9.0 2023-07-13 JP
+  - Implement glue2 views, including document processing used by the IPF glue2 router
+
 v3.8.2 2023-06-22 JP
   - Fix to extract online_service user_guide_url and primary_service_url from the sub-resource
 
