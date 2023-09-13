@@ -1,3 +1,6 @@
+v3.11.0 2023-09-13 JP
+  - Implement ../past_outages/ with optional ?page=2&results_per_page=10
+ 
 v3.10.0 2023-07-13 JP
   - Expand ApplicationHandle Value attribute from 64 to 80 characters to support a PSC module
  

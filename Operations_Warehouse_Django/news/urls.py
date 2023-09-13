@@ -10,5 +10,6 @@ urlpatterns = [
     path('v1/affiliation/<str:affiliation>/', News_v1_List.as_view(), name='news-v1-affiliation'),
     path('v1/affiliation/<str:affiliation>/current_outages/', News_v1_Current_Outages.as_view(), name='news-v1-current-outages'),
     path('v1/affiliation/<str:affiliation>/future_outages/', News_v1_Future_Outages.as_view(), name='news-v1-future-outages'),
+    path('v1/affiliation/<str:affiliation>/past_outages/', News_v1_Past_Outages.as_view(), name='news-v1-past-outages'),
     path('v1/affiliation/<str:affiliation>/all_outages/', News_v1_All_Outages.as_view(), name='news-v1-all-outages'),
 ]
