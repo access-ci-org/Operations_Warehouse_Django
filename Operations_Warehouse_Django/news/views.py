@@ -2,9 +2,12 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListAPIView, GenericAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
+from rest_framework.settings import api_settings
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from news.models import *
 from news.serializers import *
@@ -12,6 +15,31 @@ from news.serializers import *
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
 # Create your views here.
+
+class CustomPagePagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    def get_paginated_response(self, data, request):
+        try:
+            page = request.GET.get('page')
+            if page:
+                page = int(page)
+                if page == 0:
+                    raise
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page "{}" is not valid'.format(page))
+        try:
+            page_size = request.GET.get('page_size', api_settings.PAGE_SIZE or 25)
+            self.page_size = int(page_size)
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page_size "{}" is not valid'.format(page_size))
+        return MyAPIResponse({
+            'count': self.page.paginator.count,
+            'page': page,
+            'page_size': self.page_size,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+        })
 
 class News_v1_Detail(GenericAPIView):
     '''
@@ -32,23 +60,58 @@ class News_v1_Detail(GenericAPIView):
         serializer = News_v1_Detail_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
-class News_v1_List(GenericAPIView):
+class News_v1_List(ListAPIView):
     '''
         All news items optionally filtered by affiliation and publisher
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_class = News_v1_Detail_Serializer
+    serializer_class = News_v1_Outage_Serializer
+#    pagination_class = PageNumberPagination
+    @extend_schema(parameters=[
+            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
+            OpenApiParameter('publisher', str, OpenApiParameter.QUERY),
+            OpenApiParameter('page', int, OpenApiParameter.QUERY),
+            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
+        ])
     def get(self, request, format=None, **kwargs):
-        # We need the base resource to pass to the serializer
-        if self.kwargs.get('affiliation'):
-            items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])
-        elif self.kwargs.get('publisher'):
-            items = News.objects.filter(Publisher__exact=self.kwargs['publisher'])
+        if request.GET.get('affiliation'):
+            queryset = News.objects.filter(Affiliation__exact=request.GET.get('affiliation'))
         else:
-            items = News.objects.all()
-        serializer = News_v1_Detail_Serializer(items, context={'request': request}, many=True)
-        return MyAPIResponse({'results': serializer.data})
+            queryset = None
+        if request.GET.get('publisher'):
+            if queryset:
+                queryset = queryset.filter(Publisher__exact=request.GET.get('publisher'))
+            else:
+                queryset = News.objects.filter(Publisher__exact=request.GET.get('publisher'))
+        if queryset is None:
+            queryset = News.objects.all()
+        queryset = queryset.order_by('-NewsStart')
+
+        try:
+            page = request.GET.get('page')
+            if page:
+                page = int(page)
+                if page == 0:
+                    raise
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page "{}" is not valid'.format(page))
+
+        if not page:
+            serializer = News_v1_Outage_Serializer(queryset, many=True, context={'request': request})
+            return MyAPIResponse({'results': serializer.data})
+
+#        try:
+#            page_size = request.GET.get('page_size')
+#            if page_size:
+#                page_size = int(page_size)
+#        except:
+#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page_size "{}" is not valid'.format(page_size))
+
+        paginator = CustomPagePagination()
+        query_page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = News_v1_Outage_Serializer(query_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data, request)
 
 class Operations_Outages_v1(GenericAPIView):
     '''
@@ -96,48 +159,50 @@ class News_v1_Future_Outages(GenericAPIView):
         serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
-class News_v1_Past_Outages(GenericAPIView):
+class News_v1_Past_Outages(ListAPIView):
     '''
         All past outage type news items, supports pagination
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = News_v1_Outage_Serializer
+    pagination_class = PageNumberPagination
+    @extend_schema(parameters=[
+            OpenApiParameter('page', int, OpenApiParameter.QUERY),
+            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
+        ])
     def get(self, request, format=None, **kwargs):
-        parm = request.GET.get('page')
-        if parm:
-            try:
-                page = int(parm)
-                if page == 0:
-                    raise
-            except:
-                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
-        else:
-            page = None
-        try:
-            parm = request.GET.get('results_per_page', 25)
-            page_size = int(parm)
-        except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
-
         now = timezone.now()
-        items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
+        queryset = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
                             .filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])\
                             .filter(NewsStart__lte=now)\
                             .exclude(NewsEnd__isnull=False, NewsEnd__gt=now)\
                             .order_by('-NewsStart')
-        response_obj = {}
-        if page:
-            paginator = Paginator(items, page_size)
-            final_items = paginator.page(page)
-            response_obj['page'] = page
-            response_obj['total_pages'] = paginator.num_pages
-        else:
-            final_items = items
 
-        serializer = News_v1_Outage_Serializer(final_items, many=True, context={'request': request})
-        response_obj['results'] = serializer.data
-        return MyAPIResponse(response_obj)
+        try:
+            page = request.GET.get('page')
+            if page:
+                page = int(page)
+                if page == 0:
+                    raise
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page "{}" is not valid'.format(page))
+
+        if not page:
+            serializer = News_v1_Outage_Serializer(queryset, many=True, context={'request': request})
+            return MyAPIResponse({'results': serializer.data})
+
+#        try:
+#            page_size = request.GET.get('page_size')
+#            if page_size:
+#                page_size = int(page_size)
+#        except:
+#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page_size "{}" is not valid'.format(page_size))
+
+        paginator = CustomPagePagination()
+        query_page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = News_v1_Outage_Serializer(query_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data, request)
 
 class News_v1_All_Outages(GenericAPIView):
     '''

@@ -1,3 +1,6 @@
+v3.12.0 2023-09-20 JP
+  - Improve pagination to to use page= and page_size= and return more convetional pagination fields like next and previous links
+ 
 v3.11.0 2023-09-13 JP
   - Implement ../past_outages/ with optional ?page=2&results_per_page=10
  
