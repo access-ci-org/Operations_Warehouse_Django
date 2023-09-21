@@ -1,3 +1,6 @@
+v3.13.0 2023-09-21 JP
+  - Delete resource_v3 model objects and disable the admin interface, will be replaced by resource_v4
+ 
 v3.12.0 2023-09-20 JP
   - Improve pagination to to use page= and page_size= and return more convetional pagination fields like next and previous links
  

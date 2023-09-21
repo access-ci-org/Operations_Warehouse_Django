@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'glue2',
     'news',
     'resource_v3',
+#    'resource_v4',
     'warehouse_state',
     'warehouse_tools',
     'web',
