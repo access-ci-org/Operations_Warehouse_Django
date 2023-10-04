@@ -1,3 +1,6 @@
+v3.14.1 2023-10-04 JP
+  - Fix to remove Resource_Detail_Serializer reference to commented out Relations field
+
 v3.14.0 2023-10-04 JP
   - Implement Django resource_v4 models, urls, views, serializers COMMENTING OUT everything Elasticsearch related (future port effort)
   - Move CustomPagePagination to warehouse_tools/

@@ -102,7 +102,7 @@ class Resource_Detail_Serializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceV4
         fields = copy.copy([f.name for f in ResourceV4._meta.get_fields(include_parents=False)])
-        fields.append('Relations')
+#        fields.append('Relations')
         fields.append('DetailURL')
         fields.append('EntityJSON')
 
