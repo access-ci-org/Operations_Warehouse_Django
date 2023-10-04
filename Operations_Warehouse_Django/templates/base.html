@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+{% load static %}
+<HTML>
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META name="description" content="XSEDE Information Services Warehouse">
+<META name="keywords" content="xsede,information services,grids,publishing,discovery,rest interface">
+<title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{% static "common/2col_leftNav.css" %}" type="text/css">
+</HEAD>
+
+<BODY> 
+<div style="background-color:#00476F">
+  <table width="1019" height="55">
+    <tr><td width="23">&nbsp;</td><td>
+      <a href="https://info.xsede.org" title="Go to site"> <img alt="site" src="/static/images/xsede-info-services.png" width="547" height="34" max-height="34"></a>
+    </td></tr>
+  </table>
+</div>
+
+<div id="content">
+{% block content %}{% endblock %}
+</div>
+
+<div id="footer">
+  <div class="content">
+    <table width="98%" height="92" border=0 cellspacing=0 cellpadding=0>
+      <tr>
+        <td width="23">&nbsp;</td>
+        <td><a href="https://www.nsf.gov"><img alt="National Science Foundation (NSF)" src="{% static "images/NSF-logo-color-small.png" %}"/></a></td>
+        <td width="80%">© <a href="https://www.xsede.org/">XSEDE</a> All Rights Reserved.<br>
+           The Extreme Science and Engineering Development Environment<br>
+           is supported by the <a href="https://www.nsf.gov">National Science Foundation</a>.</td>
+        <td><a href="/info/feedback/">Feedback</a></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+</BODY>
+</HTML>
