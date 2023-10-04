@@ -1,4 +1,4 @@
-v3.14.2 2023-10-04 JP
+v3.14.0 2023-10-04 JP
   - Implement Django resource_v4 models, urls, views, serializers COMMENTING OUT everything Elasticsearch related (future port effort)
   - Move CustomPagePagination to warehouse_tools/
   - Fix to include on page=2 a prevous link to page=1 because standard pagination excludes it
