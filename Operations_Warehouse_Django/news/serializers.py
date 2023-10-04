@@ -1,9 +1,10 @@
 from django.urls import reverse
 from django.utils.encoding import uri_to_iri
-from news.models import *
-from cider.models import *
 from rest_framework import serializers
 import copy
+
+from cider.models import *
+from .models import *
 
 #
 # Generic News

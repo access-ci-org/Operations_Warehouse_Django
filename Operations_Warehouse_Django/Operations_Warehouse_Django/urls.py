@@ -28,7 +28,8 @@ urlpatterns = [
     path('wh2/cider/', include('cider.urls') ),
     path('wh2/glue2/', include('glue2.urls') ),
     path('wh2/news/', include('news.urls') ),
-    
+    path('wh2/resource/', include('resource_v4.urls') ),
+
 # Optional UI:
     path('wh2/api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('wh2/api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

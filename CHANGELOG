@@ -1,5 +1,12 @@
+v3.14.2 2023-10-04 JP
+  - Implement Django resource_v4 models, urls, views, serializers COMMENTING OUT everything Elasticsearch related (future port effort)
+  - Move CustomPagePagination to warehouse_tools/
+  - Fix to include on page=2 a prevous link to page=1 because standard pagination excludes it
+  - Copy missing templates/ from XSEDE
+
 v3.13.0 2023-09-21 JP
   - Delete resource_v3 model objects and disable the admin interface, will be replaced by resource_v4
+  - Used https://docs.djangoproject.com/en/4.2/howto/delete-app/
  
 v3.12.0 2023-09-20 JP
   - Improve pagination to to use page= and page_size= and return more convetional pagination fields like next and previous links

@@ -1,46 +1,18 @@
-from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
-from rest_framework.settings import api_settings
-from drf_spectacular.utils import OpenApiParameter, extend_schema
-
-from news.models import *
-from news.serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
-from warehouse_tools.responses import MyAPIResponse
+from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+
+from .models import *
+from .serializers import *
+
 # Create your views here.
-
-class CustomPagePagination(PageNumberPagination):
-    page_size_query_param = 'page_size'
-    def get_paginated_response(self, data, request):
-        try:
-            page = request.GET.get('page')
-            if page:
-                page = int(page)
-                if page == 0:
-                    raise
-        except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page "{}" is not valid'.format(page))
-        try:
-            page_size = request.GET.get('page_size', api_settings.PAGE_SIZE or 25)
-            self.page_size = int(page_size)
-        except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page_size "{}" is not valid'.format(page_size))
-        return MyAPIResponse({
-            'count': self.page.paginator.count,
-            'page': page,
-            'page_size': self.page_size,
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
-            'results': data,
-        })
-
 class News_v1_Detail(GenericAPIView):
     '''
         Single news item detail
@@ -67,7 +39,6 @@ class News_v1_List(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = News_v1_Outage_Serializer
-#    pagination_class = PageNumberPagination
     @extend_schema(parameters=[
             OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
             OpenApiParameter('publisher', str, OpenApiParameter.QUERY),
@@ -166,7 +137,7 @@ class News_v1_Past_Outages(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = News_v1_Outage_Serializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPagePagination
     @extend_schema(parameters=[
             OpenApiParameter('page', int, OpenApiParameter.QUERY),
             OpenApiParameter('page_size', int, OpenApiParameter.QUERY)

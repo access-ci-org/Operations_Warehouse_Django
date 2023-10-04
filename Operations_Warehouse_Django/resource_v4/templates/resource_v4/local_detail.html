@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Local Record Detail{% endblock %}
+{% block content %}
+
+<style>
+th, td
+    {
+        padding: 15px;
+    }
+
+th
+    {
+        color: white;
+        background-color: #1E06B4;
+        text-align: left;
+        width: 10px;
+    }
+
+td
+    {
+        color: #69696B;
+    }
+
+table#data
+    {
+        border: 2px solid black;
+        border-collapse: collapse;
+    }
+</style>
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for record in results %}
+    <tr>
+        <th>Affiliation</th>
+        <td> {{ record.Affiliation }}</th>
+    </tr>
+    
+    <tr>
+        <th>Local ID</th>
+        <td>{{ record.LocalID }}</th>
+    </tr>
+    
+    <tr>
+        <th>Local Type</th>
+        <td>{{ record.LocalType }}</th>
+    </tr>
+    
+    <tr>
+        <th>Local URL</th>
+        <td><a href="{{ record.LocalURL }}?format=html">{{ record.LocalURL }}</a></td>
+    </tr>
+    
+    <tr>
+        <th>Catalog Meta URL</th>
+        <td><a href="{{ record.CatalogMetaURL }}?format=html">{{ record.CatalogMetaURL }}</a></td>
+    </tr>
+    
+    <tr>
+        <th>Creation Time</th>
+        <td>{{ record.CreationTime }}</th>
+    </tr>
+    
+    <tr>
+        <th>Validity</th>
+        <td>{{ record.Validty }}</th>
+    </tr>
+    
+    <tr>
+        <th>ID</th>
+        <td>{{ record.ID }}</th>
+    </tr>
+    
+    <tr>
+        <th>Local JSON</th>
+        <td>{{ record.EntityJSON }}</th>
+    </tr>
+    
+    {% endfor %}
+{% endblock %}

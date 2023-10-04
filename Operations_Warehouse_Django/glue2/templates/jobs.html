@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}XSEDE Resource Jobs{% endblock %}
+{% block content %}
+
+<h1 align="center">XSEDE Resource Jobs</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+{% comment %}
+<h2>ResourceID {{ result_set[0].ResourceID }}</h2>
+{% endcomment %}
+</br>
+  <table style="margin-left:40px" border=1 cellspacing=0 cellpadding=3>
+    {% comment %}
+    <tr>
+      <th> <a href="?format=html&sort=LocalIDFromManager">Job ID</a> </th>
+      <th> <a href="?format=html&sort=LocalOwner">Owner</a> </th>
+      <th> <a href="?format=html&sort=Name">Name</a> </th>
+      <th> <a href="?format=html&sort=StandardState">State</a> </th>
+      <th> <a href="?format=html&sort=RequestedSlots">Slots</a> </th>
+      <th> <a href="?format=html&sort=RequestedTotalWallTime">Wall Time</a> </th>
+      <th> <a href="?format=html&sort=Queue">Queue</a> </th>
+      <th> <a href="?format=html&sort=SubmissionTime">Submission Time</a> </th>
+      <th> <a href="?format=html&sort=StartTime">Start Time</a> </th>
+    </tr>
+    {% endcomment %}
+    <tr>
+      <th>Job ID</th>
+      <th>Owner</th>
+      <th>Name</th>
+      <th>State</th>
+      <th>Slots</th>
+      <th>Wall Time</th>
+      <th>Queue</th>
+      <th>Submission Time</th>
+      <th>Start Time</th>
+    </tr>
+    {% for job in result_set %}
+      <tr>
+        <td><a href="{{ job.DetailURL }}">{{ job.EntityJSON.LocalIDFromManager }}</a></td>
+        <td>{{ job.EntityJSON.LocalOwner }}</td>
+        <td>{{ job.Name }}</td>
+        <td>{{ job.StandardState }}</td>
+        <td>{{ job.EntityJSON.RequestedSlots }}</td>
+        <td>{{ job.EntityJSON.RequestedTotalWallTime }}</td>
+        <td>{{ job.EntityJSON.Queue }}</td>
+        <td>{{ job.EntityJSON.SubmissionTime }}</td>
+        <td>{{ job.EntityJSON.StartTime }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

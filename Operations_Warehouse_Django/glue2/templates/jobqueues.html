@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}XSEDE Resource Job Queue{% endblock %}
+{% block content %}
+
+<h1 align="center">XSEDE Resource Job Queue</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+  {% for resource in result_set %}
+  <h2>ResourceID {{ resource.ResourceID }}</h2>
+  </br>
+  <table style="margin-left:40px" border=1 cellspacing=0 cellpadding=3>
+    {% comment %}
+    <tr>
+      <th> <a href="?format=html&sort=ID">Job ID</a> </th>
+      <th> <a href="?format=html&sort=State">State</a> </th>
+      <th> <a href="?format=html&sort=LocalOwner">Owner</a> </th>
+      <th> <a href="?format=html&sort=Name">Name</a> </th>
+      <th> <a href="?format=html&sort=Queue">Queue</a> </th>
+      <th> <a href="?format=html&sort=RequestedSlots">Slots</a> </th>
+      <th> <a href="?format=html&sort=RequestedTotalWallTime">Wall Time</a> </th>
+      <th> <a href="?format=html&sort=SubmissionTime">Submission Time</a> </th>
+      <th> <a href="?format=html&sort=StartTime">Start Time</a> </th>
+    </tr>
+    {% endcomment %}
+    <tr>
+      <th>Job ID</th>
+      <th>State</th>
+      <th>Owner</th>
+      <th>Name</th>
+      <th>Queue</th>
+      <th>Slots</th>
+      <th>Wall Time</th>
+      <th>Submission Time</th>
+      <th>Start Time</th>
+    </tr>
+    {% for job in resource.JobQueue %}
+      <tr>
+        <td>{{ job.ID }}</td>
+        <td>{{ job.State }}</td>
+        <td>{{ job.LocalOwner }}</td>
+        <td>{{ job.Name }}</td>
+        <td>{{ job.Queue }}</td>
+        <td>{{ job.RequestedSlots }}</td>
+        <td>{{ job.RequestedTotalWallTime }}</td>
+        <td>{{ job.SubmissionTime }}</td>
+        <td>{{ job.StartTime }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  </p>
+  {% endfor %}
+{% endblock %}

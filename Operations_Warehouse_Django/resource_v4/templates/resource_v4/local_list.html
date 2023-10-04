@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Local Record List{% endblock %}
+{% block content %}
+
+<h1 align="center">Local Record List</h1>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th>Affiliation</th>
+        <th>Local ID</th>
+        <th>Local Type</th>
+        <th>Global ID</th>
+    </tr>
+    
+    {% for record in results %}
+    <tr>
+        <td>{{ record.Affiliation }}</td>
+        <td>{{ record.LocalID }}</td>
+        <td>{{ record.LocalType }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">{{ record.ID }}</a></td>
+    </tr>
+    {% endfor %}
+{% endblock %}

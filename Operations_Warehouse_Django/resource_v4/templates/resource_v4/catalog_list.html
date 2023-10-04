@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Catalog List{% endblock %}
+{% block content %}
+
+<h1 align="center">Catalog List</h1>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th>Affiliation</th>
+        <th>Name</th>
+        <th>Global ID (detail)</th>
+    </tr>
+    
+    {% for record in results %}
+    <tr>
+        <td>{{ record.Affiliation }}</td>
+        <td>{{ record.Name }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">{{ record.ID }}</a></td>
+    </tr>
+    {% endfor %}
+{% endblock %}

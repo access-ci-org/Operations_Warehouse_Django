@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Resource Detail{% endblock %}
+{% block content %}
+
+<style>
+th, td
+    {
+        padding: 15px;
+    }
+
+th
+    {
+        color: white;
+        background-color: #1E06B4;
+        text-align: left;
+        width: 10px;
+    }
+
+td
+    {
+        color: #69696B;
+    }
+
+table#data
+    {
+        border: 2px solid black;
+        border-collapse: collapse;
+    }
+</style>
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for record in results %}
+    <tr>
+        <th>Affiliation</th>
+        <td> {{ record.Affiliation }}</th>
+    </tr>
+    
+    <tr>
+        <th>Resource Group</th>
+        <td>{{ record.ResourceGroup }}</th>
+    </tr>
+    
+    <tr>
+        <th>Type</th>
+        <td>{{ record.Type }}</th>
+    </tr>
+    
+    <tr>
+        <th>Name</th>
+        <td>{{ record.Name }}</th>
+    </tr>
+    
+    <tr>
+        <th>Short Description</th>
+        <td>{{ record.ShortDescription }}</th>
+    </tr>
+    
+    <tr>
+        <th>Description</th>
+        <td>{{ record.Description }}</th>
+    </tr>
+    
+    <tr>
+        <th>Topics</th>
+        <td>{{ record.Topics }}</a></th>
+    </tr>
+    
+    <tr>
+        <th>Keywords</th>
+        <td>{{ record.Keywords }}</a></th>
+    </tr>
+    
+    <tr>
+        <th>Quality Level</th>
+        <td>{{ record.QualityLevel }}</th>
+    </tr>
+    
+    <tr>
+        <th>ProviderID</th>
+        <td>{{ record.ProviderID }}</th>
+    </tr>
+    
+    <tr>
+        <th>Creation Time</th>
+        <td>{{ record.CreationTime }}</th>
+    </tr>
+    
+    <tr>
+        <th>Validity</th>
+        <td>{{ record.Validity }}</th>
+    </tr>
+    
+    <tr>
+        <th>Local ID</th>
+        <td>{{ record.LocalID }}</th>
+    </tr>
+    
+    <tr>
+        <th>ID</th>
+        <td>{{ record.ID }}</th>
+    </tr>
+    
+    {% endfor %}
+{% endblock %}

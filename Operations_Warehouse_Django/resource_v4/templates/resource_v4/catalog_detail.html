@@ -1,0 +1,60 @@
+{% extends "base_detail.html" %}
+{% block title %}Catalog Detail{% endblock %}
+{% block content %}
+
+<h1 align="center">Catalog Detail</h1>
+
+    {% for record in results %}
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th>Affiliation</th>
+        <td>{{ record.Affiliation }}</td>
+    </tr>
+
+    <tr>
+        <th>Name</th>
+        <td>{{ record.Name }}</td>
+    </tr>
+
+    <tr>
+        <th>Short Description</th>
+        <td>{{ record.ShortDescription }}</td>
+    </tr>
+
+    <tr>
+        <th>Catalog Meta URL</th>
+        <td><a href="{{ record.CatalogMetaURL }}?format=html">{{ record.CatalogMetaURL }}</a></td>
+    </tr>
+
+    <tr>
+        <th>Catalog User URL</th>
+        <td><a href="{{ record.CatalogUserURL }}?format=html">{{ record.CatalogUserURL }}</a></td>
+    </tr>
+
+    <tr>
+        <th>Catalog API URL</th>
+        <td><a href="{{ record.CatalogAPIURL }}?format=html">{{ record.CatalogAPIURL }}</a></td>
+    </tr>
+
+    <tr>
+        <th>Catalog Schema URL</th>
+        <td><a href="{{ record.CatalogSchemaURL }}?format=html">{{ record.CatalogSchemaURL }}</a></td>
+    </tr>
+
+    <tr>
+        <th>Created at</th>
+        <td>{{ record.created_at }}</td>
+    </tr>
+
+    <tr>
+        <th>Updated at</th>
+        <td>{{ record.updated_at }}</td>
+    </tr>
+
+    <tr>
+        <th>Global ID</th>
+        <td>{{ record.ID }}</td>
+    </tr>
+    </table>
+    {% endfor %}
+{% endblock %}

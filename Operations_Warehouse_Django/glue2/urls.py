@@ -1,5 +1,5 @@
 from django.urls import path
-from glue2.views import *
+from .views import *
 
 urlpatterns = [
     path(r'v1/process/doctype/<str:doctype>/resourceid/<str:resourceid>/', glue2_process_doc.as_view(), name='glue2-process-doc'),

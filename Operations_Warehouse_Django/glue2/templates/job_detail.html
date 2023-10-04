@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Job Detail{% endblock %}
+{% block content %}
+
+<style>
+th, td
+    {
+        padding: 15px;
+    }
+
+th
+    {
+        color: white;
+        background-color: #1E06B4;
+        text-align: left;
+        width: 10px;
+    }
+
+td
+    {
+        color: #69696B;
+    }
+
+table#data
+    {
+        border: 2px solid black;
+        border-collapse: collapse;
+    }
+</style>
+
+<h1 align="center">Job Detail</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+{% comment %}
+<h2>ResourceID: {{ item.ResourceID }}</h2>
+{% endcomment %}
+</br>
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for item in result_set %}
+    <tr>
+        <th>Global ID</th>
+        <td>{{ item.EntityJSON.ID }}</th>
+    </tr>
+    <tr>
+        <th>ResourceID</th>
+        <td>{{ item.ResourceID }}</th>
+    </tr>
+    <tr>
+        <th>Local ID</th>
+        <td>{{ item.EntityJSON.LocalIDFromManager }}</th>
+    </tr>
+    <tr>
+        <th>Local Owner</th>
+        <td>{{ item.EntityJSON.LocalOwner }}</th>
+    </tr>
+    <tr>
+        <th>Name</th>
+        <td>{{ item.EntityJSON.Name }}</th>
+    </tr>
+    <tr>
+        <th>State</th>
+        <td>{{ item.StandardState }}</th>
+    </tr>
+    <tr>
+        <th>Requested Slots</th>
+        <td>{{ item.EntityJSON.RequestedSlots }}</th>
+    </tr>
+    <tr>
+        <th>Requested WallTime</th>
+        <td>{{ item.EntityJSON.RequestedTotalWallTime }}</th>
+    </tr>
+    <tr>
+        <th>Used WallTime</th>
+        <td>{{ item.EntityJSON.UsedTotalWallTime }}</th>
+    </tr>
+    <tr>
+        <th>Queue</th>
+        <td>{{ item.EntityJSON.Queue }}</th>
+    </tr>
+    <tr>
+        <th>Submission Time</th>
+        <td>{{ item.EntityJSON.SubmissionTime }}</th>
+    </tr>
+    <tr>
+        <th>Start Time</th>
+        <td>{{ item.EntityJSON.StartTime }}</th>
+    </tr>
+    <tr>
+        <th>End Time</th>
+        <td>{{ item.EntityJSON.EndTime }}</th>
+    </tr>
+    <tr>
+        <th>States</th>
+        <td>{{ item.EntityJSON.State }}</th>
+    </tr>
+    <tr>
+        <th>Other Attributes</th>
+        <td>{{ item.EntityJSON.Extension }}</th>
+    </tr>
+    
+    <tr>
+        <th>Created At</th>
+        <td>{{ item.CreationTime }}</th>
+    </tr>
+    
+    {% endfor %}
+{% endblock %}
