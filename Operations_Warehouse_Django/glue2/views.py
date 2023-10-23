@@ -1035,6 +1035,7 @@ class Software_Detail(APIView):
         GLUE2 software combining ApplicationEnvironment and AppliactionHandle
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
     serializer_class = ApplicationHandle_Serializer
     def get(self, request, format=None, **kwargs):
         if 'id' in self.kwargs:
@@ -1050,6 +1051,30 @@ class Software_Detail(APIView):
             objects = ApplicationHandle.objects.filter(ApplicationEnvironment__AppName__exact=uri_to_iri(self.kwargs['appname']))
             serializer = ApplicationHandle_Serializer(objects, many=True)
         return Response(serializer.data)
+
+class Software_Full(APIView):
+    '''
+        GLUE2 Software detailed information ApplicationHandle, ApplicationEnvironment, ...
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = Software_Community_Serializer
+    def get(self, request, format=None, **kwargs):
+        if 'id' in self.kwargs:
+            try:
+                object = ApplicationHandle.objects.get(pk=uri_to_iri(self.kwargs['id'])) # uri_to_iri translates %xx
+            except ApplicationHandle.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = Software_Community_Serializer(object)
+        elif 'resourceid' in self.kwargs:
+            objects = ApplicationHandle.objects.filter(ResourceID__exact=self.kwargs['resourceid'])
+            serializer = Software_Community_Serializer(objects, many=True)
+        elif 'appname' in self.kwargs:
+            objects = ApplicationHandle.objects.filter(ApplicationEnvironment__AppName__exact=uri_to_iri(self.kwargs['appname']))
+            serializer = Software_Community_Serializer(objects, many=True)
+        else:
+            objects = ApplicationHandle.objects.all()
+            serializer = Software_Community_Serializer(objects, many=True)
+        return MyAPIResponse({'results': serializer.data})
 
 # Service information comes from Endpoint and the parent AbstractService
 class Services_List(APIView):

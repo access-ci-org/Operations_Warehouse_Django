@@ -1,3 +1,8 @@
+v3.15.0 2023-10-23 JP
+  - Migrate XSEDE software related information views used to populate resource_v4 discovery models and indexes
+  - Expand resource_v4.LocalURL field length
+  - Improve template/*.html files for rendering resource_v4 pages
+
 v3.14.3 2023-10-04 JP
   - Add two missing templates/*base*
 

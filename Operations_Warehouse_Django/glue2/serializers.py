@@ -1,6 +1,9 @@
 import copy
-from glue2.models import *
+from django.utils.encoding import uri_to_iri
 from rest_framework import serializers
+
+from glue2.models import *
+from cider.models import *
 
 class JSON_Serializer(serializers.Serializer):
     json_data = serializers.JSONField()
@@ -203,3 +206,68 @@ class EntityHistory_Usage_Serializer(serializers.ModelSerializer):
     class Meta:
         model = EntityHistory
         fields = ('DocumentType', 'ResourceID', 'ReceivedTime')
+
+#
+# Special serializers that combine multiples types of glue2 information
+#
+
+# Same as Software_Full_Serializer but adds SupportContact
+class Software_Community_Serializer(serializers.ModelSerializer):
+    SiteID = serializers.SerializerMethodField('get_siteid')
+    AppName = serializers.CharField(source='ApplicationEnvironment.AppName')
+    AppVersion = serializers.CharField(source='ApplicationEnvironment.AppVersion')
+    Description = serializers.CharField(source='ApplicationEnvironment.Description')
+    Handle = serializers.SerializerMethodField('get_handle')
+    Domain = serializers.SerializerMethodField('get_category')
+    Keywords = serializers.SerializerMethodField('get_keywords')
+    SupportStatus = serializers.SerializerMethodField('get_supportstatus')
+    SupportContact = serializers.SerializerMethodField('get_supportcontact')
+    Repository = serializers.SerializerMethodField('get_repository')
+    class Meta:
+        model = ApplicationHandle
+        fields = ('ResourceID', 'SiteID', 'AppName', 'AppVersion', 'Description', 'Handle', 'Domain',
+                  'Keywords', 'SupportStatus', 'SupportContact', 'Repository', 'CreationTime', 'ID')
+
+    def get_siteid(self, ApplicationHandle) -> str:
+        try:
+            Cider_object = CiderInfrastructure.objects.filter(cider_type='resource').filter(info_resourceid=ApplicationHandle.ResourceID)
+            if Cider_object and Cider_object[0] and Cider_object[0].info_siteid:
+                return Cider_object[0].info_siteid
+        except CiderInfrastructure.DoesNotExist:
+            pass
+        return None
+
+    def get_handle(self, ApplicationHandle) -> dict:
+        return({'HandleType': ApplicationHandle.Type,
+                'HandleKey': ApplicationHandle.Value
+               })
+    
+    def get_category(self, ApplicationHandle) -> str:
+        try:
+            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Extension']['Category']
+        except:
+            return []
+
+    def get_keywords(self, ApplicationHandle) -> str:
+        try:
+            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Keywords']
+        except:
+            return []
+
+    def get_supportstatus(self, ApplicationHandle) -> str:
+        try:
+            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Extension']['SupportStatus']
+        except:
+            return []
+
+    def get_supportcontact(self, ApplicationHandle) -> str:
+        try:
+            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Extension']['SupportContact']
+        except:
+            return []
+
+    def get_repository(self, ApplicationHandle) -> dict:
+        try:
+            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Repository']
+        except:
+            return []

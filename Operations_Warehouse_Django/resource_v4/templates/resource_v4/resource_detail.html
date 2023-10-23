@@ -1,36 +1,11 @@
-{% extends "base.html" %}
+{% extends "base_detail.html" %}
 {% block title %}Resource Detail{% endblock %}
 {% block content %}
 
-<style>
-th, td
-    {
-        padding: 15px;
-    }
-
-th
-    {
-        color: white;
-        background-color: #1E06B4;
-        text-align: left;
-        width: 10px;
-    }
-
-td
-    {
-        color: #69696B;
-    }
-
-table#data
-    {
-        border: 2px solid black;
-        border-collapse: collapse;
-    }
-</style>
-
-<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+<h1 align="center">Resource Detail</h1>
     
     {% for record in results %}
+<table style="margin-left:2px;margin-right:2px" border=1 cellspacing=0 cellpadding=3>
     <tr>
         <th>Affiliation</th>
         <td> {{ record.Affiliation }}</th>
@@ -82,24 +57,24 @@ table#data
     </tr>
     
     <tr>
-        <th>Creation Time</th>
-        <td>{{ record.CreationTime }}</th>
+        <th>Local ID</th>
+        <td>{{ record.LocalID }}</th>
+    </tr>
+    
+    <tr>
+        <th>Global ID</th>
+        <td>{{ record.ID }}</th>
     </tr>
     
     <tr>
         <th>Validity</th>
         <td>{{ record.Validity }}</th>
     </tr>
-    
+
     <tr>
-        <th>Local ID</th>
-        <td>{{ record.LocalID }}</th>
+        <th>Creation Time</th>
+        <td>{{ record.CreationTime }}</th>
     </tr>
-    
-    <tr>
-        <th>ID</th>
-        <td>{{ record.ID }}</th>
-    </tr>
-    
+
     {% endfor %}
 {% endblock %}

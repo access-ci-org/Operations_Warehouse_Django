@@ -53,7 +53,7 @@ class ResourceV4Local(models.Model):
     Affiliation = models.CharField(db_index=True, max_length=32)
     LocalID = models.CharField(db_index=True, max_length=200, null=True, blank=True)
     LocalType = models.CharField(max_length=32, null=True, blank=True)
-    LocalURL = models.CharField(max_length=200, null=True, blank=True)
+    LocalURL = models.CharField(max_length=400, null=True, blank=True)
     # The catalog API metadata access URL (from the ResourceV4Catalog record)
     CatalogMetaURL = models.CharField(max_length=200, null=True, blank=True)
     # Local unmodified record, should conform to CatalogMetaURL -> CatalogSchemaURL

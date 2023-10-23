@@ -1,39 +1,15 @@
-{% extends "base.html" %}
+{% extends "base_detail.html" %}
 {% block title %}Local Record Detail{% endblock %}
 {% block content %}
 
-<style>
-th, td
-    {
-        padding: 15px;
-    }
-
-th
-    {
-        color: white;
-        background-color: #1E06B4;
-        text-align: left;
-        width: 10px;
-    }
-
-td
-    {
-        color: #69696B;
-    }
-
-table#data
-    {
-        border: 2px solid black;
-        border-collapse: collapse;
-    }
-</style>
+<h1 align="center">Local Resource Detail</h1>
 
 <table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
     
     {% for record in results %}
     <tr>
         <th>Affiliation</th>
-        <td> {{ record.Affiliation }}</th>
+        <td>{{ record.Affiliation }}</th>
     </tr>
     
     <tr>
@@ -57,8 +33,8 @@ table#data
     </tr>
     
     <tr>
-        <th>Creation Time</th>
-        <td>{{ record.CreationTime }}</th>
+        <th>Local JSON</th>
+        <td>{{ record.EntityJSON }}</th>
     </tr>
     
     <tr>
@@ -67,14 +43,13 @@ table#data
     </tr>
     
     <tr>
-        <th>ID</th>
+        <th>Global ID</th>
         <td>{{ record.ID }}</th>
     </tr>
-    
+
     <tr>
-        <th>Local JSON</th>
-        <td>{{ record.EntityJSON }}</th>
+        <th>Creation Time</th>
+        <td>{{ record.CreationTime }}</th>
     </tr>
-    
     {% endfor %}
 {% endblock %}

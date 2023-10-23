@@ -5,7 +5,7 @@
 <h1 align="center">Catalog Detail</h1>
 
     {% for record in results %}
-<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+<table style="margin-left:2px;margin-right:2px" border=1 cellspacing=0 cellpadding=3>
     <tr>
         <th>Affiliation</th>
         <td>{{ record.Affiliation }}</td>
@@ -42,6 +42,11 @@
     </tr>
 
     <tr>
+        <th>Global ID</th>
+        <td>{{ record.ID }}</td>
+    </tr>
+
+    <tr>
         <th>Created at</th>
         <td>{{ record.created_at }}</td>
     </tr>
@@ -50,11 +55,6 @@
         <th>Updated at</th>
         <td>{{ record.updated_at }}</td>
     </tr>
-
-    <tr>
-        <th>Global ID</th>
-        <td>{{ record.ID }}</td>
-    </tr>
-    </table>
+</table>
     {% endfor %}
 {% endblock %}
