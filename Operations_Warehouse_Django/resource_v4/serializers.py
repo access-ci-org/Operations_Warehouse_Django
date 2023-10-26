@@ -4,6 +4,7 @@ from rest_framework import serializers
 import copy
 
 from .models import *
+from .documents import *
 
 class Catalog_List_Serializer(serializers.ModelSerializer):
     DetailURL = serializers.SerializerMethodField()
@@ -132,10 +133,10 @@ class Resource_Search_Serializer(serializers.ModelSerializer):
         fields.append('Provider')
         fields.append('DetailURL')
 
-#class Resource_ESearch_Serializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = ResourceV4Index
-#        fields = ('__all__')
+class Resource_ESearch_Serializer(serializers.Serializer):
+    class Meta:
+        model = ResourceV4Index
+        fields = ('__all__')
 
 class Resource_Types_Serializer(serializers.Serializer):
     ResourceGroup = serializers.CharField()

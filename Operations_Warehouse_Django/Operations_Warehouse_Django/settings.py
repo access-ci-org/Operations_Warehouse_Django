@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 import json
 import os
 import sys
+from urllib.parse import urlparse
 
 if 'APP_CONFIG' not in os.environ:
     print('Missing APP_CONFIG environment variable')
@@ -112,20 +113,30 @@ for db in DATABASES:
 #DATABASE_ROUTERS = ['xsede_warehouse.router.ModelDatabaseRouter',]
 #from xsede_warehouse.router import *
 
-if CONF.get('ELASTIC_HOSTS'):
-    import elasticsearch_dsl.connections
-    from elasticsearch import Elasticsearch, RequestsHttpConnection
-    ELASTICSEARCH_DSL = {
+if CONF.get('OPENSEARCH_HOSTS'):
+    hosts = []
+    for url in CONF.get('OPENSEARCH_HOSTS'):
+        urlparse = urlparse(url)
+        hosts.append({'scheme': urlparse.scheme, 'host': urlparse.hostname, 'port': urlparse.port})
+    http_auth = CONF.get('OPENSEARCH_LOGIN','').split(':')
+    OPENSEARCH_DSL = {
         'default': {
-            'hosts': CONF.get('ELASTIC_HOSTS', None)
+            'hosts': hosts,
+            'http_auth': http_auth,
+            'timeout': 120,
+        },
+        'development': {
+            'hosts': [{'scheme': 'https', 'host': 'localhost', 'port': 9200}],
+            'http_auth': http_auth,
+            'timeout': 120,
+            'verify_certs': True,
+            'ca_certs': '/soft/warehouse-2.0/conf/https_ca.crt',
         },
     }
-    ESCON = elasticsearch_dsl.connections.create_connection( \
-        hosts = CONF['ELASTIC_HOSTS'], \
-        connection_class = RequestsHttpConnection, \
-        timeout = 10)
+    OSCON = CONF.get('OPENSEARCH_USING', 'default')
 else:
-    ESCON = None
+    OSCON = None
+
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -193,6 +204,7 @@ if SETTINGS_MODE == 'SERVER':
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+        'django_opensearch_dsl',
         'rest_framework',
         'drf_spectacular',
         # For django-allauth

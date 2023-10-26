@@ -1,3 +1,10 @@
+v3.16.0 2023-10-26 JP
+  - Convert from ElasticSearch to OpenSearch and django_opensearch_dsl plus opensearchpy
+  - Move Documents from models.py to documents.py
+  - Convert resource_v4 API documentation to OpenApiParameter
+  - Use query_params which work with all http methods, and cleanup use of kwargs
+  - Implement APP configuration parameters: OPENSEARCH_HOSTS, OPENSEARCH_LOGIN, and OPENSEARCH_USING
+
 v3.15.0 2023-10-23 JP
   - Migrate XSEDE software related information views used to populate resource_v4 discovery models and indexes
   - Expand resource_v4.LocalURL field length

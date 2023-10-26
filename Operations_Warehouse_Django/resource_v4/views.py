@@ -1,7 +1,9 @@
-from django.db.models.expressions import RawSQL
 from django.db.models import Count
 from django.conf import settings as django_settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from opensearchpy.helpers.query import Q
+from opensearchpy.helpers.aggs import A
+from opensearchpy import RequestError
 from django.urls import reverse
 from django.utils.encoding import uri_to_iri
 from django.utils import timezone
@@ -13,19 +15,19 @@ from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+
 from .models import *
 from .serializers import *
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
-from elasticsearch import Elasticsearch, RequestError
-from elasticsearch_dsl import Search, Q, A
+
 import datetime
 from datetime import datetime, timedelta
 import pytz
 Central = pytz.timezone("US/Central")
 UTC = pytz.timezone("UTC")
 import logging
-logg2 = logging.getLogger('xsede.logger')
+logg2 = logging.getLogger('warehouse.logger')
 
 class Catalog_Search(ListAPIView):
     '''
@@ -35,10 +37,10 @@ class Catalog_Search(ListAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Catalog_List_Serializer
     @extend_schema(parameters=[
-            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY)
+            OpenApiParameter('affiliations', str, OpenApiParameter.QUERY)
         ])
     def get(self, request, format=None, **kwargs):
-        arg_affiliations = request.GET.get('affiliations', kwargs.get('affiliations', None))
+        arg_affiliations = request.query_params.get('affiliations')
         if arg_affiliations and arg_affiliations not in ['_all_', '*']:
             want_affiliations = set(arg_affiliations.split(','))
         else:
@@ -65,7 +67,7 @@ class Catalog_Detail(GenericAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Catalog_Detail_Serializer
     def get(self, request, format=None, **kwargs):
-        arg_id = request.GET.get('id', kwargs.get('id', None))
+        arg_id = kwargs.get('id')
         if not arg_id:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Missing Global ID argument')
 
@@ -90,30 +92,30 @@ class Local_Search(ListAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Local_List_Serializer
     @extend_schema(parameters=[
-            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
+            OpenApiParameter('affiliations', str, OpenApiParameter.QUERY),
             OpenApiParameter('localids', str, OpenApiParameter.QUERY),
             OpenApiParameter('localtypes', str, OpenApiParameter.QUERY),
             OpenApiParameter('page', int, OpenApiParameter.QUERY),
             OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
         ])
     def get(self, request, format=None, **kwargs):
-        arg_affiliation = request.GET.get('affiliation', kwargs.get('affiliation', None))
-        if not arg_affiliation:
+        arg_affiliations = request.query_params.get('affiliations')
+        if not arg_affiliations:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Required affiliation not specified')
 
-        arg_localids = request.GET.get('localids', kwargs.get('localids', None))
+        arg_localids = request.query_params.get('localids')
         if arg_localids:
             want_localids = set(arg_localids.split(','))
         else:
             want_localids = set()
 
-        arg_localtypes = request.GET.get('localtypes', kwargs.get('localtypes', None))
+        arg_localtypes = request.query_params.get('localtypes')
         if arg_localtypes:
             want_localtypes = set(arg_localtypes.split(','))
         else:
             want_localtypes = set()
 
-        parm = request.GET.get('page')
+        parm = request.query_params.get('page')
         if parm:
             try:
                 page = int(parm)
@@ -124,7 +126,7 @@ class Local_Search(ListAPIView):
         else:
             page = None
         try:
-            parm = request.GET.get('results_per_page', 25)
+            parm = request.query_params.get('page_size', 25)
             page_size = int(parm)
         except:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
@@ -161,7 +163,7 @@ class Local_Detail(GenericAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Local_Detail_Serializer
     def get(self, request, format=None, **kwargs):
-        arg_id = request.GET.get('id', kwargs.get('id', None))
+        arg_id = kwargs.get('id')
         if not arg_id:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Missing Global ID argument')
 
@@ -186,12 +188,12 @@ class Resource_Types_List(ListAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Resource_Types_Serializer
     @extend_schema(parameters=[
-            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
+            OpenApiParameter('affiliations', str, OpenApiParameter.QUERY),
             OpenApiParameter('page', int, OpenApiParameter.QUERY),
             OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
         ])
     def get(self, request, format=None, **kwargs):
-        arg_affiliations = request.GET.get('affiliations', kwargs.get('affiliations', None))
+        arg_affiliations = request.query_params.get('affiliations')
         if arg_affiliations and arg_affiliations not in ['_all_', '*']:
             want_affiliations = set(arg_affiliations.split(','))
         else:
@@ -389,7 +391,7 @@ class Resource_Detail(GenericAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Resource_Detail_Serializer
     def get(self, request, format=None, **kwargs):
-        arg_id = request.GET.get('id', kwargs.get('id', None))
+        arg_id = kwargs.get('id')
         if not arg_id:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Missing Global ID argument')
             
@@ -406,24 +408,7 @@ class Resource_Detail(GenericAPIView):
 
 class Resource_Search(ListAPIView):
     '''
-        ### Resource search and list
-        
-        Optional selection argument(s):
-        ```
-            search_terms=<comma_delimited_search_terms>
-            search_strings=<comma_delimited_search_strings>
-            affiliations=<comma-delimited-list>
-            resource_groups=<group1>[, <group2>[...]]
-            types=<type1>[,<type2>[...]]
-            qualitylevels=[_all_|<level1>[,<level2>[...]]]       (default=production)
-            topics=<topic1>[,<topic2>[...]]
-            providers=<provider1>[,<provider2>[...]]
-        ```
-        Optional response argument(s):
-        ```
-            sort=<local_field>                  (default global Name)
-            subtotals={only,include}            (default no totals)
-        ```
+        Resource search and list
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
@@ -431,7 +416,7 @@ class Resource_Search(ListAPIView):
     @extend_schema(parameters=[
             OpenApiParameter('search_terms', str, OpenApiParameter.QUERY),
             OpenApiParameter('search_strings', str, OpenApiParameter.QUERY),
-            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
+            OpenApiParameter('affiliations', str, OpenApiParameter.QUERY),
             OpenApiParameter('resource_groups', str, OpenApiParameter.QUERY),
             OpenApiParameter('types', str, OpenApiParameter.QUERY),
             OpenApiParameter('qualitylevels', str, OpenApiParameter.QUERY),
@@ -444,13 +429,13 @@ class Resource_Search(ListAPIView):
         ])
     def get(self, request, format=None, **kwargs):
         # Process optional arguments
-        arg_affiliations = request.GET.get('affiliations', kwargs.get('affiliations', None))
+        arg_affiliations = request.query_params.get('affiliations')
         if arg_affiliations and arg_affiliations not in ['_all_', '*']:
             want_affiliations = set(arg_affiliations.split(','))
         else:
             want_affiliations = set()
 
-        arg_resource_groups = request.GET.get('resource_groups', None)
+        arg_resource_groups = request.query_params.get('resource_groups')
         want_resource_groups = list()
         if arg_resource_groups:
             # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
@@ -459,13 +444,13 @@ class Resource_Search(ListAPIView):
             for item in arg_resource_groups.split(','):
                 want_resource_groups.append(rg_map.get(item.lower(), item))
 
-        arg_types = request.GET.get('types', None)
+        arg_types = request.query_params.get('types')
         if arg_types:
             want_types = set(arg_types.split(','))
         else:
             want_types = set()
 
-        arg_qualitylevels = request.GET.get('qualitylevels', kwargs.get('qualitylevels', 'production'))
+        arg_qualitylevels = request.query_params.get('qualitylevels', kwargs.get('qualitylevels', 'production'))
         want_qualitylevels = list()
         if arg_qualitylevels and arg_qualitylevels not in ['_all_', '*']:
             # We normalize case if the lower of what was entered is in our map, otherwise we leave the case
@@ -474,25 +459,25 @@ class Resource_Search(ListAPIView):
             for item in arg_qualitylevels.split(','):
                 want_qualitylevels.append(quality_map.get(item.lower(), item))
 
-        arg_terms = request.GET.get('search_terms', None)
+        arg_terms = request.query_params.get('search_terms')
         if arg_terms:
             want_terms = set(arg_terms.replace(',', ' ').lower().split())
         else:
             want_terms = set()
 
-        arg_strings = request.GET.get('search_strings', None)
+        arg_strings = request.query_params.get('search_strings')
         if arg_strings:
             want_strings = set(arg_strings.replace(',', ' ').lower().split())
         else:
             want_strings = set()
 
-        arg_topics = request.GET.get('topics', None)
+        arg_topics = request.query_params.get('topics')
         if arg_topics:
             want_topics = set(arg_topics.split(','))
         else:
             want_topics = set()
 
-        arg_providers = request.GET.get('providers', None)
+        arg_providers = request.query_params.get('providers')
         # Search in ProviderID field if possible rather than Provider in JSONField
         if arg_providers:
             if set(arg_providers).issubset(set('0123456789,')):
@@ -511,9 +496,9 @@ class Resource_Search(ListAPIView):
             want_providerids = []
             want_providers = []
 
-        sort = request.GET.get('sort', 'Name')
+        sort = request.query_params.get('sort', 'Name')
 
-        parm = request.GET.get('page')
+        parm = request.query_params.get('page')
         if parm:
             try:
                 page = int(parm)
@@ -524,12 +509,12 @@ class Resource_Search(ListAPIView):
         else:
             page = None
         try:
-            parm = request.GET.get('results_per_page', 25)
+            parm = request.query_params.get('page_size', 25)
             page_size = int(parm)
         except:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
 
-        arg_subtotals = request.GET.get('subtotals', None)
+        arg_subtotals = request.query_params.get('subtotals', None)
         if arg_subtotals:
             arg_subtotals = arg_subtotals.lower()
 
@@ -580,307 +565,300 @@ class Resource_Search(ListAPIView):
         response_obj['results'] = serializer.data
         return MyAPIResponse(response_obj, template_name='resource_v4/resource_list.html')
         
-#class Resource_ESearch(ListAPIView):
-#    '''
-#        ### Resource Elastic search and list
-#
-#        Results are ordered by relevance (_score)
-#        
-#        Optional selection argument(s):
-#        ```
-#            search_terms=<comma_delimited_search_terms>
-#            search_fields=<any-combination-of: Name,Topics,Keywords,ShortDescription,Description
-#            affiliations=<comma-delimited-list>
-#            resource_groups=<comma-delimited-list>
-#            types=<comma-delimited-list>
-#            qualitylevels=*|<level1>[,<level2>[...]]            (default=production)
-#            topics=<comma-delimited-list>
-#            keywords=<comma-delimited-list>
-#            providers=<comma-delimited-providerid-list>
-#            idprefix=<an-id-prefix>
-#            relation=[!]<relatedid>
-#            aggregations=[affiliation|resourcegroup|type|qualitylevel|providerid]
-#        ```
-#    '''
-#    permission_classes = (IsAuthenticatedOrReadOnly,)
-#    renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
-#    serializer_class = Resource_ESearch_Serializer
-#    @extend_schema(parameters=[
-#            OpenApiParameter('search_terms', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('search_strings', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('affiliation', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('resource_groups', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('types', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('qualitylevels', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('topics', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('keywords', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('providers', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('idprefix', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('relation', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('aggregations', str, OpenApiParameter.QUERY),
-#            OpenApiParameter('page', int, OpenApiParameter.QUERY),
-#            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
-#        ])
-#    def get(self, request, format=None, **kwargs):
-#        if not django_settings.ESCON:
-#            raise MyAPIException(code=status.HTTP_503_SERVICE_UNAVAILABLE, detail='Elasticsearch not available')
-#        
-#        # Process optional arguments
-#        arg_affiliations = request.GET.get('affiliations', kwargs.get('affiliations', None))
-#        if arg_affiliations and arg_affiliations not in ['_all_', '*']:
-#            want_affiliations = list(arg_affiliations.split(','))
-#        else: # No selected affiliations means all affiliations
-#            want_affiliations = list()
-#        only_xsede = len(want_affiliations) == 1 and want_affiliations[0] == 'xsede.org'
-#
-#        arg_resource_groups = request.GET.get('resource_groups', None)
-#        want_resource_groups = list()
-#        if arg_resource_groups:
-#            # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
-#            rg_map = { item.lower(): item for item in
-#                ['Computing Tools and Services', 'Data Resources', 'Guides', 'Live Events', 'Organizations', 'Software', 'Streamed Events'] }
-#            for item in arg_resource_groups.split(','):
-#                want_resource_groups.append(rg_map.get(item.lower(), item))
-#
-#        arg_types = request.GET.get('types', None)
-#        if arg_types:
-#            want_types = list(arg_types.split(','))
-#        else:
-#            want_types = list()
-#
-#        arg_qualitylevels = request.GET.get('qualitylevels', kwargs.get('qualitylevels', 'production'))
-#        want_qualitylevels = list()
-#        if arg_qualitylevels and arg_qualitylevels not in ['_all_', '*']:
-#            # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
-#            quality_map = { item.lower(): item for item in
-#                    ['Decommissioned', 'Preliminary', 'Pre-production', 'Production', 'Testing', 'Unsupported'] }
-#            for item in arg_qualitylevels.split(','):
-#                want_qualitylevels.append(quality_map.get(item.lower(), item))
-#
-#        arg_terms = request.GET.get('search_terms', None)
-#        want_terms = list()
-#        want_wildcard_terms = list()
-#        if arg_terms:
-#            for term in arg_terms.replace(',', ' ').lower().split():
-#                if '*' in term:
-#                    want_wildcard_terms.append(term)
-#                else:
-#                    want_terms.append(term)
-#        if len(want_wildcard_terms) > 1:
-#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Only one wildcard term allowed')
-#
-#        # Search any valid subset of fields_all passed in search_fields
-#        arg_fields = request.GET.get('search_fields', None)
-#        fields_all = ['Name', 'Topics', 'Keywords', 'ShortDescription', 'Description']
-#        fields_map = { item.lower(): item for item in fields_all }
-#        want_fields = list()
-#        if arg_fields and arg_fields.lower() not in ['_all_', '*']:
-#            for item in arg_fields.replace(',', ' ').lower().split():
-#                want_fields.append(fields_map.get(item, item)) # The lookup value, or the value itself
-#        if not want_fields:     # Default is to search all fields
-#            want_fields = fields_all
-#
-#        arg_topics = request.GET.get('topics', None)
-#        if arg_topics:
-#            want_topics = list(arg_topics.split(','))
-#        else:
-#            want_topics = list()
-#
-#        arg_keywords = request.GET.get('keywords', None)
-#        if arg_keywords:
-#            want_keywords = list(arg_keywords.split(','))
-#        else:
-#            want_keywords = list()
-#
-#        arg_providers = request.GET.get('providers', None)
-#        # Search in ProviderID field if possible rather than Provider in JSONField
-#        if arg_providers:
-#            want_providerids = list(arg_providers.split(','))
-#        else:
-#            want_providerids = list()
-#
-#        arg_idprefix = request.GET.get('idprefix', None)
-#        # Search for ID fields that start with this prefix
-#        if arg_idprefix:
-#            if arg_idprefix[-1] in ('%', '*'):
-#                want_idprefix = arg_idprefix[:-1]
-#            else:
-#                want_idprefix = arg_idprefix
-#        else:
-#            want_idprefix = False
-#
-#        arg_relation = request.GET.get('relation', None)
-#        if arg_relation:
-#            want_relationinvert = (arg_relation[0] == '!')
-#            if want_relationinvert:
-#                arg_relation = arg_relation[1:]
-#            want_relationid = arg_relation
-#        else:
-#            want_relationid = False
-#
-#        arg_aggregations = request.GET.get('aggregations', None)
-#        # Return Elasticsearch aggregations
-#        if arg_aggregations:
-#            want_aggregations = list(x.lower() for x in arg_aggregations.split(','))
-#        else:
-#            want_aggregations = list()
-#
-#        try:
-#            parm = request.GET.get('page', 1)
-#            page = int(parm)
-#            if page == 0:
-#                raise
-#        except:
-#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
-#        try:
-#            parm = request.GET.get('results_per_page', 25)
-#            page_size = int(parm)
-#        except:
-#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
-#
-#        # Build the query, starting with result filters, and then queries that rank results
-#        try:
-#            ES = Search(index=ResourceV4Index.Index.name).using(django_settings.ESCON)
-#
-#            # The FILTERs that control whether rows are returned at all
-#            if want_affiliations:
-#                ES = ES.filter('terms', Affiliation=want_affiliations)
-#            if want_resource_groups:
-#                ES = ES.filter('terms', ResourceGroup=want_resource_groups)
-#            if want_types:
-#                ES = ES.filter('terms', Type=want_types)
-#            if want_qualitylevels:
-#                ES = ES.filter('terms', QualityLevel=want_qualitylevels)
-#            if want_providerids:
-#                ES = ES.filter('terms', ProviderID=want_providerids)
-#            if want_idprefix:
-#                ES = ES.filter('prefix', ID=want_idprefix)
-#            if want_relationid:
-#                if want_relationinvert:
-#                    ES = ES.filter(
-#                        'bool', must_not=
-#                        Q('nested', path='Relations', query=
-#                            Q('bool', filter=
-#                            Q('term', Relations__RelatedID__keyword=want_relationid)))
-#                        )
-#                else:
-#                    ES = ES.filter(
-#                        'bool', must=
-#                        Q('nested', path='Relations', query=
-#                            Q('bool', filter=
-#                            Q('term', Relations__RelatedID__keyword=want_relationid)))
-#                        )
-#
-#            # The QUERYs that control how rows are ranked
-#            if want_topics:
-#                ES = ES.query('match', Topics=arg_topics)
-#            if want_keywords:
-#                ES = ES.query('match', Keywords=arg_keywords)
-#            if want_terms:
-#                ES = ES.query('multi_match', query=' '.join(want_terms), fields=want_fields)
-#            if want_wildcard_terms:
-#                SUBQ = []
-#                for field in want_fields:
-#                    SUBQ.append(Q({'wildcard': {field: want_wildcard_terms[0]}}))
-#                ES = ES.query('bool', should=SUBQ)
-#
-#            # If the user didn't enter search terms use a default non-filtering query that does not
-#            #   exclude non-matches but produces results ordered by the default query based score
-#            USER_QUERIES = want_topics or want_keywords or want_terms or want_wildcard_terms
-#            if not USER_QUERIES:
-#                # Default ordering for 'Cloud Image', 'featured' is known to be used
-#                if len(want_types) == 1 and want_types[0] == 'Cloud Image':
-#                    ES = ES.query('bool', minimum_should_match=-1, should=
-#                        Q('match', Keywords='featured' ))
-#                # Default ordering for XSEDE
-#                elif only_xsede:
-#                    ES = ES.query('bool', minimum_should_match=-1, should=
-#                        Q('multi_match', query='xup rsp xsede', fields='Name' ))
-#                # Everything else doesn't have a default query or ordering so we inject 'featured'
-#                else: # 'featured' may not be known to be used, but is useful
-#                    ES = ES.query('bool', minimum_should_match=-1, should=
-#                        Q('match', Keywords='featured' ))
-#
-#            # Request aggregations
-#            if want_aggregations:
-#                field_map = { item.lower(): item for item in
-#                    ['Affiliation', 'ResourceGroup', 'Type', 'QualityLevel', 'ProviderID'] }
-#                for field in want_aggregations:
-#                    if field in field_map:
-#                        realfield = field_map[field]
-#                        ES.aggs.bucket(realfield, A('terms', field=realfield))
-#
-#            if page or page_size:
-#                page_start = page_size * (page - 1)
-#                page_end = page_start + page_size
-#                ES = ES[page_start:page_end]
-##            ES = ES.extra(explain=True)
-#
-#            es_results = ES.execute()
-#            
-#            response_obj = {}
-#            response_obj['results'] = []
-#            for row in es_results.hits.hits:
-#                row_dict = row['_source'].to_dict()
-#                row_dict['_score'] = row['_score']
-#                try:
-#                    for rel in row_dict['Relations']:
-#                        rel['ID'] = rel.pop('RelatedID')
-#                        related = ResourceV4Index.Lookup_Relation(rel['ID'])
-#                        if related:
-#                            rel['Name'] = related.get('Name')
-#                        try:
-#                            rel['DetailURL'] = request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[rel['ID']])))
-#                        except:
-#                            pass
-#                except:
-#                    pass
-#                try:
-#                    row_dict['DetailURL'] = request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[row_dict['ID']])))
-#                except:
-#                    pass
-#                response_obj['results'].append(row_dict)
-#
-#            response_obj['total_results'] = ES.count()
-#
-#            if 'aggregations' in es_results:
-#                response_obj['aggregations'] = {}
-#                for aggkey in dir(es_results.aggregations):
-#                    buckets = []
-#                    for item in es_results.aggregations[aggkey].buckets:
-#                        itemdict = item.to_dict()
-#                        bucket = { 'count': itemdict['doc_count'] }
-#                        if aggkey != 'ProviderID':
-#                            bucket['Name'] = itemdict['key']
-#                        else: # For ProviderIDs lookup the cached Name
-#                            bucket['ID'] = itemdict['key']
-#                            provider = ResourceV4Index.Lookup_Relation(itemdict['key'])
-#                            if provider and only_xsede and provider.get('Abbreviation'):
-#                                bucket['Name'] = provider.get('Abbreviation', itemdict['key'])
-#                            elif provider:
-#                                bucket['Name'] = provider.get('Name', itemdict['key'])
-#                            else:
-#                                bucket['Name'] = itemdict['key']
-#                        buckets.append(bucket)
-#                    response_obj['aggregations'][aggkey] = buckets
-#
-#        except RequestError as exc:
-#            if exc.error == 'search_phase_execution_exception':
-#                try:
-#                    reason = exc.info['error']['root_cause'][0]['reason']
-#                    if not reason.startswith('Result window is too large'):
-#                        pass
-#                finally:
-#                    logg2.warning(exc)
-#                    raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Unable to page that far into results, narrow your search') from None
-#            logg2.info(exc, exc_info=True)
-#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
-#
-#        except Exception as exc:
-#            logg2.info(exc, exc_info=True)
-#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
-#
-#        return MyAPIResponse(response_obj, template_name='resource_v4/resource_list.html')
+class Resource_ESearch(ListAPIView):
+    '''
+        Resource ElasticSearch/OpenSearch and list
+
+        Results are ordered by relevance (_score)
+        
+        Optional selection argument(s):
+        ```
+            search_terms=<comma_delimited_search_terms>
+            search_fields=<any-combination-of: Name,Topics,Keywords,ShortDescription,Description
+            affiliations=<comma-delimited-list>
+            resource_groups=<comma-delimited-list>
+            types=<comma-delimited-list>
+            qualitylevels=*|<level1>[,<level2>[...]]            (default=production)
+            topics=<comma-delimited-list>
+            keywords=<comma-delimited-list>
+            providers=<comma-delimited-providerid-list>
+            idprefix=<an-id-prefix>
+            relation=[!]<relatedid>
+            aggregations=[affiliation|resourcegroup|type|qualitylevel|providerid]
+        ```
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
+    serializer_class = Resource_ESearch_Serializer
+    @extend_schema(parameters=[
+            OpenApiParameter('search_terms', str, OpenApiParameter.QUERY),
+            OpenApiParameter('search_strings', str, OpenApiParameter.QUERY),
+            OpenApiParameter('affiliations', str, OpenApiParameter.QUERY),
+            OpenApiParameter('resource_groups', str, OpenApiParameter.QUERY),
+            OpenApiParameter('types', str, OpenApiParameter.QUERY),
+            OpenApiParameter('qualitylevels', str, OpenApiParameter.QUERY),
+            OpenApiParameter('topics', str, OpenApiParameter.QUERY),
+            OpenApiParameter('keywords', str, OpenApiParameter.QUERY),
+            OpenApiParameter('providers', str, OpenApiParameter.QUERY),
+            OpenApiParameter('idprefix', str, OpenApiParameter.QUERY),
+            OpenApiParameter('relation', str, OpenApiParameter.QUERY),
+            OpenApiParameter('aggregations', str, OpenApiParameter.QUERY),
+            OpenApiParameter('page', int, OpenApiParameter.QUERY),
+            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
+        ])
+    def get(self, request, format=None, **kwargs):
+        if not django_settings.OSCON:
+            raise MyAPIException(code=status.HTTP_503_SERVICE_UNAVAILABLE, detail='OpenSearch not available')
+        
+        ### Process optional arguments
+        arg_affiliations = request.query_params.get('affiliations')
+        if arg_affiliations and arg_affiliations not in ['_all_', '*']:
+            want_affiliations = list(arg_affiliations.split(','))
+        else: # No selected affiliations means all affiliations
+            want_affiliations = list()
+
+        arg_resource_groups = request.query_params.get('resource_groups', None)
+        want_resource_groups = list()
+        if arg_resource_groups:
+            # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
+            rg_map = { item.lower(): item for item in
+                ['Computing Tools and Services', 'Data Resources', 'Guides', 'Live Events', 'Organizations', 'Software', 'Streamed Events'] }
+            for item in arg_resource_groups.split(','):
+                want_resource_groups.append(rg_map.get(item.lower(), item))
+
+        arg_types = request.query_params.get('types', None)
+        if arg_types:
+            want_types = list(arg_types.split(','))
+        else:
+            want_types = list()
+
+        arg_qualitylevels = request.query_params.get('qualitylevels', 'production')
+        want_qualitylevels = list()
+        if arg_qualitylevels and arg_qualitylevels not in ['_all_', '*']:
+            # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
+            quality_map = { item.lower(): item for item in
+                    ['Decommissioned', 'Preliminary', 'Pre-production', 'Production', 'Testing', 'Unsupported'] }
+            for item in arg_qualitylevels.split(','):
+                want_qualitylevels.append(quality_map.get(item.lower(), item))
+
+        arg_terms = request.query_params.get('search_terms', None)
+        want_terms = list()
+        want_wildcard_terms = list()
+        if arg_terms:
+            for term in arg_terms.replace(',', ' ').lower().split():
+                if '*' in term:
+                    want_wildcard_terms.append(term)
+                else:
+                    want_terms.append(term)
+        if len(want_wildcard_terms) > 1:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Only one wildcard term allowed')
+
+        # Search any valid subset of fields_all passed in search_fields
+        arg_fields = request.query_params.get('search_fields', None)
+        fields_all = ['Name', 'Topics', 'Keywords', 'ShortDescription', 'Description']
+        fields_map = { item.lower(): item for item in fields_all }
+        want_fields = list()
+        if arg_fields and arg_fields.lower() not in ['_all_', '*']:
+            for item in arg_fields.replace(',', ' ').lower().split():
+                want_fields.append(fields_map.get(item, item)) # The lookup value, or the value itself
+        if not want_fields:     # Default is to search all fields
+            want_fields = fields_all
+
+        arg_topics = request.query_params.get('topics', None)
+        if arg_topics:
+            want_topics = list(arg_topics.split(','))
+        else:
+            want_topics = list()
+
+        arg_keywords = request.query_params.get('keywords', None)
+        if arg_keywords:
+            want_keywords = list(arg_keywords.split(','))
+        else:
+            want_keywords = list()
+
+        arg_providers = request.query_params.get('providers', None)
+        # Search in ProviderID field if possible rather than Provider in JSONField
+        if arg_providers:
+            want_providerids = list(arg_providers.split(','))
+        else:
+            want_providerids = list()
+
+        arg_idprefix = request.query_params.get('idprefix', None)
+        # Search for ID fields that start with this prefix
+        if arg_idprefix:
+            if arg_idprefix[-1] in ('%', '*'):
+                want_idprefix = arg_idprefix[:-1]
+            else:
+                want_idprefix = arg_idprefix
+        else:
+            want_idprefix = False
+
+        arg_relation = request.query_params.get('relation', None)
+        if arg_relation:
+            want_relationinvert = (arg_relation[0] == '!')
+            if want_relationinvert:
+                arg_relation = arg_relation[1:]
+            want_relationid = arg_relation
+        else:
+            want_relationid = False
+
+        arg_aggregations = request.query_params.get('aggregations', None)
+        # Return OpenSearch aggregations
+        if arg_aggregations:
+            want_aggregations = list(x.lower() for x in arg_aggregations.split(','))
+        else:
+            want_aggregations = list()
+
+        try:
+            parm = request.query_params.get('page', 1)
+            page = int(parm)
+            if page == 0:
+                raise
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+        try:
+            parm = request.query_params.get('page_size', 25)
+            page_size = int(parm)
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
+
+        # Build the query, starting with result filters, and then queries that rank results
+        try:
+            ES = ResourceV4Index.search(using=django_settings.OSCON)
+
+            # These FILTERs control which rows the index returns
+            if want_affiliations:
+                ES = ES.filter('terms', Affiliation=want_affiliations)
+            if want_resource_groups:
+                ES = ES.filter('terms', ResourceGroup=want_resource_groups)
+            if want_types:
+                ES = ES.filter('terms', Type=want_types)
+            if want_qualitylevels:
+                ES = ES.filter('terms', QualityLevel=want_qualitylevels)
+            if want_providerids:
+                ES = ES.filter('terms', ProviderID=want_providerids)
+            if want_idprefix:
+                ES = ES.filter('prefix', ID=want_idprefix)
+            if want_relationid:
+                if want_relationinvert:
+                    ES = ES.filter(
+                        'bool', must_not=
+                        Q('nested', path='Relations', query=
+                            Q('bool', filter=
+                            Q('term', Relations__RelatedID__keyword=want_relationid)))
+                        )
+                else:
+                    ES = ES.filter(
+                        'bool', must=
+                        Q('nested', path='Relations', query=
+                            Q('bool', filter=
+                            Q('term', Relations__RelatedID__keyword=want_relationid)))
+                        )
+
+            # The QUERYs that control how rows are ranked
+            if want_topics:
+                ES = ES.query('match', Topics=arg_topics)
+            if want_keywords:
+                ES = ES.query('match', Keywords=arg_keywords)
+            if want_terms:
+                ES = ES.query('multi_match', query=' '.join(want_terms), fields=want_fields)
+            if want_wildcard_terms:
+                SUBQ = []
+                for field in want_fields:
+                    SUBQ.append(Q({'wildcard': {field: want_wildcard_terms[0]}}))
+                ES = ES.query('bool', should=SUBQ)
+
+            # If the user didn't enter search terms use a default non-filtering query that does not
+            #   exclude non-matches but produces results ordered by the default query based score
+            USER_QUERIES = want_topics or want_keywords or want_terms or want_wildcard_terms
+            if not USER_QUERIES:
+                # Default ordering for 'Cloud Image', 'featured' is known to be used
+                if len(want_types) == 1 and want_types[0] == 'Cloud Image':
+                    ES = ES.query('bool', minimum_should_match=-1, should=
+                        Q('match', Keywords='featured' ))
+                # Everything else doesn't have a default query or ordering so we inject 'featured'
+                else: # 'featured' may not be known to be used, but is useful
+                    ES = ES.query('bool', minimum_should_match=-1, should=
+                        Q('match', Keywords='featured' ))
+
+            # Request aggregations
+            if want_aggregations:
+                field_map = { item.lower(): item for item in
+                    ['Affiliation', 'ResourceGroup', 'Type', 'QualityLevel', 'ProviderID'] }
+                for field in want_aggregations:
+                    if field in field_map:
+                        realfield = field_map[field]
+                        ES.aggs.bucket(realfield, A('terms', field=realfield))
+
+            if page or page_size:
+                page_start = page_size * (page - 1)
+                page_end = page_start + page_size
+                ES = ES[page_start:page_end]
+#            ES = ES.extra(explain=True)
+
+            es_results = ES.execute()
+            
+            response_obj = {}
+            response_obj['results'] = []
+            for row in es_results.hits.hits:
+                row_dict = row['_source'].to_dict()
+                row_dict['_score'] = row['_score']
+                try:
+                    for rel in row_dict['Relations']:
+                        rel['ID'] = rel.pop('RelatedID')
+                        related = ResourceV4Index.Lookup_Relation(rel['ID'])
+                        if related:
+                            rel['Name'] = related.get('Name')
+                        try:
+                            rel['DetailURL'] = request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[rel['ID']])))
+                        except:
+                            pass
+                except:
+                    pass
+                try:
+                    row_dict['DetailURL'] = request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[row_dict['ID']])))
+                except:
+                    pass
+                response_obj['results'].append(row_dict)
+
+            response_obj['total_results'] = ES.count()
+
+            if 'aggregations' in es_results:
+                response_obj['aggregations'] = {}
+                for aggkey in dir(es_results.aggregations):
+                    buckets = []
+                    for item in es_results.aggregations[aggkey].buckets:
+                        itemdict = item.to_dict()
+                        bucket = { 'count': itemdict['doc_count'] }
+                        if aggkey != 'ProviderID':
+                            bucket['Name'] = itemdict['key']
+                        else: # For ProviderIDs lookup the cached Name
+                            bucket['ID'] = itemdict['key']
+                            provider = ResourceV4Index.Lookup_Relation(itemdict['key'])
+                            if provider:
+                                bucket['Name'] = provider.get('Name', itemdict['key'])
+                            else:
+                                bucket['Name'] = itemdict['key']
+                        buckets.append(bucket)
+                    response_obj['aggregations'][aggkey] = buckets
+
+        except RequestError as exc:
+            if exc.error == 'search_phase_execution_exception':
+                try:
+                    reason = exc.info['error']['root_cause'][0]['reason']
+                    if not reason.startswith('Result window is too large'):
+                        pass
+                finally:
+                    logg2.warning(exc)
+                    raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Unable to page that far into results, narrow your search') from None
+            logg2.info(exc, exc_info=True)
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+
+        except Exception as exc:
+            logg2.info(exc, exc_info=True)
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+
+        return MyAPIResponse(response_obj, template_name='resource_v4/resource_list.html')
 
 ##
 ## Cache Management Views

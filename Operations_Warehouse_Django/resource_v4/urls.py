@@ -2,9 +2,6 @@ from django.urls import path
 from django.views.decorators.cache import cache_page
 from .views import *
 
-# Define our custom URLs
-# Additionally, we include login URLs for the browseable API.
-# Special reg for resource/id/<id> in case there are slashes in the 'id'
 urlpatterns = [
     path(r'v4/catalog_search/', Catalog_Search.as_view(), name='catalog-search'),
     path(r'v4/catalog/id/<str:id>/', Catalog_Detail.as_view(), name='catalog-detail'),
@@ -18,7 +15,7 @@ urlpatterns = [
     path(r'v4/resource_types/', cache_page(60 * 60)(Resource_Types_List.as_view()), name='resource-types-list'),
     path(r'v4/resource/id/<str:id>/', Resource_Detail.as_view(), name='resource-detail'),
     path(r'v4/resource_search/', Resource_Search.as_view(), name='resource-search'),
-#    path(r'v1/resource_esearch/', Resource_ESearch.as_view(), name='resource-esearch'),
+    path(r'v4/resource_esearch/', Resource_ESearch.as_view(), name='resource-esearch'),
 #    path(r'^relations_cache/?$',
 #        Relations_Cache.as_view(), name='relations-cache'),
 ]
