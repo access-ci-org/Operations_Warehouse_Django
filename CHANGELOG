@@ -1,3 +1,6 @@
+v3.16.1 2023-10-30 JP
+  - Neet to initialize OPENSEARCH_DSL even when not configuring OPENSEARCH
+
 v3.16.0 2023-10-26 JP
   - Convert from ElasticSearch to OpenSearch and django_opensearch_dsl plus opensearchpy
   - Move Documents from models.py to documents.py

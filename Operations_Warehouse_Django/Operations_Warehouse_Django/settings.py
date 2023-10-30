@@ -135,6 +135,7 @@ if CONF.get('OPENSEARCH_HOSTS'):
     }
     OSCON = CONF.get('OPENSEARCH_USING', 'default')
 else:
+    OPENSEARCH_DSL = {}
     OSCON = None
 
 # Password validation
