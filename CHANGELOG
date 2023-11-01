@@ -1,3 +1,9 @@
+v3.17.0 2023-11-01 JP
+  - Make INSTALLED_APPS=django_opensearch_dsl always installed
+  - Move Document indexing to resource_v4/processing.py
+  - Improve OPENSEARCH_DSL port setup
+  - Disable OpenSearch SSL verification as we operate in a private network environment
+
 v3.16.1 2023-10-30 JP
   - Neet to initialize OPENSEARCH_DSL even when not configuring OPENSEARCH
 

@@ -1,11 +1,4 @@
 from django.db import models
-from django.conf import settings as django_settings
-from django.core.cache import caches
-
-from django_opensearch_dsl import Document
-from opensearchpy import InnerDoc, Text, Keyword, Date, Nested, Search
-
-import re
 
 ################################################################################
 # GLUE2 identifiers (AbstraceGlue2Entity)
@@ -84,40 +77,12 @@ class AbstractResourceV4Model(models.Model):
 
     class Meta:
         abstract = True
+
     def __str__(self):
         return str(self.ID)
         
 class ResourceV4(AbstractResourceV4Model):
-#    pass
-    def indexing(self, relations=None):
-        newRels = []
-        if relations:
-            for i in relations:
-                newRels.append({'RelatedID': i, 'RelationType': relations[i]})
-        obj = ResourceV4Index(
-                meta = {'id': self.ID},
-                ID = self.ID,
-                Affiliation = self.Affiliation,
-                LocalID = self.LocalID,
-                QualityLevel = self.QualityLevel,
-                Name = self.Name,
-                ResourceGroup = self.ResourceGroup,
-                Type = self.Type,
-                ShortDescription = self.ShortDescription,
-                ProviderID = self.ProviderID,
-                Description = self.Description,
-                Topics = self.Topics,
-                Keywords = self.Keywords,
-                Audience = self.Audience,
-                Relations = newRels,
-                StartDateTime = self.StartDateTime,
-                EndDateTime = self.EndDateTime
-            )
-        obj.save()
-        return obj.to_dict(include_meta = True)
-    def delete(self):
-        obj = ResourceV4Index.get(self.ID).delete()
-        return
+    pass
 
 #
 #  Resource Relationships

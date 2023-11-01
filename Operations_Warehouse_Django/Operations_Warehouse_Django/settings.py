@@ -49,6 +49,7 @@ ALLOWED_HOSTS = CONF['ALLOWED_HOSTS']
 # Application definition
 
 INSTALLED_APPS = [
+    'django_opensearch_dsl',
     'allocations',
     'cider',
     'glue2',
@@ -117,20 +118,26 @@ if CONF.get('OPENSEARCH_HOSTS'):
     hosts = []
     for url in CONF.get('OPENSEARCH_HOSTS'):
         urlparse = urlparse(url)
-        hosts.append({'scheme': urlparse.scheme, 'host': urlparse.hostname, 'port': urlparse.port})
+        port = urlparse.port or (443 if urlparse.scheme == 'https' else 9200)
+        hosts.append({'scheme': urlparse.scheme, 'host': urlparse.hostname, 'port': port})
     http_auth = CONF.get('OPENSEARCH_LOGIN','').split(':')
+    # ssl verification isn't critical connecting over private networks to non-public services
     OPENSEARCH_DSL = {
         'default': {
             'hosts': hosts,
             'http_auth': http_auth,
+            'verify_certs': False,
+            'ssl_assert_hostname': False,
+            'ssl_show_warn': False,
             'timeout': 120,
         },
         'development': {
             'hosts': [{'scheme': 'https', 'host': 'localhost', 'port': 9200}],
             'http_auth': http_auth,
             'timeout': 120,
-            'verify_certs': True,
-            'ca_certs': '/soft/warehouse-2.0/conf/https_ca.crt',
+            'verify_certs': False,
+            'ssl_assert_hostname': False,
+            'ssl_show_warn': False,
         },
     }
     OSCON = CONF.get('OPENSEARCH_USING', 'default')
@@ -205,7 +212,6 @@ if SETTINGS_MODE == 'SERVER':
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
-        'django_opensearch_dsl',
         'rest_framework',
         'drf_spectacular',
         # For django-allauth

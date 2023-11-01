@@ -1,49 +1,58 @@
-from django.db import models
 from django.conf import settings as django_settings
 from django.core.cache import caches
-
-from django_opensearch_dsl import Document
+from django_opensearch_dsl import Document, fields
 from django_opensearch_dsl.registries import registry
-from opensearchpy import InnerDoc, Text, Keyword, Date, Nested, Search
+from opensearchpy import InnerDoc, Search
 
-from .models import ResourceV4
+from resource_v4.models import ResourceV4
 
 import re
 
-class ResourceV4IndexRelation(InnerDoc):
-    RelatedID: Keyword()
-    RelationType: Keyword()
+#class ResourceV4IndexRelation(InnerDoc):
+#    RelatedID: fields.KeywordField()
+#    RelationType: fields.KeywordField()
+
+#    class Django:
+#        model = ResourceV4Relation
 
 @registry.register_document
 class ResourceV4Index(Document):
-    ID = Keyword()
-    Affiliation = Keyword()
-    LocalID = Keyword()
-    QualityLevel = Keyword()
-    Name = Text(fields={'Keyword': Keyword()})
-    ResourceGroup = Keyword()
-    Type = Keyword()
-    ShortDescription = Text()
-    ProviderID = Keyword()
-    Description = Text()
-    Topics = Text()
-    Keywords = Text()
-    Audience = Text()
-    Relations = Nested(ResourceV4IndexRelation)
-    StartDateTime = Date()
-    EndDateTime = Date()
-    class Meta:
-        pass
+    ID = fields.KeywordField()
+    Affiliation = fields.KeywordField()
+    LocalID = fields.KeywordField()
+    QualityLevel = fields.KeywordField()
+    Name = fields.TextField(fields={
+            'Keyword': fields.KeywordField()
+        })
+    ResourceGroup = fields.KeywordField()
+    Type = fields.KeywordField()
+    ShortDescription = fields.TextField()
+    ProviderID = fields.KeywordField()
+    Description = fields.TextField()
+    Topics = fields.TextField()
+    Keywords = fields.TextField()
+    Audience = fields.TextField()
+    Relations = fields.NestedField(properties={
+            'RelatedID': fields.KeywordField(),
+            'RelationType': fields.KeywordField(),
+        })
+    StartDateTime = fields.DateField()
+    EndDateTime = fields.DateField()
+
     class Django:
         model = ResourceV4
-        queryset_pagination = 100
+
     class Index:
         name = 'resource-v4-index'
         settings = {
             'number_of_shards': 1,
-            'nubmer_of_replicas': 0
+            'number_of_replicas': 0
         }
         auto_refresh = False
+
+    @classmethod
+    def generate_id(cls, document):
+        return document.ID
 
     @classmethod
     def Cache_Lookup_Relations(self):
