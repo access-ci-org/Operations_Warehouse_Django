@@ -20,7 +20,8 @@ def MyAPIResponse(data, code=None, template_name=None):
 class CustomPagePagination(PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'page_size'
-    def get_paginated_response(self, data, request):
+    def get_paginated_response(self, data, request, **kwargs):
+        # **kwargs are included in the response
         try:
             page = request.GET.get(self.page_query_param)
             if page:
@@ -44,4 +45,5 @@ class CustomPagePagination(PageNumberPagination):
             'next': self.get_next_link(),
             'previous': previous,
             'results': data,
+            **kwargs
         })

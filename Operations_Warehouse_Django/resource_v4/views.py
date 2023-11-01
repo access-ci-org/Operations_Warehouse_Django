@@ -19,7 +19,7 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from warehouse_tools.exceptions import MyAPIException
-from warehouse_tools.responses import MyAPIResponse
+from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 
 import datetime
 from datetime import datetime, timedelta
@@ -61,7 +61,7 @@ class Catalog_Search(ListAPIView):
 
 class Catalog_Detail(GenericAPIView):
     '''
-        Single Catalog access by Global ID
+        Single Catalog retrieve by Global ID
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
@@ -134,7 +134,7 @@ class Local_Search(ListAPIView):
         response_obj = {}
 
         try:
-            objects = ResourceV4Local.objects.filter(Affiliation__exact=arg_affiliation)
+            objects = ResourceV4Local.objects.filter(Affiliation__exact=arg_affiliations)
             if want_localids:
                 objects = objects.filter(LocalID__in=want_localids)
             if want_localtypes:
@@ -157,7 +157,7 @@ class Local_Search(ListAPIView):
 
 class Local_Detail(GenericAPIView):
     '''
-        Single Local resource access by Global ID
+        Single Local resource retrieve by Global ID
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
@@ -385,7 +385,7 @@ def resource_strings_filtersort(input_objects, search_strings_set, sort_field='n
 
 class Resource_Detail(GenericAPIView):
     '''
-        Single Resource access by Global ID or by Affiliation and Local ID
+        Single Resource retrieve by Global ID or by Affiliation and Local ID
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
@@ -709,18 +709,23 @@ class Resource_ESearch(ListAPIView):
         else:
             want_aggregations = list()
 
-        try:
-            parm = request.query_params.get('page', 1)
-            page = int(parm)
-            if page == 0:
-                raise
-        except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+        parm = request.query_params.get('page')
+        if parm:
+            try:
+                page = int(parm)
+                if page == 0:
+                    raise
+            except:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+        else:
+            page = None
         try:
             parm = request.query_params.get('page_size', 25)
             page_size = int(parm)
         except:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
+
+        extra_response = {}      # Extras to return in the response
 
         # Build the query, starting with result filters, and then queries that rank results
         try:
@@ -769,10 +774,10 @@ class Resource_ESearch(ListAPIView):
                 ES = ES.query('bool', should=SUBQ)
 
             # If the user didn't enter search terms use a default non-filtering query that does not
-            #   exclude non-matches but produces results ordered by the default query based score
+            #   exclude non-matches but produces results ordered by the default query matching score
             USER_QUERIES = want_topics or want_keywords or want_terms or want_wildcard_terms
             if not USER_QUERIES:
-                # Default ordering for 'Cloud Image', 'featured' is known to be used
+                # Default ordering for 'Cloud Image' where the 'featured' keyword is used
                 if len(want_types) == 1 and want_types[0] == 'Cloud Image':
                     ES = ES.query('bool', minimum_should_match=-1, should=
                         Q('match', Keywords='featured' ))
@@ -790,17 +795,18 @@ class Resource_ESearch(ListAPIView):
                         realfield = field_map[field]
                         ES.aggs.bucket(realfield, A('terms', field=realfield))
 
-            if page or page_size:
-                page_start = page_size * (page - 1)
-                page_end = page_start + page_size
-                ES = ES[page_start:page_end]
+            ES = ES.extra(from_ = 0, size = 1000)       # Limit to 1000 results
 #            ES = ES.extra(explain=True)
-
             es_results = ES.execute()
-            
-            response_obj = {}
-            response_obj['results'] = []
-            for row in es_results.hits.hits:
+ 
+            if page:
+                paginator = CustomPagePagination()
+                results_page = paginator.paginate_queryset(es_results.hits.hits, request, view=self)
+            else:
+                results_page = es_results.hits.hits
+
+            results_dicts = []
+            for row in results_page:
                 row_dict = row['_source'].to_dict()
                 row_dict['_score'] = row['_score']
                 try:
@@ -819,12 +825,10 @@ class Resource_ESearch(ListAPIView):
                     row_dict['DetailURL'] = request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[row_dict['ID']])))
                 except:
                     pass
-                response_obj['results'].append(row_dict)
+                results_dicts.append(row_dict)
 
-            response_obj['total_results'] = ES.count()
-
+            aggregations = {}
             if 'aggregations' in es_results:
-                response_obj['aggregations'] = {}
                 for aggkey in dir(es_results.aggregations):
                     buckets = []
                     for item in es_results.aggregations[aggkey].buckets:
@@ -840,7 +844,9 @@ class Resource_ESearch(ListAPIView):
                             else:
                                 bucket['Name'] = itemdict['key']
                         buckets.append(bucket)
-                    response_obj['aggregations'][aggkey] = buckets
+                    aggregations[aggkey] = buckets
+            if aggregations:
+                extra_response['aggregations'] = aggregations
 
         except RequestError as exc:
             if exc.error == 'search_phase_execution_exception':
@@ -858,7 +864,15 @@ class Resource_ESearch(ListAPIView):
             logg2.info(exc, exc_info=True)
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
 
-        return MyAPIResponse(response_obj, template_name='resource_v4/resource_list.html')
+        try:
+            extra_response['count'] = ES.count()
+        except:
+            pass
+            
+        if page:
+            return paginator.get_paginated_response(results_dicts, request, **extra_response)
+        else:
+            return MyAPIResponse({'results': results_dicts}, template_name='resource_v4/resource_list.html')
 
 ##
 ## Cache Management Views

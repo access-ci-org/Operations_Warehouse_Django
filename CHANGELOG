@@ -1,3 +1,8 @@
+v3.18.0 2023-11-01 JP
+  - Improve CustomPagePagination to accept arbitrary **kwargs that are added to the response (used for aggregations)
+  - Implement Resource_ESearch pagination using CustomPagePagination
+  - Request, and limit, OpenSearch to 1000 results
+
 v3.17.0 2023-11-01 JP
   - Make INSTALLED_APPS=django_opensearch_dsl always installed
   - Move Document indexing to resource_v4/processing.py
