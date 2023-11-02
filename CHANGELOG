@@ -1,3 +1,7 @@
+v3.19.0 2023-11-02 JP
+  - Include count and aggregations in results even when not paginating
+  - Cleanup imports and other code improvements
+
 v3.18.0 2023-11-01 JP
   - Improve CustomPagePagination to accept arbitrary **kwargs that are added to the response (used for aggregations)
   - Implement Resource_ESearch pagination using CustomPagePagination

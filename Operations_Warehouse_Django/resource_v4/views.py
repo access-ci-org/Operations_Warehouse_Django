@@ -1,20 +1,18 @@
 from django.db.models import Count
 from django.conf import settings as django_settings
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator
+from opensearchpy import RequestError
 from opensearchpy.helpers.query import Q
 from opensearchpy.helpers.aggs import A
-from opensearchpy import RequestError
 from django.urls import reverse
-from django.utils.encoding import uri_to_iri
 from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.encoding import uri_to_iri
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
 
 from .models import *
 from .serializers import *
@@ -115,21 +113,20 @@ class Local_Search(ListAPIView):
         else:
             want_localtypes = set()
 
-        parm = request.query_params.get('page')
-        if parm:
+        raw_page = request.query_params.get('page')
+        if raw_page:
             try:
-                page = int(parm)
-                if page == 0:
-                    raise
+                page = int(raw_page)
+                if page == 0: raise
             except:
-                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(raw_page))
         else:
             page = None
         try:
-            parm = request.query_params.get('page_size', 25)
-            page_size = int(parm)
+            raw_page_size = request.query_params.get('page_size', 25)
+            page_size = int(raw_page_size)
         except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(raw_page_size))
 
         response_obj = {}
 
@@ -498,21 +495,20 @@ class Resource_Search(ListAPIView):
 
         sort = request.query_params.get('sort', 'Name')
 
-        parm = request.query_params.get('page')
-        if parm:
+        raw_page = request.query_params.get('page')
+        if raw_page:
             try:
-                page = int(parm)
-                if page == 0:
-                    raise
+                page = int(raw_page)
+                if page == 0: raise
             except:
-                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(raw_page))
         else:
             page = None
         try:
-            parm = request.query_params.get('page_size', 25)
-            page_size = int(parm)
+            raw_page_size = request.query_params.get('page_size', 25)
+            page_size = int(raw_page_size)
         except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(raw_page_size))
 
         arg_subtotals = request.query_params.get('subtotals', None)
         if arg_subtotals:
@@ -617,7 +613,7 @@ class Resource_ESearch(ListAPIView):
         else: # No selected affiliations means all affiliations
             want_affiliations = list()
 
-        arg_resource_groups = request.query_params.get('resource_groups', None)
+        arg_resource_groups = request.query_params.get('resource_groups')
         want_resource_groups = list()
         if arg_resource_groups:
             # We normalize case if lower of what was entered is in our map, otherwise we leave what was entered
@@ -626,7 +622,7 @@ class Resource_ESearch(ListAPIView):
             for item in arg_resource_groups.split(','):
                 want_resource_groups.append(rg_map.get(item.lower(), item))
 
-        arg_types = request.query_params.get('types', None)
+        arg_types = request.query_params.get('types')
         if arg_types:
             want_types = list(arg_types.split(','))
         else:
@@ -709,21 +705,20 @@ class Resource_ESearch(ListAPIView):
         else:
             want_aggregations = list()
 
-        parm = request.query_params.get('page')
-        if parm:
+        raw_page = request.query_params.get('page')
+        if raw_page:
             try:
-                page = int(parm)
-                if page == 0:
-                    raise
+                page = int(raw_page)
+                if page == 0: raise
             except:
-                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(parm))
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page "{}" not valid'.format(raw_page))
         else:
             page = None
         try:
-            parm = request.query_params.get('page_size', 25)
-            page_size = int(parm)
+            raw_page_size = request.query_params.get('page_size', 25)
+            page_size = int(raw_page_size)
         except:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(parm))
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified page_size "{}" not valid'.format(raw_page_size))
 
         extra_response = {}      # Extras to return in the response
 
@@ -852,8 +847,7 @@ class Resource_ESearch(ListAPIView):
             if exc.error == 'search_phase_execution_exception':
                 try:
                     reason = exc.info['error']['root_cause'][0]['reason']
-                    if not reason.startswith('Result window is too large'):
-                        pass
+                    if not reason.startswith('Result window is too large'): pass
                 finally:
                     logg2.warning(exc)
                     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Unable to page that far into results, narrow your search') from None
@@ -872,7 +866,7 @@ class Resource_ESearch(ListAPIView):
         if page:
             return paginator.get_paginated_response(results_dicts, request, **extra_response)
         else:
-            return MyAPIResponse({'results': results_dicts}, template_name='resource_v4/resource_list.html')
+            return MyAPIResponse({'results': results_dicts, **extra_response}, template_name='resource_v4/resource_list.html')
 
 ##
 ## Cache Management Views
