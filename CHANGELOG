@@ -1,3 +1,6 @@
+v3.19.1 2023-11-10 JP
+  - In postgresql path replace django (was an error) with info (for future migration from public to info schema)
+
 v3.19.0 2023-11-02 JP
   - Include count and aggregations in results even when not paginating
   - Cleanup imports and other code improvements

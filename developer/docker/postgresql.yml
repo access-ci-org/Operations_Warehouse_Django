@@ -1,0 +1,17 @@
+version: '1.0'
+services :
+  db:
+    image: postgres:14-bookworm
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: opsdba
+      POSTGRES_PASSWORD: <PASSWORD>
+      POSTGRES_DB: postgres
+  admin:
+    image: adminer
+    restart: always
+    depends_on: 
+      - db
+    ports:
+      - 8080:8080
