@@ -1,3 +1,7 @@
+v3.20.0 2023-11-29 JP
+  - Re-enable resourec_v4 relation caching
+  - Return resource_v4 relations in detail views
+
 v3.19.1 2023-11-10 JP
   - In postgresql path replace django (was an error) with info (for future migration from public to info schema)
 

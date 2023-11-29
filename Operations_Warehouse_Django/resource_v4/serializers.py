@@ -51,31 +51,31 @@ class Local_Detail_Serializer(serializers.ModelSerializer):
 #
 
 class Resource_Detail_Serializer(serializers.ModelSerializer):
-#    Relations = serializers.SerializerMethodField()
+    Relations = serializers.SerializerMethodField()
     DetailURL = serializers.SerializerMethodField()
     EntityJSON = serializers.SerializerMethodField()
 
-#    def get_Relations(self, ResourceV4) -> list[dict[str, str]]:
-#        relations = []
-#        http_request = self.context.get('request')
-#        try:
-#            relateditems = ResourceV4Relation.objects.filter(FirstResourceID=ResourceV4.ID)
-#            for ri in relateditems:
-#                related = {'RelationType': ri.RelationType, 'ID': ri.SecondResourceID}
-#                provider = ResourceV4Index.Lookup_Relation(ri.SecondResourceID)
-#                if provider and provider.get('Name'):
-#                    related['Name'] = provider.get('Name')
-#                if provider and provider.get('ResourceGroup'):
-#                    related['ResourceGroup'] = provider.get('ResourceGroup')
-#                if provider and provider.get('ProviderID'):
-#                    rp = ResourceV4Index.Lookup_Relation(provider.get('ProviderID'))
-#                    if rp and rp.get('Name'):
-#                        related['Provider'] = rp.get('Name')
-#                if http_request:
-#                    related['DetailURL'] = http_request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[ri.SecondResourceID])))
-#                relations.append(related)
-#        except ResourceV4Relation.DoesNotExist:
-#            pass
+    def get_Relations(self, ResourceV4) -> list[dict[str, str]]:
+        relations = []
+        http_request = self.context.get('request')
+        try:
+            relateditems = ResourceV4Relation.objects.filter(FirstResourceID=ResourceV4.ID)
+            for ri in relateditems:
+                related = {'RelationType': ri.RelationType, 'ID': ri.SecondResourceID}
+                provider = ResourceV4Index.Lookup_Relation(ri.SecondResourceID)
+                if provider and provider.get('Name'):
+                    related['Name'] = provider.get('Name')
+                if provider and provider.get('ResourceGroup'):
+                    related['ResourceGroup'] = provider.get('ResourceGroup')
+                if provider and provider.get('ProviderID'):
+                    rp = ResourceV4Index.Lookup_Relation(provider.get('ProviderID'))
+                    if rp and rp.get('Name'):
+                        related['Provider'] = rp.get('Name')
+                if http_request:
+                    related['DetailURL'] = http_request.build_absolute_uri(uri_to_iri(reverse('resource-detail', args=[ri.SecondResourceID])))
+                relations.append(related)
+        except ResourceV4Relation.DoesNotExist:
+            pass
 ## Excluding Inverse Relations for now, consider adding including as InverseRelations in the future
 ##        try:
 ##            related = ResourceV4Relation.objects.filter(SecondResourceID=ResourceV4.ID)
@@ -83,7 +83,7 @@ class Resource_Detail_Serializer(serializers.ModelSerializer):
 ##                relations.append({"Type": ri.RelationType, "From.ID": ri.FirstResourceID})
 ##        except ResourceV4Relation.DoesNotExist:
 ##            pass
-#        return(relations)
+        return(relations)
 
     def get_DetailURL(self, ResourceV4) -> str:
         http_request = self.context.get('request')
@@ -103,10 +103,8 @@ class Resource_Detail_Serializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceV4
         fields = copy.copy([f.name for f in ResourceV4._meta.get_fields(include_parents=False)])
-#        fields.append('Relations')
-        fields.append('DetailURL')
-        fields.append('EntityJSON')
-
+        fields.extend(('Relations', 'DetailURL', 'EntityJSON'))
+        
 class Resource_Search_Serializer(serializers.ModelSerializer):
     Provider = serializers.SerializerMethodField()
     DetailURL = serializers.SerializerMethodField()
@@ -130,8 +128,7 @@ class Resource_Search_Serializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceV4
         fields = copy.copy([f.name for f in ResourceV4._meta.get_fields(include_parents=False)])
-        fields.append('Provider')
-        fields.append('DetailURL')
+        fields.extend(('Provider', 'DetailURL'))
 
 class Resource_ESearch_Serializer(serializers.Serializer):
     class Meta:

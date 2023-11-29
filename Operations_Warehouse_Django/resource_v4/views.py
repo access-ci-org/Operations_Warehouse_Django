@@ -408,7 +408,7 @@ class Resource_Search(ListAPIView):
         Resource search and list
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = Resource_Search_Serializer
     @extend_schema(parameters=[
             OpenApiParameter('search_terms', str, OpenApiParameter.QUERY),
@@ -871,14 +871,14 @@ class Resource_ESearch(ListAPIView):
 ##
 ## Cache Management Views
 ##
-#class Relations_Cache(ListAPIView):
-#    '''
-#        Populate Relations Cache
-#    '''
-#    permission_classes = (IsAuthenticatedOrReadOnly,)
-#    renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
-#    def get(self, request, format='json', **kwargs):
-#        start_utc = datetime.now(timezone.utc)
-#        count = ResourceV4Index.Cache_Lookup_Relations()
-#        response_obj = {'cached': count, 'seconds': (datetime.now(timezone.utc) - start_utc).total_seconds()}
-#        return MyAPIResponse(response_obj)
+class Relations_Cache(ListAPIView):
+    '''
+        Load Relations Cache
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
+    def get(self, request, format='json', **kwargs):
+        start_utc = datetime.now(timezone.utc)
+        count = ResourceV4Index.Cache_Lookup_Relations()
+        response_obj = {'cached': count, 'seconds': (datetime.now(timezone.utc) - start_utc).total_seconds()}
+        return MyAPIResponse(response_obj)
