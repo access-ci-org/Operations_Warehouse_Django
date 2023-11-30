@@ -1,0 +1,35 @@
+version: '1.0'
+#volumes:
+#   pg-data:
+services :
+  db:
+    image: testdb
+    ports:
+      - "5432:5432"
+    environment:
+      #POSTGRES_USER: opsdba
+      #POSTGRES_PASSWORD: <PASSWORD>
+      #POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /pg-data
+      #user: "${UID:?You must do 'export UID' to launch}:${GID:?You must do 'export GID' to launch}"
+    user: "${UID:?You must do 'export UID' to launch}:${GID:?You must do 'export GID' to launch}"
+    volumes:
+      - ./dbrestore:/opt/app/dbrestore
+      - ./data/db:/pg-data
+  django:
+    tty: true
+    image: warehouse:latest
+    restart: always
+    depends_on: 
+      - db
+        #ports:
+      #- ${POSTGRES_PORT}:8080
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../:/soft/warehouse-2.0/PROD
+      - ./DEV/logs:/soft/warehouse-2.0/var/
+      - ./restore:/opt/app/dbrestore

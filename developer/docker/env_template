@@ -1,0 +1,7 @@
+POSTGRES_USER=opsdba
+POSTGRES_PASSWORD=<what you want the postgres password to be>
+POSTGRES_DB=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5434
+UID=<your local UID>
+GID=<your local GID>

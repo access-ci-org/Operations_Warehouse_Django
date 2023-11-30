@@ -1,0 +1,5 @@
+DEV/logs/*
+dbrestore/*
+data/*
+.env
+

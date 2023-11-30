@@ -1,0 +1,21 @@
+django == 4.1.*
+django-opensearch-dsl == 0.5.*
+#psycopg2-binary = "==2.9.*"
+psycopg2 == 2.9.*
+requests 
+django-cors-headers
+django-rest-framework
+amqp
+django-allauth == 0.52.*
+django-bootstrap-v5 == 1.0.*
+djangorestframework 
+drf-spectacular == 0.24.*
+gunicorn == 20.1.*
+markdown
+#mod-wsgi
+pip-versions
+python-jose
+python3-openid
+pymemcache
+pyyaml
+tzdata

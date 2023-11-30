@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+# Install dependencies
+USER root
+COPY requirements.txt .
+RUN apt update && apt install -y --no-install-recommends postgresql-client python3.10 python3-pip libpq-dev gcc python3-dev
+RUN pip install -r requirements.txt
+
+# Ensure logging is up to date despite possible buffering
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /opt/app
+
+USER root
+RUN mkdir -p /soft/warehouse-2.0/conf
+RUN mkdir -p /soft/warehouse-2.0/sbin
+COPY ./conf/django_prod_mgmt.conf /soft/warehouse-2.0/conf
+COPY ./conf/warehouse_api.conf /soft/warehouse-2.0/conf
+COPY ./sbin/manage.prod.sh /soft/warehouse-2.0/sbin
+COPY ./sbin/warehouse_api.sh /soft/warehouse-2.0/sbin
+
+# Move sourcefiles
+COPY ./scripts ./scripts
+
+#This entrypoint will never return, and will let the container run even when
+#the db is not initialized
+ENTRYPOINT ["/usr/bin/tail"]
+CMD ["-f","/dev/null"]
+#ENTRYPOINT ["/soft/warehouse-2.0/sbin/manage.prod.sh"]
+#CMD ["$@"]
