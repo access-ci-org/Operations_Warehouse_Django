@@ -1,3 +1,11 @@
+Prerequisites:
+* A functional docker and docker-compose ecosystem.
+* A functional Ansible environment (a venv in which you have done "pip install ansible" will be fine)
+* The django_aws_credential_key file, in your home dir.  Get this from Eric or JP.
+* Your local uid and gid (on linux systems, you can use the "id" command to get these)
+
+
+
 Quick notes for using the docker-compose django dev environment:
 
 Inital steps:
@@ -7,7 +15,7 @@ edit postgresql_setup.yml in this directory and change <PASSWORD> to a value you
 
 mkdir -p data/db
 
-ansible-vault decrypt --vault-id ~/ansible_vault_password aws_credentials --output aws_credentials_local
+ansible-vault decrypt --vault-id ~/django_aws_credential_key aws_credentials --output aws_credentials_local
 
 docker build -f ./warehouse.yml -t warehouse:latest .
 docker-compose -f warehouse_deploy.yml up
