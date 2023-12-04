@@ -17,6 +17,7 @@ COPY ./conf/django_prod_mgmt.conf /soft/warehouse-2.0/conf
 COPY ./conf/warehouse_api.conf /soft/warehouse-2.0/conf
 COPY ./sbin/manage.prod.sh /soft/warehouse-2.0/sbin
 COPY ./sbin/warehouse_api.sh /soft/warehouse-2.0/sbin
+RUN touch /opt/app/aws_credentials_local
 
 # Move sourcefiles
 COPY ./scripts ./scripts

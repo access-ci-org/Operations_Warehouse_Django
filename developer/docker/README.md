@@ -2,6 +2,8 @@ Quick notes for using the docker-compose django dev environment:
 
 Inital steps:
 Copy env_template to .env, and change the password, UID, and GID values
+mkdir -p data/db
+mkdir -p dbrestore
 
 ansible-vault decrypt --vault-id ~/ansible_vault_password aws_credentials --output aws_credentials_local
 

@@ -1,9 +1,9 @@
-version: '1.0'
+version: '2.2'
 #volumes:
 #   pg-data:
 services :
   db:
-    image: testdb
+    image: postgres:14-bookworm
     ports:
       - "5432:5432"
     environment:
@@ -35,4 +35,4 @@ services :
       - ../../:/soft/warehouse-2.0/PROD
       - ./DEV/logs:/soft/warehouse-2.0/var/
       - ./dbrestore:/opt/app/dbrestore
-      - ./aws_credentials_local:/opt/app/aws_credentials_local
+      - ${PWD}/aws_credentials_local:/opt/app/aws_credentials_local
