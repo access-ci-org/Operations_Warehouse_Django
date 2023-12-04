@@ -3,9 +3,9 @@ Quick notes for using the docker-compose django dev environment:
 Inital steps:
 
 Copy env_template to .env, and change the password, UID, and GID values
+edit postgresql_setup.yml in this directory and change <PASSWORD> to a value you choose.
 
 mkdir -p data/db
-mkdir -p dbrestore
 
 ansible-vault decrypt --vault-id ~/ansible_vault_password aws_credentials --output aws_credentials_local
 
@@ -14,7 +14,7 @@ docker-compose -f warehouse_deploy.yml up
 
 NOTE: For all of the below commands, if you are using docker-compose v1, you will need to use the *-dc1.sh scripts in ./local_scripts, as docker-compose v1 uses underscores "_" instead of hyphens "-" in the container names.
 
-./local_scripts/get_latest_backup.sh
+./local_scripts/get_backup_on_container.sh
 ./local_scripts/initialize_db.sh
 
 then ./local_scripts/runserver.sh will start your dev env on localhost:8000,
