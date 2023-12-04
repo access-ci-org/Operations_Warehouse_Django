@@ -1,6 +1,7 @@
 DEV/logs/*
 dbrestore/*
 data/*
+!data/db/NOTAREALFILE
 .env
 aws_credentials_local
 
