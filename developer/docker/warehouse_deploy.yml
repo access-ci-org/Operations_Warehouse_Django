@@ -29,7 +29,10 @@ services :
       #- ${POSTGRES_PORT}:8080
     ports:
       - "8000:8000"
+    environment:
+      AWS_SHARED_CREDENTIALS_FILE: /opt/app/aws_credentials_local
     volumes:
       - ../../:/soft/warehouse-2.0/PROD
       - ./DEV/logs:/soft/warehouse-2.0/var/
-      - ./restore:/opt/app/dbrestore
+      - ./dbrestore:/opt/app/dbrestore
+      - ./aws_credentials_local:/opt/app/aws_credentials_local

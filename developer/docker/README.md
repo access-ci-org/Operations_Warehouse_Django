@@ -3,14 +3,7 @@ Quick notes for using the docker-compose django dev environment:
 Inital steps:
 Copy env_template to .env, and change the password, UID, and GID values
 
-ansible-vault decrypt --vault-id ~/ansible_vault_password aws_credentials
-
-   # Place the following in your ~/.aws/config
-     [profile newbackup]
-     region = us-east-2
-     output = json
-     aws_access_key_id = <GET VALUE FROM decrypted aws_credentials>
-     aws_secret_access_key = <GE VALUE FROM decrypted aws_credentials>
+ansible-vault decrypt --vault-id ~/ansible_vault_password aws_credentials --output aws_credentials_local
 
 docker build -f ./warehouse.yml -t warehouse:latest .
 docker-compose -f warehouse_deploy.yml up

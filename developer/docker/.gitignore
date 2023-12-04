@@ -2,4 +2,5 @@ DEV/logs/*
 dbrestore/*
 data/*
 .env
+aws_credentials_local
 

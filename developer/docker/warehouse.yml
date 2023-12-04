@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 # Install dependencies
 USER root
 COPY requirements.txt .
-RUN apt update && apt install -y --no-install-recommends postgresql-client python3.10 python3-pip libpq-dev gcc python3-dev
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends postgresql-client python3.10 python3-pip libpq-dev gcc python3-dev awscli
 RUN pip install -r requirements.txt
 
 # Ensure logging is up to date despite possible buffering
