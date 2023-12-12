@@ -1,3 +1,12 @@
+The contents of this directory, described by this document will configure a 
+development environment for ACCESS-CI Operations Warehouse.
+
+This environment uses docker and docker-compose to configure several containers.
+One container consists of the configured Postgresql server that the warehouse requires
+Another container consists of the Django deployment of the warehouse itself, along with its prerequisites and various scripts for confguring and/or interacting
+with it.
+
+
 Prerequisites:
 * A functional docker and docker-compose ecosystem.
 * The django_aws_credential_key file, in your home dir.  Get this from Eric or JP.
