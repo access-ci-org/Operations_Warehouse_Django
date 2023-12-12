@@ -16,6 +16,7 @@ RUN mkdir -p /soft/warehouse-2.0/sbin
 COPY ./conf/django_prod_mgmt_customized.conf /soft/warehouse-2.0/conf/django_prod_mgmt.conf
 COPY ./conf/warehouse_api_customized.conf /soft/warehouse-2.0/conf/warehouse_api.conf
 COPY ./sbin/manage.prod.sh /soft/warehouse-2.0/sbin
+COPY ./sbin/manage.users.sh /soft/warehouse-2.0/sbin
 COPY ./sbin/warehouse_api.sh /soft/warehouse-2.0/sbin
 RUN touch /opt/app/aws_credentials
 RUN touch /opt/app/django_aws_credential_key

@@ -12,6 +12,9 @@ Copy env_template to .env, and change the password, UID, and GID values
 
 mkdir -p data/db
 
+Set the info_django and warehouse_user password to a value you like:
+./local_scripts/set_warehouse_pw.sh <password you want to set>
+
 docker build -f ./warehouse.yml -t warehouse:latest .
 
 docker-compose -f warehouse_deploy.yml up
@@ -19,9 +22,6 @@ docker-compose -f warehouse_deploy.yml up
 NOTE: For all of the below commands, if you are using docker-compose v1, you will need to use the *-dc1.sh scripts in ./local_scripts, as docker-compose v1 uses underscores "_" instead of hyphens "-" in the container names.
 
 ./local_scripts/decrypt_credentials
-
-Set the info_django and warehouse_user password to a value you like:
-./local_scripts/set_warehouse_pw.sh <password you want to set>
 
 Get the latest production data backup, and initialize the database:
 
@@ -37,6 +37,11 @@ rm -rf data/db
 mkdir -p data/db
 docker-compose -f warehouse_deploy.yml up
 ./local_scripts/initialize_db.sh
+
+
+To create a superuser account that can do anything needed in the admin interface:
+
+./local_scripts/create_user.sh
 
 
 Still todo:  add the opensearch container to warehouse_deploy.yml
