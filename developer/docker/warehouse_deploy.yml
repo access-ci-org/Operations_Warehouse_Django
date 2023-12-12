@@ -35,4 +35,5 @@ services :
       - ../../:/soft/warehouse-2.0/PROD
       - ./DEV/logs:/soft/warehouse-2.0/var/
       - ./dbrestore:/opt/app/dbrestore
-      - ${PWD}/aws_credentials_local:/opt/app/aws_credentials_local
+      - ${PWD}/aws_credentials:/opt/app/aws_credentials
+      - ${HOME}/django_aws_credential_key:/opt/app/django_aws_credential_key

@@ -20,3 +20,4 @@ python3-openid
 pymemcache
 pyyaml
 tzdata
+ansible
