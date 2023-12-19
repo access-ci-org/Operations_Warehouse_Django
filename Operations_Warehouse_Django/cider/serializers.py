@@ -4,7 +4,6 @@ from cider.models import *
 from rest_framework import serializers
 
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
-    cider_type = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -19,15 +18,6 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             'organization_name', 'organization_url', 'organization_logo_url',
             'cider_view_url', 'cider_data_url', 'updated_at')
         
-    def get_cider_type(self, object) -> str:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # Type comes from sub-resource for now
-                type_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                type_object = object
-            return type_object.cider_type
-        except:
-            return None
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -56,7 +46,6 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             return ''
 
 class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
-    cider_type = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -78,15 +67,6 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
             'features', 'features_list', 'primary_service_url', 'user_guide_url',
             'cider_view_url', 'cider_data_url', 'updated_at')
         
-    def get_cider_type(self, object) -> str:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # Type comes from sub-resource for now
-                type_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                type_object = object
-            return type_object.cider_type
-        except:
-            return None
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -103,39 +83,23 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
         except:
             return None
     def get_primary_service_url(self, object) -> str:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # URL comes from sub-resource for now
-                url_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                url_object = object
-            return url_object.other_attributes['primary_service_url']
+        try:
+            return object.other_attributes['primary_service_url']
         except:
             return None
     def get_user_guide_url(self, object) -> str:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # Geo comes from sub-resource for now
-                url_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                url_object = object
-            return url_object.other_attributes['user_guide_url']
+        try:
+            return object.other_attributes['user_guide_url']
         except:
             return None
     def get_latitude(self, object) -> float:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # Geo comes from sub-resource for now
-                geo_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                geo_object = object
-            return geo_object.other_attributes['latitude']
+        try:
+            return object.other_attributes['latitude']
         except:
             return None
     def get_longitude(self, object) -> float:
-        try: # Gracefully ignore
-            if object.cider_type == 'resource': # Geo comes from sub-resource for now
-                geo_object = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            else:
-                geo_object = object
-            return geo_object.other_attributes['longitude']
+        try:
+            return object.other_attributes['longitude']
         except:
             return None
     def get_features(self, object) -> dict:
@@ -171,8 +135,6 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
     compute = serializers.SerializerMethodField()
     storage = serializers.SerializerMethodField()
@@ -210,42 +172,24 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
             return str(object.other_attributes['organizations'][0]['organization_logo_url']) or None
         except:
             return None
-    def get_latitude(self, object) -> float:
-        try:    # Gracefully ignore missing sub
-            sub = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            if sub:
-                return sub.other_attributes['latitude']
-        except:
-            pass
-        return None
-    def get_longitude(self, object) -> float:
-        try:    # Gracefully ignore missing sub
-            sub = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id)
-            if sub:
-                return sub.other_attributes['longitude']
-        except:
-            pass
-        return None
     def get_features(self, object) -> dict:
         try:    # Gracefully ignore missing compute
             return object.other_attributes['features']
         except:
             return None
     def get_compute(self, object) -> dict:
-        try:    # Gracefully ignore missing compute
-            compute = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='compute')
-            if compute:
-                return CiderInfrastructure_Compute_Detail_Serializer(compute).data
-        except:
-            pass
+        if object.cider_type == 'Compute':
+            try:    # Gracefully ignore missing compute
+                return CiderInfrastructure_Compute_Detail_Serializer(object).data
+            except:
+                pass
         return None
     def get_storage(self, object) -> dict:
-        try:    # Gracefully ignore missing compute
-            storage = CiderInfrastructure.objects.get(parent_resource=object.cider_resource_id, cider_type='storage')
-            if storage:
-                return CiderInfrastructure_Storage_Detail_Serializer(storage).data
-        except:
-            pass
+        if object.cider_type == 'Storage':
+            try:
+                return CiderInfrastructure_Storage_Detail_Serializer(object).data
+            except:
+                pass
         return None
 
 class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer):

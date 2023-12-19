@@ -69,7 +69,7 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
                 raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified cider_resource_id not found')
         elif self.kwargs.get('info_resourceid'):
             try:
-                item = CiderInfrastructure.objects.get(info_resourceid=self.kwargs['info_resourceid'], cider_type='resource')
+                item = CiderInfrastructure.objects.get(info_resourceid=self.kwargs['info_resourceid'])
             except (CiderInfrastructure.DoesNotExist, CiderInfrastructure.MultipleObjectsReturned):
                 raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_resourceid did not match a single resource')
         else:
@@ -89,7 +89,7 @@ class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
         if self.kwargs.get('cider_resource_id'):        # Whether base or sub resource, grab the other one also
             try:
                 item = CiderInfrastructure.objects.get(pk=self.kwargs['cider_resource_id'])
-                if item.cider_type != 'compute':
+                if item.cider_type != 'Compute':
                     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified cider_resource_id is of a different type')
 #                if item.parent_resource: # Serializer wants the parent, but will serialize both
 #                    item =  CiderInfrastructure.objects.get(pk=item.parent_resource)
