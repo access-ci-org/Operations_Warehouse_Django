@@ -1,0 +1,26 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}Publisher List{% endblock %}
+{% block content %}
+
+<h1 align="center">Publisher List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=ResourceID">ResourceID</a></th>
+        <th><a href="?format=html&sort=Type">Type</a></th>
+        <th><a href="?format=html&sort=Version">Version</a></th>
+        <th><a href="?format=html&sort=CreationTime">Creation Time</a></th>
+        <th>Global ID (detail)</th>
+    </tr>
+    
+    {% for record in record_list %}
+    <tr>
+        <td>{{ record.ResourceID }}</td>
+        <td>{{ record.Type }}</td>
+        <td>{{ record.Version }}</td>
+        <td>{{ record.CreationTime }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">{{ record.ID }}</a></td>
+    </tr>
+    {% endfor %}
+{% endblock %}

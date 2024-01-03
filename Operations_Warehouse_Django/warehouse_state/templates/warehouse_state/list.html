@@ -1,0 +1,32 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}Processing Status List{% endblock %}
+{% block content %}
+
+<h1 align="center">Processing Status List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=Topic">Topic</a></th>
+        <th><a href="?format=html&sort=About">About</a></th>
+        <th><a href="?format=html&sort=ProcessingApplication">Application</a></th>
+        <th><a href="?format=html&sort=ProcessingCode">Code</a></th>
+        <th><a href="?format=html&sort=ProcessingMessage">Message</a></th>
+        <th><a href="?format=html&sort=ProcessingEnd">Processed at</a></th>
+        <th>Detail</th>
+        <th>History</th>
+    </tr>
+    
+    {% for record in record_list %}
+    <tr>
+        <td>{{ record.Topic }}</td>
+        <td>{{ record.About }}</td>
+        <td>{{ record.ProcessingApplication }}</td>
+        <td align="center">{{ record.ProcessingCode }}</td>
+        <td align="center"><b><div title="{{ record.ProcessingMessage }}">See</div></b></td>
+        <td>{{ record.ProcessingEnd }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
+        <td><a href="{{ record.HistoryURL }}?format=json">View</a></td>
+    </tr>
+    {% endfor %}
+{% endblock %}

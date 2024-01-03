@@ -1,3 +1,7 @@
+v3.22.0 2024-01-03 JP
+  - Implement warehouse_state views
+  - Link to browsable warehouse_state pages from the main page
+
 v3.21.0 2023-12-08 JP
   - Convert to new CiDeR resource hierarchy with typed resources and no sub-resources
   - cider_types changed to mixed case: Compute, Storage, Online Services, Science Gateways, ..

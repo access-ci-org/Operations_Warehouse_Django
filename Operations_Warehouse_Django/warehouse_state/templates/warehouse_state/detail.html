@@ -1,0 +1,63 @@
+{% extends "base_detail.html" %}
+{% block title %}Processing Status{% endblock %}
+{% block content %}
+
+<h1 align="center">Processing Status</h1>
+
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for record in record_list %}
+    <tr>
+        <th>About</th>
+        <td>{{ record.About }}</th>
+    </tr>
+    
+    <tr>
+        <th>Topic</th>
+        <td> {{ record.Topic }}</th>
+    </tr>
+    
+    <tr>
+        <th>Message</th>
+        <td>{{ record.ProcessingMessage }}</th>
+    </tr>
+    
+    <tr>
+        <th>Age</th>
+        <td>{{ record.ProcessingEnd|timesince }}</th>
+    </tr>
+    
+    <tr>
+        <th>Started</th>
+        <td>{{ record.ProcessingStart|date:'Y-m-d H:i:s e' }}</th>
+    </tr>
+    
+    <tr>
+        <th>Completed</th>
+        <td>{{ record.ProcessingEnd|date:'Y-m-d H:i:s e' }}</th>
+    </tr>
+
+    <tr>
+        <th>Code</th>
+        <td>{{ record.ProcessingCode }}</th>
+    </tr>
+    
+    <tr>
+        <th>Router Node</th>
+        <td>{{ record.ProcessingNode }}</th>
+    </tr>
+
+    <tr>
+        <th>Router App</th>
+        <td>{{ record.ProcessingApplication }}</th>
+    </tr>
+    
+    <tr>
+        <th>Router Func</th>
+        <td>{{ record.ProcessingFunction }}</th>
+    </tr>
+
+    {% endfor %}
+{% endblock %}

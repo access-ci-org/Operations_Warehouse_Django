@@ -1,0 +1,57 @@
+{% extends "base_detail.html" %}
+{% block title %}Publisher Information{% endblock %}
+{% block content %}
+
+<h1 align="center">Publisher Information</h1>
+
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+    {% for record in record_list %}
+<table style="margin-left:2px;margin-right:2px" border=1 cellspacing=0 cellpadding=3>
+        <tr>
+        <th>ResourceID</th>
+        <td> {{ record.ResourceID }}</th>
+    </tr>
+    
+    <tr>
+        <th>Type</th>
+        <td>{{ record.Type }}</th>
+    </tr>
+    
+    <tr>
+        <th>Version</th>
+        <td>{{ record.Version }}</th>
+    </tr>
+    
+    <tr>
+        <th>Hostname</th>
+        <td>{{ record.Hostname }}</th>
+    </tr>
+    
+    <tr>
+        <th>Location</th>
+        <td>{{ record.Location }}</th>
+    </tr>
+    
+    <tr>
+        <th>EntityJSON</th>
+        <td>{{ record.EntityJSON }}</th>
+    </tr>
+    
+    <tr>
+        <th>History ID</th>
+        <td>{{ record.RecentHistory }}</th>
+    </tr>
+
+    <tr>
+        <th>Global ID</th>
+        <td>{{ record.ID }}</th>
+    </tr>
+
+    <tr>
+        <th>Created at</th>
+        <td>{{ record.CreationTime|date:'Y-m-d H:i:s e' }}</th>
+    </tr>
+</table>
+    {% endfor %}
+{% endblock %}
