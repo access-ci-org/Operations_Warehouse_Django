@@ -124,6 +124,7 @@ class PublisherInfo_DbList(ListAPIView):
 class PublisherInfo_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
+    serializer_class = PublisherInfo_DetailURL_DbSerializer
     def get(self, request, format=None, **kwargs):
         if 'id' in self.kwargs:
             try:

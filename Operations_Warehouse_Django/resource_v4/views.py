@@ -871,12 +871,13 @@ class Resource_ESearch(ListAPIView):
 ##
 ## Cache Management Views
 ##
-class Relations_Cache(ListAPIView):
+class Relations_Cache(GenericAPIView):
     '''
         Load Relations Cache
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
+    serializer_class = Relations_Cache_Serializer
     def get(self, request, format='json', **kwargs):
         start_utc = datetime.now(timezone.utc)
         count = ResourceV4Index.Cache_Lookup_Relations()

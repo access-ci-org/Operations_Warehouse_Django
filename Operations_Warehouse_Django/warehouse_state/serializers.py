@@ -17,7 +17,7 @@ class ProcessingStatus_DetailURL_DbSerializer(serializers.ModelSerializer):
     DetailURL = serializers.SerializerMethodField()
     HistoryURL = serializers.SerializerMethodField()
 
-    def get_DetailURL(self, ProcessingStatus):
+    def get_DetailURL(self, ProcessingStatus) -> str:
         http_request = self.context.get('request')
         if http_request:
             return http_request.build_absolute_uri(iri_to_uri(reverse('processingrecord-detail', kwargs={'id': ProcessingStatus.ID} )))

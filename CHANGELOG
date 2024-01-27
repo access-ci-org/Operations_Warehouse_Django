@@ -1,3 +1,9 @@
+v3.23.0 2024-01-28 JP
+  - Implement Science Gateway view
+  - Improve cider filters
+  - Failed attempt to improve resource_v4 cache view
+  - Fix some warehouse_state warnings
+
 v3.22.0 2024-01-03 JP
   - Implement warehouse_state views
   - Link to browsable warehouse_state pages from the main page

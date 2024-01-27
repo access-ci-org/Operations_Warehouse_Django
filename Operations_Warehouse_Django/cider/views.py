@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
-from cider.models import *
-from cider.filters import *
-from cider.serializers import *
+from .models import *
+from .filters import *
+from .serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
@@ -23,7 +23,7 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_AllocatedResources(affiliation='ACCESS', result='OBJECTS')
+        objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
@@ -35,7 +35,7 @@ class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_AllocatedResources(affiliation='ACCESS', result='OBJECTS')
+        objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
@@ -47,7 +47,19 @@ class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_ActiveOnlineServices(affiliation='ACCESS', result='OBJECTS')
+        objects = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Online Service')
+        serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
+    '''
+        All ACCESS Scince Gateways
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
+    def get(self, request, format=None, **kwargs):
+        objects = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Science Gateway')
         serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 

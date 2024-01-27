@@ -138,7 +138,8 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
     features = serializers.SerializerMethodField()
     compute = serializers.SerializerMethodField()
     storage = serializers.SerializerMethodField()
-    
+    gateway = serializers.SerializerMethodField()
+
     class Meta:
         model = CiderInfrastructure
         exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
@@ -188,6 +189,13 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
         if object.cider_type == 'Storage':
             try:
                 return CiderInfrastructure_Storage_Detail_Serializer(object).data
+            except:
+                pass
+        return None
+    def get_gateway(self, object) -> dict:
+        if object.cider_type == 'Science Gateway':
+            try:
+                return CiderInfrastructure_Gateway_Detail_Serializer(object).data
             except:
                 pass
         return None
@@ -354,5 +362,43 @@ class CiderInfrastructure_Storage_Detail_Serializer(serializers.ModelSerializer)
     def get_sensitive_data_support_description(self, object) -> str:
         try:
             return object.other_attributes['sensitive_data_support_description']
+        except:
+            return None
+
+class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer):
+    primary_service_url = serializers.SerializerMethodField()
+    shortname = serializers.SerializerMethodField()
+    user_guide_url = serializers.SerializerMethodField()
+    allocated_grant_number = serializers.SerializerMethodField()
+    requested_usernames = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CiderInfrastructure
+        fields = ('primary_service_url', 'shortname', 'user_guide_url', 'allocated_grant_number', 'requested_usernames')
+
+    def get_primary_service_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['url_1']) or None
+        except:
+            return None
+    def get_shortname(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
+    def get_user_guide_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['user_guide_url']) or None
+        except:
+            return None
+    def get_allocated_grant_number(self, object) -> str:
+        try:
+            return str(object.other_attributes['access_allocated_grant_number']) or None
+        except:
+            return None
+
+    def get_requested_usernames(self, object) -> str:
+        try:
+            return str(object.other_attributes['requested_usernames']) or None
         except:
             return None

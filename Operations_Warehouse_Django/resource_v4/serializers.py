@@ -142,3 +142,10 @@ class Resource_Types_Serializer(serializers.Serializer):
 
     class Meta:
         fields = ('__all__')
+
+class Relations_Cache_Serializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    seconds = serializers.IntegerField()
+    
+    class Meta:
+        fields = ('count', 'seconds')
