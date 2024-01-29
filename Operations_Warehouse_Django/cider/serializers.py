@@ -55,8 +55,9 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     longitude = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
     features_list = serializers.SerializerMethodField()
-    primary_service_url = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
+# Just Online Service
+    primary_service_url = serializers.SerializerMethodField()
     
     class Meta:
         model = CiderInfrastructure
@@ -64,8 +65,9 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
             'resource_descriptive_name', 'resource_description', 'recommended_use', 'access_description',
             'latest_status', 'latest_status_begin', 'latest_status_end',
             'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
-            'features', 'features_list', 'primary_service_url', 'user_guide_url',
-            'cider_view_url', 'cider_data_url', 'updated_at')
+            'features', 'features_list', 'user_guide_url',
+            'cider_view_url', 'cider_data_url', 'updated_at',
+            'primary_service_url')
         
     def get_organization_name(self, object) -> str:
         try:
@@ -80,11 +82,6 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     def get_organization_logo_url(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_logo_url']
-        except:
-            return None
-    def get_primary_service_url(self, object) -> str:
-        try:
-            return object.other_attributes['primary_service_url']
         except:
             return None
     def get_user_guide_url(self, object) -> str:
@@ -127,6 +124,123 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
             return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
         else:
             return ''
+# Just Online Service
+    def get_primary_service_url(self, object) -> str:
+        try:
+            return object.other_attributes['primary_service_url']
+        except:
+            return None
+
+class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSerializer):
+    cider_view_url = serializers.SerializerMethodField()
+    cider_data_url = serializers.SerializerMethodField()
+    organization_name = serializers.SerializerMethodField()
+    organization_url = serializers.SerializerMethodField()
+    organization_logo_url = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+    features = serializers.SerializerMethodField()
+    features_list = serializers.SerializerMethodField()
+    user_guide_url = serializers.SerializerMethodField()
+# Just Science Gateway
+    primary_service_url = serializers.SerializerMethodField()
+    shortname = serializers.SerializerMethodField()
+    long_description = serializers.SerializerMethodField()
+    allocated_grant_number = serializers.SerializerMethodField()
+    requested_usernames = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CiderInfrastructure
+        fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
+            'resource_descriptive_name', 'resource_description', 'recommended_use', 'access_description',
+            'latest_status', 'latest_status_begin', 'latest_status_end',
+            'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
+            'features', 'features_list', 'user_guide_url',
+            'cider_view_url', 'cider_data_url', 'updated_at',
+            'primary_service_url', 'shortname', 'long_description', 'allocated_grant_number', 'requested_usernames')
+        
+    def get_organization_name(self, object) -> str:
+        try:
+            return object.other_attributes['organizations'][0]['organization_name']
+        except:
+            return None
+    def get_organization_url(self, object) -> str:
+        try:
+            return object.other_attributes['organizations'][0]['organization_url']
+        except:
+            return None
+    def get_organization_logo_url(self, object) -> str:
+        try:
+            return object.other_attributes['organizations'][0]['organization_logo_url']
+        except:
+            return None
+    def get_user_guide_url(self, object) -> str:
+        try:
+            return object.other_attributes['user_guide_url']
+        except:
+            return None
+    def get_latitude(self, object) -> float:
+        try:
+            return object.other_attributes['latitude']
+        except:
+            return None
+    def get_longitude(self, object) -> float:
+        try:
+            return object.other_attributes['longitude']
+        except:
+            return None
+    def get_features(self, object) -> dict:
+        try:
+            return object.other_attributes['features']
+        except:
+            return None
+    def get_features_list(self, object) -> dict:
+        try:
+            features_list = []
+            for item in object.other_attributes['features']:
+#                features_list.append('{}:{} ({})'.format(item['feature_category'], item['name'], item['description']))
+                features_list.append(item['description'])
+            return features_list
+        except:
+            return None
+    def get_cider_view_url(self, CiderInfrastructure) -> str:
+        try:
+            return CiderInfrastructure.other_attributes['public_url']
+        except:
+            return None
+    def get_cider_data_url(self, object) -> str:
+        http_request = self.context.get('request')
+        if http_request:
+            return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
+        else:
+            return ''
+# Just Science Gateway
+    def get_primary_service_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['url_1']) or None
+        except:
+            return None
+    def get_shortname(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
+    def get_long_description(self, object) -> str:
+        try:
+            return str(object.other_attributes['long_description']) or None
+        except:
+            return None
+    def get_allocated_grant_number(self, object) -> str:
+        try:
+            return str(object.other_attributes['access_allocations_grant_number']) or None
+        except:
+            return None
+    def get_requested_usernames(self, object) -> str:
+        try:
+            return str(object.other_attributes['requested_usernames']) or None
+        except:
+            return None
+
 
 class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
 #    cider_type = serializers.SerializerMethodField()
@@ -368,7 +482,7 @@ class CiderInfrastructure_Storage_Detail_Serializer(serializers.ModelSerializer)
 class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer):
     primary_service_url = serializers.SerializerMethodField()
     shortname = serializers.SerializerMethodField()
-    user_guide_url = serializers.SerializerMethodField()
+    long_description = serializers.SerializerMethodField()
     allocated_grant_number = serializers.SerializerMethodField()
     requested_usernames = serializers.SerializerMethodField()
     
@@ -386,17 +500,16 @@ class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer)
             return str(object.other_attributes['short_name']) or None
         except:
             return None
-    def get_user_guide_url(self, object) -> str:
+    def get_long_description(self, object) -> str:
         try:
-            return str(object.other_attributes['user_guide_url']) or None
+            return str(object.other_attributes['long_description']) or None
         except:
             return None
     def get_allocated_grant_number(self, object) -> str:
         try:
-            return str(object.other_attributes['access_allocated_grant_number']) or None
+            return str(object.other_attributes['access_allocations_grant_number']) or None
         except:
             return None
-
     def get_requested_usernames(self, object) -> str:
         try:
             return str(object.other_attributes['requested_usernames']) or None

@@ -60,7 +60,7 @@ class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Science Gateway')
-        serializer = CiderInfrastructure_Summary_v2_Serializer(objects, context={'request': request}, many=True)
+        serializer = CiderInfrastructure_Summary_v2_Gateway_Serializer(objects, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_Detail(GenericAPIView):

@@ -1,3 +1,7 @@
+v3.23.1 2024-01-29 JP
+  - New CiderInfrastructure_Summary_v2_Gateway_Serializer
+  - Gateway fixes: remove user_guide_url which is a base resource attribute, add missing long_description attribute
+
 v3.23.0 2024-01-28 JP
   - Implement Science Gateway view
   - Improve cider filters
