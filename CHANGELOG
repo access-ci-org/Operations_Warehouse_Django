@@ -1,3 +1,7 @@
+v3.24.0 2024-02-07 JP
+  - Implement ScienceGateway pagination and string search
+  - Implement CiDeR filter string search
+
 v3.23.1 2024-01-29 JP
   - New CiderInfrastructure_Summary_v2_Gateway_Serializer
   - Gateway fixes: remove user_guide_url which is a base resource attribute, add missing long_description attribute

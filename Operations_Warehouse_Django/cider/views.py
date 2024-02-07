@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import render
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -12,7 +13,7 @@ from .filters import *
 from .serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
-from warehouse_tools.responses import MyAPIResponse
+from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 # Create your views here.
 
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
@@ -58,10 +59,37 @@ class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
+    @extend_schema(parameters=[
+            OpenApiParameter('search', str, OpenApiParameter.QUERY),
+            OpenApiParameter('page', int, OpenApiParameter.QUERY),
+            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
+        ])
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Science Gateway')
-        serializer = CiderInfrastructure_Summary_v2_Gateway_Serializer(objects, context={'request': request}, many=True)
-        return MyAPIResponse({'results': serializer.data})
+        arg_string = request.query_params.get('search')
+        if arg_string:
+            want_string = arg_string.lower()
+        else:
+            want_string = None
+        try:
+            page = request.GET.get('page')
+            if page:
+                page = int(page)
+                if page == 0:
+                    raise
+        except:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Pagination page "{}" is not valid'.format(page))
+
+        objects = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Science Gateway', search=want_string)
+        
+        if not page:
+            serializer = CiderInfrastructure_Summary_v2_Gateway_Serializer(objects, context={'request': request}, many=True)
+            return MyAPIResponse({'results': serializer.data})
+
+        objects = objects.order_by('resource_descriptive_name')
+        paginator = CustomPagePagination()
+        query_page = paginator.paginate_queryset(objects, request, view=self)
+        serializer = CiderInfrastructure_Summary_v2_Gateway_Serializer(query_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data, request)
 
 class CiderInfrastructure_v1_Detail(GenericAPIView):
     '''

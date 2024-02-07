@@ -30,11 +30,24 @@ def CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJ
     else: # Model objects
         return(resources)
 
-def CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='none'):
+def CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='none', search=None):
     resources = CiderInfrastructure.objects.filter(
             Q(cider_type=type) &
             Q(latest_status__in=active_statuses) &
             Q(project_affiliation__icontains=affiliation) )
+    if search:
+        if type=='Science Gateway':
+            resources = resources.filter(
+                Q(info_resourceid__icontains=search) |
+                Q(resource_descriptive_name__icontains=search) |
+                Q(resource_description__icontains=search) |
+                Q(other_attributes__short_name__icontains=search) |
+                Q(other_attributes__long_description__icontains=search) )
+        else:
+            resources = resources.filter(
+                Q(info_resourceid__icontains=search) |
+                Q(resource_descriptive_name__icontains=search) |
+                Q(resource_description__icontains=search) )
     if result.upper() == 'RESOURCEID':
         return(list(resources.values_list('info_resourceid', flat=True)))
     else: # Model objects
