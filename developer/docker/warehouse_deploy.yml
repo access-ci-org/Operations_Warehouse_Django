@@ -1,0 +1,39 @@
+version: '2.2'
+#volumes:
+#   pg-data:
+services :
+  db:
+    image: postgres:14-bookworm
+    ports:
+      - "5432:5432"
+    environment:
+      #POSTGRES_USER: opsdba
+      #POSTGRES_PASSWORD: <PASSWORD>
+      #POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /pg-data
+      #user: "${UID:?You must do 'export UID' to launch}:${GID:?You must do 'export GID' to launch}"
+    user: "${UID:?You must do 'export UID' to launch}:${GID:?You must do 'export GID' to launch}"
+    volumes:
+      - ./dbrestore:/opt/app/dbrestore
+      - ./data/db:/pg-data
+  django:
+    tty: true
+    image: warehouse:latest
+    restart: always
+    depends_on: 
+      - db
+        #ports:
+      #- ${POSTGRES_PORT}:8080
+    ports:
+      - "8000:8000"
+    environment:
+      AWS_SHARED_CREDENTIALS_FILE: /opt/app/aws_credentials_local
+    volumes:
+      - ../../:/soft/warehouse-2.0/PROD
+      - ./DEV/logs:/soft/warehouse-2.0/var/
+      - ./dbrestore:/opt/app/dbrestore
+      - ${PWD}/aws_credentials:/opt/app/aws_credentials
+      - ${HOME}/django_aws_credential_key:/opt/app/django_aws_credential_key

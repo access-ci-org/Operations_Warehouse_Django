@@ -1,0 +1,8 @@
+DEV/logs/*
+!dbrestore/NOTAREALFILE
+dbrestore/*
+!data/db/NOTAREALFILE
+data/*
+.env
+aws_credentials_local
+
