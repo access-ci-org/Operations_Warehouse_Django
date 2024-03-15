@@ -1,3 +1,6 @@
+v3.25.0 2024-03-15 JP
+  - Expand model=PublisherInfo field=Location max_length from 64 to 200 to hold longer paths
+
 v3.24.0 2024-02-07 JP
   - Implement ScienceGateway pagination and string search
   - Implement CiDeR filter string search

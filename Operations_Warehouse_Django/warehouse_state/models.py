@@ -51,7 +51,7 @@ class PublisherInfo(models.Model):
     Type = models.CharField(max_length=32)
     Version = models.CharField(max_length=32)
     Hostname = models.CharField(max_length=64)
-    Location = models.CharField(max_length=64, null=True)
+    Location = models.CharField(max_length=200, null=True)
     EntityJSON = models.JSONField()
     CreationTime = models.DateTimeField()
     RecentHistory = models.CharField(max_length=1024)
