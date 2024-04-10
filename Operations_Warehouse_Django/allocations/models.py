@@ -50,10 +50,17 @@ class AllocationResourceMap(models.Model):
 
 class FieldOfScience(models.Model):
     field_of_science_id = models.IntegerField(primary_key=True, null=False)
-    parent_field_of_science_id = models.IntegerField(null=True, blank=True)
-    field_of_science_desc = models.CharField(max_length=200, null=False)
+    field_of_science_desc = models.CharField(max_length=80, null=False)
     fos_nsf_id = models.IntegerField(null=True, blank=True)
     fos_nsf_abbrev = models.CharField(max_length=10, null=True, blank=True)
     is_active = models.BooleanField(default=True, null=False)
+    fos_source = models.CharField(max_length=10, null=False, blank=True)
+    nsf_directorate_id = models.IntegerField(null=True, blank=True)
+    nsf_directorage_name = models.CharField(max_length=80, null=True, blank=True)
+    nsf_directorage_abbrev = models.CharField(max_length=10, null=True, blank=True)
+    parent_field_of_science_id = models.IntegerField(null=True, blank=True)
+    parent_field_of_science_desc = models.CharField(max_length=80, null=True, blank=True)
+    parent_fos_nsf_id = models.IntegerField(null=True, blank=True)
+    parent_fos_nsf_abbrev = models.CharField(max_length=10, null=True, blank=True)
     def __str__(self):
        return str(self.field_of_science_id)

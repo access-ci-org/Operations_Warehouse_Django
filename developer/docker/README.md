@@ -30,7 +30,7 @@ docker-compose -f warehouse_deploy.yml up
 
 NOTE: For all of the below commands, if you are using docker-compose v1, you will need to use the *-dc1.sh scripts in ./local_scripts, as docker-compose v1 uses underscores "_" instead of hyphens "-" in the container names.
 
-./local_scripts/decrypt_credentials
+./local_scripts/decrypt_credentials.sh
 
 Get the latest production data backup, and initialize the database:
 
