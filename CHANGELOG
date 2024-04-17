@@ -1,3 +1,6 @@
+v3.26.1 2024-04-17 JP
+  - Fix FieldofScience model field name spelling directorage -> directorate
+
 v3.26.0 2024-04-10 JP
   - Convert allocations.FieldOfScience to hold values from the latest Allocatios FOS view
 
