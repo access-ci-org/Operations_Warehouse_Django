@@ -1,3 +1,6 @@
+v3.27.0 2024-04-18 JP
+  - Implement allocations/FieldOfScience json and html views
+
 v3.26.2 2024-04-17 JP
   - Add missing migration
 

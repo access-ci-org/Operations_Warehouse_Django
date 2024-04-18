@@ -1,0 +1,77 @@
+{% extends "base_detail.html" %}
+{% block title %}Field of Science Detail{% endblock %}
+{% block content %}
+
+<h1 align="center">Field of Science Detail</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for record in results %}
+    <tr>
+        <th>Description</th>
+        <td>{{ record.field_of_science_desc }}</th>
+    </tr>
+    
+    <tr>
+        <th>ID</th>
+        <td>{{ record.field_of_science_id }} </th>
+    </tr>
+    
+    <tr>
+        <th>NSF Abbrev</th>
+        <td>{{ record.fos_nsf_abbrev }}</th>
+    </tr>
+    
+    <tr>
+        <th>NSF ID</th>
+        <td>{{ record.fos_nsf_id }}</th>
+    </tr>
+    
+    <tr>
+        <th>FOS Source</th>
+        <td>{{ record.fos_source }}</th>
+    </tr>
+
+    <tr>
+        <th>Is Active?</th>
+        <td>{{ record.is_active }}</th>
+    </tr>
+
+    <tr>
+        <th>NSF Directorate Description</th>
+        <td>{{ record.nsf_directorate_desc }}</th>
+    </tr>
+
+    <tr>
+        <th>NSF Directorate Abbrev</th>
+        <td>{{ record.nsf_directorate_abbrev }}</th>
+    </tr>
+
+    <tr>
+        <th>NSF Directorate ID</th>
+        <td>{{ record.nsf_directorate_id }}</th>
+    </tr>
+    
+    <tr>
+        <th>Parent Description</th>
+        <td>{{ record.parent_field_of_science_desc }}</th>
+    </tr>
+    
+    <tr>
+        <th>Parent ID</th>
+        <td>{{ record.parent_field_of_science_id }} </th>
+    </tr>
+    
+    <tr>
+        <th>Parent NSF Abbrev</th>
+        <td>{{ record.parent_fos_nsf_abbrev }}</th>
+    </tr>
+    
+    <tr>
+        <th>Parent NSF ID</th>
+        <td>{{ record.parent_fos_nsf_id }}</th>
+    </tr>
+    
+    {% endfor %}
+{% endblock %}

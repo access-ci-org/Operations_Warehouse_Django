@@ -1,0 +1,31 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}Field of Science List{% endblock %}
+{% block content %}
+
+<h1 align="center">Field of Science List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=0 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=field_of_science_desc">Description</a></th>
+        <th><a href="?format=html&sort=field_of_science_id">ID</a></th>
+        <th><a href="?format=html&sort=parent_field_of_science_id">Parent ID</a></th>
+        <th><a href="?format=html&sort=fos_nsf_abbrev">NSF Abbrev</a></th>
+        <th><a href="?format=html&sort=fos_source">Source</a></th>
+        <th><a href="?format=html&sort=is_active">Active</a></th>
+    </tr>
+    {% for record in results %}
+    <tr>
+        {% if record.print_desc %}
+            <td>{{ record.print_desc | safe }}</td>
+        {% else %}
+            <td>{{ record.field_of_science_desc }}</td>
+        {% endif %}
+	    <td><a href="{{ record.DetailURL }}?format=html">{{ record.field_of_science_id }}</a></td>
+        <td>{{ record.parent_field_of_science_id }}</td>
+        <td>{{ record.fos_nsf_abbrev }}</td>
+        <td>{{ record.fos_source }}</td>
+        <td>{{ record.is_active }}</td>
+    </tr>
+    {% endfor %}
+{% endblock %}
