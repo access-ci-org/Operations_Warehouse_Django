@@ -1,3 +1,6 @@
+v3.28.0 2024-05-01 JP
+  - New /wh2/cider/v2/access-active/ that includes Online Services not present in ../v1/..
+
 v3.27.0 2024-04-18 JP
   - Implement allocations/FieldOfScience json and html views
 

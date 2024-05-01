@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import render
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from itertools import chain
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -18,7 +19,7 @@ from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''
-        All ACCESS Active Resources
+        All ACCESS Active Allocated Compute and Storage Resources
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -26,6 +27,19 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
         serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v2_ACCESSActiveList(GenericAPIView):
+    '''
+        All ACCESS Active Allocated Compute and Storage Resources and Central Online Services Resources
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
+    def get(self, request, format=None, **kwargs):
+        objects1 = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        objects2 = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS', type='Online Service')
+        serializer = CiderInfrastructure_Summary_Serializer(chain(objects1, objects2), context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
@@ -54,7 +68,7 @@ class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
 
 class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
     '''
-        All ACCESS Scince Gateways
+        All ACCESS Science Gateways
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
