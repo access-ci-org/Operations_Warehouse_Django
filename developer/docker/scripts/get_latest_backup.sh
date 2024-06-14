@@ -30,6 +30,11 @@
 #
 ###############################################################################
 
+if [ ! -f "/opt/app/aws_credentials_local" ]
+then
+    echo "No aws_credentials_local file found.  Please run local_scripts/decrypt_credentials.sh"
+    exit
+fi
 ME=$(basename "$0" .sh)
 DATE=`date +'%s'`
 MY_HOSTNAME=`hostname -f`
@@ -73,21 +78,47 @@ IFS=$'\n' read -r -d '' -a my_array < <( aws s3 ls ${S3_BUCKET} --profile newbac
 length=${#my_array[@]}
 echo $length
 echo "last idex is " ${my_array[$length-1]}
-
+match_array=()
 for filename in "${my_array[@]}"
+do
+    # Ignore anything that doesn't match the pattern
+    if [[ ! -z "$PATTERN" && "${filename}" != *"$PATTERN"* ]]; then
+		continue
+    else
+        # Everything here matches the pattern
+        if [[ ! -z "$PATTERN" ]]; then
+          #match_array=(${match_array[@]} ${filename})
+          match_array+=(${filename})
+        fi
+   fi
+done
+        echo "matcharray is ${match_array[*]}" >&2
+
+match_length=${#match_array[@]}
+for filename in "${match_array[@]}"
 do
     if [[ ! -z "$PATTERN" && "${filename}" != *"$PATTERN"* ]]; then
 		continue
 	fi
     if [ "$MODE" = "list" ]; then
         echo "Found -> ${S3_BUCKET}${filename}" >&2
-    else
-        if [[ ! -z "$PATTERN" ]]; then
-          echo "Retrieved -> ${RESTORE_DIR}/${filename}" >&2
-          aws s3 cp ${S3_BUCKET}${filename} ${RESTORE_DIR}/${filename} --profile newbackup
-        fi
+#    else
+#        if [[ ! -z "$PATTERN" ]]; then
+#          echo "Retrieved -> ${RESTORE_DIR}/${filename}" >&2
+#          aws s3 cp ${S3_BUCKET}${filename} ${RESTORE_DIR}/${filename} --profile newbackup
+#          cd ${RESTORE_DIR}
+#          gzip -d --stdout ${filename} >>django.dump.latest
+#        fi
     fi
 done
+
+#Download only the most recent matching pattern
+if [[ ! -z "$PATTERN" && "$MODE" != "list" ]]; then
+   echo "Retrieved -> ${RESTORE_DIR}/${match_array[$match_length-1]}" >&2
+   aws s3 cp ${S3_BUCKET}${match_array[$match_length-1]} ${RESTORE_DIR}/${match_array[$match_length-1]} --profile newbackup
+   cd ${RESTORE_DIR}
+   gzip -d --stdout ${match_array[$match_length-1]} >>django.dump.latest
+fi
 
 #If no pattern was given, only download the most recent
 if [[ -z "$PATTERN" && "$MODE" != "list" ]]; then
