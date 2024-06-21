@@ -22,3 +22,4 @@ pymemcache
 pyyaml
 tzdata
 ansible
+Pillow

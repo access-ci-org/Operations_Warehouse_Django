@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_opensearch_dsl',
     'allocations',
     'cider',
+    'integration_badges',
     'glue2',
     'news',
     'resource_v4',
