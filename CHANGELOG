@@ -1,3 +1,9 @@
+v3.30.0 2024-06-25 JP
+  - Fix fos views not declaring serializer class
+  - Fix fos seriaizer method field not declaring return type
+  - Fix news serializer not correctly returniing distribution option flags
+  - Return new news serializer post slack flag
+
 v3.29.0 2024-05-08 JP
   - Increase News.Content field maximum size from 8000 to 50000
 
