@@ -12,10 +12,30 @@ from rest_framework.generics import GenericAPIView
 from .models import *
 from .filters import *
 from .serializers import *
+from .utils import cider_to_coco, mk_html_table
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+
 # Create your views here.
+
+class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
+    '''
+        Comparison of ACCESS Active Allocated Compute Resources
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    serializer_class = CiderInfrastructure_OtherAttrs_Serializer
+    def get(self, request, format=None, **kwargs):
+        returnformat = request.query_params.get('format' )
+        template_name = 'coco.html'
+        objects = CiderInfrastructure_Active_Filter( type='Compute' )
+        serializer = CiderInfrastructure_OtherAttrs_Serializer(objects, context={'request': request}, many=True)
+        coco_data = cider_to_coco( { 'results': serializer.data } )
+        if returnformat != 'json':
+            coco_data = mk_html_table( coco_data )
+        return MyAPIResponse( { 'results': coco_data }, template_name=template_name )
+
 
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''

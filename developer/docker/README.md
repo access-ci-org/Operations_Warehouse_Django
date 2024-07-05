@@ -8,10 +8,10 @@ along with its prerequisites and various scripts for confguring and/or interacti
 with it.
 
 
-# How to setup the docker compose django dev environment
+# How to setup the docker-compose django dev environment
 
 ## Prerequisites:
-* A functional docker and docker compose ecosystem.
+* A functional docker and docker-compose ecosystem.
 * The django_aws_credential_key file, in your home dir.  Get this from Eric or JP.
 * Your local uid and gid (on linux systems, you can use the "id" command to get these)
 * Docker vm.max_map_count >= 262144 (See also: faq.md)

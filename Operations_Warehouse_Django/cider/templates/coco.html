@@ -1,0 +1,65 @@
+{% extends "web/base_nav_none.html" %}
+
+{% block title %}Compute Comparison{% endblock %}
+
+{% block page_extra_scripts %}
+<style>
+  .coco {
+    border: 1px solid black;
+  }
+
+  table.coco {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th.coco {
+    text-align: center;
+  }
+
+  .bgwhite {
+    background-color: white;
+  }
+  .bglight {
+    background-color: silver;
+  }
+
+  .remainder {
+    display: none;
+  }
+  .truncated:hover + .remainder {
+    display: inline;
+    color: red;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1>Compute Comparison</h1>
+
+<table class="coco">
+  <tr class="coco">
+    {% for header in results.headers %}
+      {% autoescape off %}
+        <th class="coco"> {{ header }} </th>
+      {% endautoescape %}
+    {% endfor %}
+  </tr>
+  {% for row in results.table %}
+  <tr class="coco {% cycle 'bgwhite' 'bglight' %}">
+      {% for v in row %}
+        {% if v|length > 35 %}
+        <td class="coco">
+          <div class="truncated">{{v|truncatechars:34}}</div>
+          <div class="remainder">{{v|slice:"33:"}}</div>
+        </td>
+        {% else %}
+        <td class="coco">{{v}}</td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
