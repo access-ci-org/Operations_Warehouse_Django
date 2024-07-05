@@ -37,8 +37,8 @@ class Integration_Roadmap_Task(models.Model):
 
 class Integration_Badge_Prerequisite_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    badge_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
-    prerequisite_badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+    badge_id = models.ForeignKey(Integration_Badge, related_name='badge_prerequisites', on_delete=models.CASCADE)
+    prerequisite_badge_id = models.ForeignKey(Integration_Badge, related_name='badge_required_by', on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
 
     class Meta:
@@ -68,7 +68,7 @@ class Integration_Badge_Task(models.Model):
 
 class Integration_Resource_Roadmap(models.Model):
     id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_roadmaps', on_delete=models.CASCADE)
     roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
 
     class Meta:
@@ -77,7 +77,7 @@ class Integration_Resource_Roadmap(models.Model):
 
 class Integration_Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_badges', on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
 
     class Meta:
