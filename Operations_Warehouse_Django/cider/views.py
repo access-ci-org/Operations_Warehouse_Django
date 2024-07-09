@@ -15,7 +15,21 @@ from .serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+
 # Create your views here.
+
+class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
+    '''
+        Comparison of ACCESS Active Allocated Compute Resources
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Comparison_Serializer
+    def get(self, request, format=None, **kwargs):
+        objects = CiderInfrastructure_Active_Filter( affiliation='ACCESS', result='OBJECTS', type='Compute' )
+        serializer = CiderInfrastructure_Comparison_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''

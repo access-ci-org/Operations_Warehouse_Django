@@ -3,6 +3,13 @@ from django.utils.encoding import uri_to_iri
 from cider.models import *
 from rest_framework import serializers
 
+
+class CiderInfrastructure_Comparison_Serializer( serializers.ModelSerializer ):
+    class Meta:
+        model = CiderInfrastructure
+        fields = ( 'cider_type', 'other_attributes' )
+
+
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()

@@ -1,6 +1,9 @@
 # Repo specific ignores
 *_customized.conf
 *_customized.sql
+*.html
+*.json
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
