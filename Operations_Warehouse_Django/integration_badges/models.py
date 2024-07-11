@@ -1,6 +1,18 @@
 from django.db import models
 from cider.models import *
 
+def get_current_username():
+    # TODO integrate the cilogon credentials
+    return "admin"
+
+WORKFLOW_STATE = {
+    "NOT_PLANNED": "Not Planned",
+    "PLANNED": "Planned",
+    "TASK_COMPLETED": "Task Completed",
+    "VERIFICATION_FAILED": "Verification Failed",
+    "VERIFIED": "Verified",
+    "DEPRECATED": "Deprecated"
+}
 
 class Integration_Roadmap(models.Model):
     roadmap_id = models.AutoField(primary_key=True)
@@ -74,12 +86,42 @@ class Integration_Resource_Roadmap(models.Model):
     class Meta:
         unique_together = ('resource_id', 'roadmap_id',)
 
+class Integration_Workflow(models.Model):
+    workflow_id = models.AutoField(primary_key=True)
+    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+    state = models.CharField(max_length=20)
+    stateUpdatedBy = models.CharField(max_length=50)
+    stateUpdatedAt = models.DateTimeField(auto_now_add=True)
+
 
 class Integration_Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
     resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_badges', on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+    badge_access_url = models.URLField(null=True)
+    badge_access_url_label = models.CharField(max_length=20, null=True)
 
     class Meta:
         unique_together = ('resource_id', 'badge_id',)
+
+    @property
+    def workflow(self):
+        # TODO return the latest workflow filtered by resource_id and badge_id
+        return None
+
+    @property
+    def state(self):
+        if self.workflow is None:
+            return WORKFLOW_STATE["NOT_PLANNED"]
+        return self.workflow.state
+
+    def __init__(self, resource_id, badge_id, badge_access_url = None, badge_access_url_label = None):
+        workflow = Integration_Workflow(state=WORKFLOW_STATE["PLANNED"], stateUpdatedBy=get_current_username(),
+                                        resource_id=resource_id, badge_id=badge_id)
+        workflow.save()
+
+        super(Integration_Resource_Badge, self).__init__(self, resource_id=resource_id, badge_id=badge_id,  badge_access_url=badge_access_url,
+            badge_access_url_label=badge_access_url_label)
+
 
