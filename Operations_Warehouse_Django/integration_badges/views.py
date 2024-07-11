@@ -67,7 +67,8 @@ class Integration_Resource_List_v1(GenericAPIView):
     serializer_class = Integration_Resource_List_Serializer
 
     def get(self, request, format=None, **kwargs):
-        item = CiderInfrastructure.objects.all()
+        # Filter out only Compute and Storage resources
+        item = CiderInfrastructure.objects.filter(cider_type__in=['Compute', 'Storage'])
 
         serializer = self.serializer_class(item, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
@@ -111,7 +112,7 @@ class Integration_Task_v1(GenericAPIView):
             if not badge_tasks:
                 raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail="Specified badge has no associated tasks.")
         except Integration_Badge_Task.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge tasks not found')
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified badge tasks not found')
 
         serializer = self.serializer_class(badge_tasks, context={'request': request}, many=True)
-        return Response(serializer.data)
+        return MyAPIResponse({'results': serializer.data})

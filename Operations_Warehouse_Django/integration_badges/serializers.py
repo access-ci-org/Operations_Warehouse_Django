@@ -73,14 +73,16 @@ class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
 
 # return the all information of a resource, including the list of ids of the badges
 class Integration_Resource_List_Serializer(serializers.ModelSerializer):
-    related_badges = Integration_Resource_Badge_Serializer(source='resource_badges', many=True)
+    badges = Integration_Resource_Badge_Serializer(source='resource_badges', many=True)
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'resource_descriptive_name', 'related_badges', 'organization_name', 'organization_url', 'organization_logo_url')
+        fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description',
+                  'resource_descriptive_name', 'badges', 
+                  'organization_name', 'organization_url', 'organization_logo_url')
 
     def get_organization_name(self, obj) -> str:
         try:
@@ -111,10 +113,40 @@ class Integration_Resource_Roadmap_Serializer(serializers.ModelSerializer):
 # return all the information of a resource, including the roadmaps
 class Integration_Resource_Serializer(serializers.ModelSerializer):
     roadmaps = Integration_Resource_Roadmap_Serializer(source='resource_roadmaps', many=True)
+    organization_name = serializers.SerializerMethodField()
+    organization_url = serializers.SerializerMethodField()
+    organization_logo_url = serializers.SerializerMethodField()
+    user_guide_url = serializers.SerializerMethodField()
 
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'resource_descriptive_name', 'roadmaps')
+        fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
+                  'resource_descriptive_name', 'roadmaps', 'organization_name', 'organization_url', 
+                  'organization_logo_url', 'user_guide_url')
+        
+    def get_organization_name(self, obj) -> str:
+        try:
+            return obj.other_attributes['organizations'][0]['organization_name']
+        except:
+            return None
+
+    def get_organization_url(self, obj) -> str:
+        try:
+            return obj.other_attributes['organizations'][0]['organization_url']
+        except:
+            return None
+
+    def get_organization_logo_url(self, obj) -> str:
+        try:
+            return obj.other_attributes['organizations'][0]['organization_logo_url']
+        except:
+            return None
+        
+    def get_user_guide_url(self, object) -> str:
+        try:
+            return object.other_attributes['user_guide_url']
+        except:
+            return None
 
 class Integration_Badge_Task_Serializer(serializers.ModelSerializer):
     tasks = serializers.SerializerMethodField()
