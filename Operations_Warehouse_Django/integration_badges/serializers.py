@@ -4,32 +4,44 @@ from integration_badges.models import *
 from rest_framework import serializers
 
 
-# returns only the badge_id and name for a badge
 class Integration_Badge_Serializer(serializers.ModelSerializer):
-    #    badges = serializers.SerializerMethodField()
-
-    #badges = serializers.RelatedField(many=True)
+    '''
+    Returns the badge_id and name of an Integration_Badge object
+    '''
 
     class Meta:
         model = Integration_Badge
         fields = ('badge_id', 'name')
 
-# returns all fields for a badge, except the prerequisites
+
 class Integration_Badge_Extended_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Integration_Badge object
+    '''
 
     class Meta:
         model = Integration_Badge
         fields = "__all__"
 
-# returns the prerequisites for a badge
+
 class Integration_Badge_Prerequisite_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields (except the internal id) of an Integration_Badge_Prerequisite_Badge 
+    object, including badge_id, prerequisite_badge_id, and sequence_no
+    '''
 
     class Meta:
         model = Integration_Badge_Prerequisite_Badge
         fields = ('badge_id', 'prerequisite_badge_id', 'sequence_no')
 
-# returns all fields for a badge, including the prerequisites
+
 class Integration_Badge_Full_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Integration_Badge object and also include the prerequisites 
+    of the badge. It uses the Integration_Badge_Prerequisite_Serializer to return the 
+    prerequisites.
+    '''
+
     prerequisites = Integration_Badge_Prerequisite_Serializer(source='badge_prerequisites', many=True)
 
     class Meta:
@@ -39,11 +51,18 @@ class Integration_Badge_Full_Serializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         prerequisites = representation.get('prerequisites', [])
+        # sort the prerequisites by sequence_no
         sorted_prerequisites = sorted(prerequisites, key=lambda x: x['sequence_no'])
         representation['prerequisites'] = sorted_prerequisites
         return representation
 
+
 class Integration_Roadmap_Badge_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Integration_Roadmap_Badge object. It includes the 
+    required field that determines if the badge is required or optional by the 
+    roadmap. It uses the Integration_Badge_Serializer to return the badge_id and name.
+    '''
 
     class Meta:
         model = Integration_Roadmap_Badge
@@ -54,8 +73,12 @@ class Integration_Roadmap_Badge_Serializer(serializers.ModelSerializer):
         rep['badge'] = Integration_Badge_Serializer(instance.badge_id).data
         return rep
 
+
 class Integration_Roadmap_Serializer(serializers.ModelSerializer):
-    #    badges = serializers.SerializerMethodField()
+    '''
+    Return all fields of an Integration_Roadmap object. It includes fields from the 
+    roadmap-badge model, which are returned as a list of badges.
+    '''
 
     badges = Integration_Roadmap_Badge_Serializer(source='badge_set', many=True)
 
@@ -63,16 +86,38 @@ class Integration_Roadmap_Serializer(serializers.ModelSerializer):
         model = Integration_Roadmap
         fields = ('roadmap_id', 'name', 'badges')
         exclude = ()
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        badges = representation.get('badges', [])
+        # Sort the badges by sequence_no
+        sorted_badges = sorted(badges, key=lambda x: x['sequence_no'])
+        representation['badges'] = sorted_badges
+        return representation
 
-# return all the badges of a resource
+
 class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Integration_Resource_Badge object, including the badge state. 
+    The badges returned are at least planned.
+    '''
+
+    state = serializers.SerializerMethodField()
 
     class Meta:
         model = Integration_Resource_Badge
-        fields = ('id', 'resource_id', 'badge_id')
+        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'state')
+    
+    def get_state(self, obj):
+        return obj.state
+    
 
-# return the all information of a resource, including the list of ids of the badges
 class Integration_Resource_List_Serializer(serializers.ModelSerializer):
+    '''
+    Return fields of a CiderInfrastructure object, including badges of the resource 
+    that are at least planned.
+    '''
+
     badges = Integration_Resource_Badge_Serializer(source='resource_badges', many=True)
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
@@ -102,27 +147,39 @@ class Integration_Resource_List_Serializer(serializers.ModelSerializer):
         except:
             return None
 
-# return the roadmaps of a resource
+
 class Integration_Resource_Roadmap_Serializer(serializers.ModelSerializer):
+    '''
+    Return all roadmaps of a resource, including the roadmap_id and name. 
+    Using the Integration_Roadmap_Serializer to return the roadmap_id, name, 
+    and the badges of that roadmap.
+    '''
+
     roadmap = Integration_Roadmap_Serializer(source='roadmap_id')
 
     class Meta:
         model = Integration_Resource_Roadmap
         fields = ('id', 'resource_id', 'roadmap_id', 'roadmap')
 
-# return all the information of a resource, including the roadmaps
+
 class Integration_Resource_Serializer(serializers.ModelSerializer):
+    '''
+    Return fields of a CiderInfrastructure object, as well as roadmaps and 
+    badges states of associated badges that are at least planned.
+    '''
+
     roadmaps = Integration_Resource_Roadmap_Serializer(source='resource_roadmaps', many=True)
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
+    badge_status = serializers.SerializerMethodField()
 
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
                   'resource_descriptive_name', 'roadmaps', 'organization_name', 'organization_url', 
-                  'organization_logo_url', 'user_guide_url')
+                  'organization_logo_url', 'user_guide_url', 'badge_status')
         
     def get_organization_name(self, obj) -> str:
         try:
@@ -142,24 +199,112 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
         except:
             return None
         
-    def get_user_guide_url(self, object) -> str:
+    def get_user_guide_url(self, obj) -> str:
         try:
-            return object.other_attributes['user_guide_url']
+            return obj.other_attributes['user_guide_url']
         except:
             return None
-
-class Integration_Badge_Task_Serializer(serializers.ModelSerializer):
-    tasks = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Integration_Badge_Task
-        fields = ['badge_id', 'sequence_no', 'tasks']
-
-    def get_tasks(self, obj):
-        return Integration_Roadmap_Task_Serializer(obj.task_id).data
+        
+    def get_badge_status(self, obj):
+        try:
+            badges = obj.resource_badges.all()
+        
+            badge_status = []
+            for badge in badges:
+                badge_data = {
+                    'badge_id': badge.badge_id.badge_id,
+                    'badge_access_url': badge.badge_access_url,
+                    'badge_access_url_label': badge.badge_access_url_label,
+                    'state': badge.workflow.state,
+                    'state_updated_by': badge.workflow.stateUpdatedBy if badge.workflow else None,
+                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None
+                }
+                badge_status.append(badge_data)
+            
+            return badge_status
+        except:
+            return None
+        
 
 class Integration_Roadmap_Task_Serializer(serializers.ModelSerializer):
-    
+    '''
+    Return all fields of an Integration_Roadmap_Task object.
+    '''
+
     class Meta:
         model = Integration_Roadmap_Task
         fields = "__all__"
+
+
+class Integration_Badge_Task_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Integration_Badge_Task object.
+    '''
+
+    task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Integration_Badge_Task
+        fields = ['badge_id', 'sequence_no', 'task']
+
+    def get_task(self, obj):
+        try:
+            return Integration_Roadmap_Task_Serializer(obj.task_id).data
+        except:
+            return None
+
+
+class Integration_Resource_Badge_Plan_Serializer(serializers.ModelSerializer):
+    '''
+    Create a new Integration_Resource_Badge object.
+    '''
+
+    class Meta:
+        model = Integration_Resource_Badge
+        fields = ['badge_access_url', 'badge_access_url_label']
+
+    def create(self, validated_data):
+        resource = validated_data.pop('resource', None)
+        badge = validated_data.pop('badge', None)
+
+        if resource is None or badge is None:
+            raise serializers.ValidationError("Resource and badge must be provided.")
+
+        resource_badge = Integration_Resource_Badge.objects.create(
+            resource_id=resource,
+            badge_id=badge,
+            **validated_data
+        )
+        return resource_badge
+
+
+class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
+    '''
+    Return the states of all badges (at least planned) associated with a resource.
+    '''
+
+    badge_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Integration_Resource_Badge
+        fields = ['badge_status']
+    
+    def get_badge_status(self, obj):
+        try:
+            badges = obj.resource_badges.all()
+        
+            badge_status = []
+            for badge in badges:
+                badge_data = {
+                    'badge_id': badge.badge_id.badge_id,
+                    'badge_access_url': badge.badge_access_url,
+                    'badge_access_url_label': badge.badge_access_url_label,
+                    'state': badge.workflow.state,
+                    'state_updated_by': badge.workflow.stateUpdatedBy if badge.workflow else None,
+                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None
+                }
+                badge_status.append(badge_data)
+            
+            return badge_status
+        except:
+            return None

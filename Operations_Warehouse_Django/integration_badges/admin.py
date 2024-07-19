@@ -82,3 +82,11 @@ class Integration_Resource_Badge_Admin(admin.ModelAdmin):
 admin.site.register(Integration_Resource_Badge, Integration_Resource_Badge_Admin)
 
 
+class Integration_Workflow_Admin(admin.ModelAdmin):
+    list_display = ('workflow_id', 'resource_id', 'badge_id', 'state', 'stateUpdatedBy', 'stateUpdatedAt')
+    list_display_links = ['workflow_id']
+    ordering = ['workflow_id']
+    search_fields = ['state', 'stateUpdatedBy']
+
+# Register your model here.
+admin.site.register(Integration_Workflow, Integration_Workflow_Admin)
