@@ -86,6 +86,7 @@ class Integration_Resource_Roadmap(models.Model):
     class Meta:
         unique_together = ('resource_id', 'roadmap_id',)
 
+
 class Integration_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
     resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
@@ -107,21 +108,26 @@ class Integration_Resource_Badge(models.Model):
 
     @property
     def workflow(self):
-        # TODO return the latest workflow filtered by resource_id and badge_id
-        return None
-
+        return Integration_Workflow.objects.filter(
+            resource_id=self.resource_id,
+            badge_id=self.badge_id
+        ).order_by('-stateUpdatedAt').first()
+    
     @property
     def state(self):
         if self.workflow is None:
             return WORKFLOW_STATE["NOT_PLANNED"]
         return self.workflow.state
 
-    def __init__(self, resource_id, badge_id, badge_access_url = None, badge_access_url_label = None):
-        workflow = Integration_Workflow(state=WORKFLOW_STATE["PLANNED"], stateUpdatedBy=get_current_username(),
-                                        resource_id=resource_id, badge_id=badge_id)
-        workflow.save()
-
-        super(Integration_Resource_Badge, self).__init__(self, resource_id=resource_id, badge_id=badge_id,  badge_access_url=badge_access_url,
-            badge_access_url_label=badge_access_url_label)
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            workflow = Integration_Workflow(
+                state=WORKFLOW_STATE["PLANNED"],
+                stateUpdatedBy=get_current_username(),
+                resource_id=self.resource_id,
+                badge_id=self.badge_id
+            )
+            workflow.save()
+        super().save(*args, **kwargs)
 
 
