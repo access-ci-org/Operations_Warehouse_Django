@@ -164,8 +164,16 @@ class Integration_Resource_Badge_Plan_v1(GenericAPIView):
                 raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail="Error saving the resource_badge: " + str(e))
         else:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail="Invalid data: " + str(serializer.errors))
+
+
+class Integration_Resource_Badge_Unplan_v1(GenericAPIView):
+    '''
+    Delete a resource-badge object.
+    '''
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
     
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         resource_id = kwargs.get('cider_resource_id')
         badge_id = kwargs.get('integration_badge_id')
 
