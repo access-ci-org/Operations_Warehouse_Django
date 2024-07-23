@@ -257,3 +257,43 @@ class Integration_Resource_Badge_Task_Completed_v1(GenericAPIView):
         workflow.save()
 
         return MyAPIResponse({'message': 'Task marked as completed'})
+
+
+class Integration_Resource_Badge_Task_Uncompleted_v1(GenericAPIView):
+    '''
+    Mark a badge as task uncompleted.
+    '''
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+
+    def post(self, request, *args, **kwargs):
+        resource_id = kwargs.get('cider_resource_id')
+        badge_id = kwargs.get('integration_badge_id')
+
+        if not resource_id or not badge_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID and Badge ID are required')
+
+        try:
+            resource = CiderInfrastructure.objects.get(pk=resource_id)
+            badge = Integration_Badge.objects.get(pk=badge_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
+        except Integration_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
+
+        try:
+            resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
+        except Integration_Resource_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
+
+        # Update the state back to "PLANNED"
+        workflow = Integration_Workflow(
+            resource_id=resource,
+            badge_id=badge,
+            state=WORKFLOW_STATE["PLANNED"],
+            stateUpdatedBy=get_current_username(),
+            stateUpdatedAt=timezone.now()
+        )
+        workflow.save()
+
+        return MyAPIResponse({'message': 'Task marked as uncompleted (state as planned)'})

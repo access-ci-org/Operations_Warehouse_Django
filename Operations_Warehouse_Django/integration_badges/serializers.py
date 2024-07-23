@@ -103,13 +103,23 @@ class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
     '''
 
     state = serializers.SerializerMethodField()
+    comment = serializers.SerializerMethodField()
 
     class Meta:
         model = Integration_Resource_Badge
-        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'state')
+        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'state', 'comment')
     
     def get_state(self, obj):
-        return obj.state
+        try:
+            return obj.workflow.state
+        except:
+            return None
+        
+    def get_comment(self, obj):
+        try:
+            return obj.workflow.comment
+        except:
+            return None
     
 
 class Integration_Resource_List_Serializer(serializers.ModelSerializer):
@@ -217,7 +227,8 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
                     'badge_access_url_label': badge.badge_access_url_label,
                     'state': badge.workflow.state,
                     'state_updated_by': badge.workflow.stateUpdatedBy if badge.workflow else None,
-                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None
+                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None,
+                    'comment': badge.workflow.comment if badge.workflow else None
                 }
                 badge_status.append(badge_data)
             

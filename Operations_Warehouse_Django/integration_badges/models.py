@@ -94,6 +94,7 @@ class Integration_Workflow(models.Model):
     state = models.CharField(max_length=20)
     stateUpdatedBy = models.CharField(max_length=50)
     stateUpdatedAt = models.DateTimeField(auto_now_add=True)
+    comment = models.TextField(null=True)
 
 
 class Integration_Resource_Badge(models.Model):
