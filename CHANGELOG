@@ -1,3 +1,6 @@
+v3.31.0 2024-07-24 JP
+  - New /wh2/cider/v2/access-all/ view returning all active AND inactive ACCESS resources
+
 v3.30.0 2024-06-25 JP
   - Fix fos views not declaring serializer class
   - Fix fos seriaizer method field not declaring return type
