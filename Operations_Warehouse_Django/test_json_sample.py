@@ -1,7 +1,6 @@
 import tabulate
 import json
 import pathlib
-import pprint
 
 def put_html( data, filename ):
     ''' write data to a file
@@ -60,30 +59,11 @@ def get_best_org_details( org_list ):
     ]
     scores = [0] * len(org_list)
     for i in range( len(org_list) ):
-        # print( f"\t({org['organization_abbreviation']})" )
         org = org_list[i]
         org_scores = [ org[k] is not None for k in keys ]
-        # pprint.pprint( org_scores )
         scores[i] = sum( org_scores )
-        # scores[i] = sum( [ int(b) for b in org_scores ] )
-        # for k in keys:
-        #     print( f"\t\t{k}: {org[k]}" )
-    # print( f"\t{scores}" )
     best = scores.index( max( scores ) )
-    # print( f"\t\tindex of best: {best}" )
     return org_list[ best ]
-
-
-# def get_institution_info( attrs ):
-#     ''' INPUT cider other_attributes dict
-#         OUTPUT dict with org info (as returned from cider)
-#             organization_name
-#             organization_url
-#             organization_abbreviation
-#             organization_logo_url   "https://cider.access-ci.…ource_providers/369/logo"
-#             ...
-#     '''
-#     return get_best_org_details( attrs['organizations'] )
 
 
 def get_resource_info( attrs ):
