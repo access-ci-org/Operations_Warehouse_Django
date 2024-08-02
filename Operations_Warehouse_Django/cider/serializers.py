@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.urls import reverse
 from django.utils.encoding import uri_to_iri
 from cider.models import *
@@ -9,12 +10,13 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
+    fixed_status = serializers.SerializerMethodField()
     
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
             'resource_descriptive_name', 'resource_description',
-            'latest_status', 'latest_status_begin', 'latest_status_end',
+            'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
             'organization_name', 'organization_url', 'organization_logo_url',
             'cider_view_url', 'cider_data_url', 'updated_at')
         
@@ -33,9 +35,9 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             return object.other_attributes['organizations'][0]['organization_logo_url']
         except:
             return None
-    def get_cider_view_url(self, CiderInfrastructure) -> str:
+    def get_cider_view_url(self, object) -> str:
         try:
-            return CiderInfrastructure.other_attributes['public_url']
+            return object.other_attributes['public_url']
         except:
             return None
     def get_cider_data_url(self, object) -> str:
@@ -44,6 +46,25 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
             return http_request.build_absolute_uri(uri_to_iri(reverse('cider-detail-v1-id', args=[object.cider_resource_id])))
         else:
             return ''
+
+    def get_fixed_status(self, object) -> str:
+        if object.latest_status:
+            return object.latest_status
+        # Handle the common retired case, and other cases, where there is no latest status
+        today_str = datetime.strftime(datetime.now(), '%Y-%m-%d')
+        try:
+            prod_start = object.resourceStatus.get('productionBeginDate')
+            prod_end = object.resourceStatus.get('productionEndDate')
+        except:
+            prod_start = ''
+            prod_end = ''
+        if not prod_start or prod_start >= today_str:
+            fixed_status = 'coming_soon'
+        elif today_str > prod_end:
+            fixed_status = 'decommissioned'
+        else:
+            fixed_status = ''
+        return fixed_status
 
 class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     cider_view_url = serializers.SerializerMethodField()
