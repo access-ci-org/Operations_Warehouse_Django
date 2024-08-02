@@ -1,3 +1,6 @@
+v3.32.1 2024-08-024JP
+  - Fix /wh2/cider/v2/access-all/ fixed_status field serializer to look at correct status dates
+
 v3.32.0 2024-08-024JP
   - Add /wh2/cider/v2/access-all/ fixed_status field when current_status isn't correct
 

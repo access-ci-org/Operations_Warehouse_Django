@@ -53,8 +53,8 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
         # Handle the common retired case, and other cases, where there is no latest status
         today_str = datetime.strftime(datetime.now(), '%Y-%m-%d')
         try:
-            prod_start = object.resourceStatus.get('productionBeginDate')
-            prod_end = object.resourceStatus.get('productionEndDate')
+            prod_start = object.resourceStatus.get('production_begin_date')
+            prod_end = object.resourceStatus.get('production_end_date')
         except:
             prod_start = ''
             prod_end = ''
