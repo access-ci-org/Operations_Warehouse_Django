@@ -1,3 +1,6 @@
+v3.32.2 2024-08-024JP
+  - Fix /wh2/cider/v2/access-all/ fixed_status field serializer to look at correct resource_status json field
+
 v3.32.1 2024-08-024JP
   - Fix /wh2/cider/v2/access-all/ fixed_status field serializer to look at correct status dates
 
