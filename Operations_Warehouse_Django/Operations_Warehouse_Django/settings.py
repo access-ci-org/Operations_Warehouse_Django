@@ -109,7 +109,7 @@ for db in DATABASES:
     DATABASES[db]['ENGINE'] = 'django.db.backends.postgresql'
     DATABASES[db]['PORT'] = os.environ.get('PGPORT', CONF.get('DB_PORT', '5432'))
     DATABASES[db]['CONN_MAX_AGE'] = 600 # Persist DB connections
-    DATABASES[db]['OPTIONS'] = {'options': '-c search_path=info,public'}
+    DATABASES[db]['OPTIONS'] = {'options': '-c search_path=info_django,info,public'}
 
 #DATABASE_ROUTERS = ['xsede_warehouse.router.ModelDatabaseRouter',]
 #from xsede_warehouse.router import *
