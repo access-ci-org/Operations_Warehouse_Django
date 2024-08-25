@@ -40,12 +40,13 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
     OutageType = serializers.SerializerMethodField()
     DistributionOptionsEmailSubscribers = serializers.SerializerMethodField()
     DistributionOptionsEmailAll = serializers.SerializerMethodField()
+    DistributionOptionsPostSlack = serializers.SerializerMethodField()
     AffectedResources = News_Associations_Embedded_ResourceID_Serializer(source='Associations', many=True, read_only=True)
 
     class Meta:
         model = News
         fields = ['URN', 'Subject', 'Content', 'OutageStart', 'OutageEnd', 'OutageType', 'AffectedResources', \
-            'DistributionOptionsEmailSubscribers', 'DistributionOptionsEmailAll']
+            'DistributionOptionsEmailSubscribers', 'DistributionOptionsEmailAll', 'DistributionOptionsPostSlack']
 
     def get_OutageType(self, object) -> str:
         if object.NewsType == 'Outage Full':
@@ -59,12 +60,16 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
     def get_DistributionOptionsEmailSubscribers(self, object) -> bool:
         # The 'or' convert None to string so that split works
         dops = [opt.strip().lower() for opt in (object.DistributionOptions or '').split(',')]
-        return('email subscribers' in dops)
+        return('email only subscribers' in dops)
 
     def get_DistributionOptionsEmailAll(self, object) -> bool:
         dops = [opt.strip().lower() for opt in (object.DistributionOptions or '').split(',')]
-        return('email everyone' in dops)
-        
+        return('email everyone with access' in dops)
+
+    def get_DistributionOptionsPostSlack(self, object) -> bool:
+        dops = [opt.strip().lower() for opt in (object.DistributionOptions or '').split(',')]
+        return('post to slack' in dops)
+
 #class News_v1_List_Serializer(serializers.ModelSerializer):
 #    PublisherID = serializers.CharField(source='Publisher.OrganizationID')
 #    PublisherName = serializers.CharField(source='Publisher.OrganizationName')

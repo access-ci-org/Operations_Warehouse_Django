@@ -42,6 +42,19 @@ class CiderInfrastructure_v2_ACCESSActiveList(GenericAPIView):
         serializer = CiderInfrastructure_Summary_Serializer(chain(objects1, objects2), context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
+class CiderInfrastructure_v2_ACCESSAllList(GenericAPIView):
+    '''
+        All ACCESS Active and Inactive Compute and Storage Resources and Central Online Services Resources
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_Summary_Serializer
+    def get(self, request, format=None, **kwargs):
+        objects1 = CiderInfrastructure_All_Filter(affiliation='ACCESS', result='OBJECTS', type='Compute')
+        objects2 = CiderInfrastructure_All_Filter(affiliation='ACCESS', result='OBJECTS', type='Storage')
+        serializer = CiderInfrastructure_Summary_Serializer(chain(objects1, objects2), context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+    
 class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     '''
         All ACCESS Allocated Resources

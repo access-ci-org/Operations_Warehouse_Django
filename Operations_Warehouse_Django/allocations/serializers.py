@@ -12,7 +12,7 @@ class Allocations_fos_Serializer(serializers.ModelSerializer):
 class Allocations_fos_DetailURL_Serializer(serializers.ModelSerializer):
     DetailURL = serializers.SerializerMethodField()
     
-    def get_DetailURL(self, FieldOfScience):
+    def get_DetailURL(self, FieldOfScience) -> str:
         http_request = self.context.get('request')
         if http_request:
             return http_request.build_absolute_uri(uri_to_iri(reverse('accessdb-fos-detail', args=[FieldOfScience.field_of_science_id])))

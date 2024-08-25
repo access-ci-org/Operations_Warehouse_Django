@@ -25,6 +25,7 @@ class Allocations_v1_fos_List(ListAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
+    serializer_class = Allocations_fos_DetailURL_Serializer
     @extend_schema(parameters=[
             OpenApiParameter('search_strings', str, OpenApiParameter.QUERY),
             OpenApiParameter('format', str, OpenApiParameter.QUERY),
@@ -133,6 +134,7 @@ class Allocations_v1_fos_Detail(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
+    serializer_class = Allocations_fos_Serializer
     def get(self, request, format=None, **kwargs):
         returnformat = request.query_params.get('format', 'json')
         if not 'id' in self.kwargs:
