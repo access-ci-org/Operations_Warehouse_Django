@@ -105,7 +105,7 @@ DATABASES = {
     }
 }
 for db in DATABASES:
-    DATABASES[db]['NAME'] = 'warehouse2'
+    DATABASES[db]['NAME'] = CONF.get('DB_NAME', 'warehouse2')
     DATABASES[db]['ENGINE'] = 'django.db.backends.postgresql'
     DATABASES[db]['PORT'] = os.environ.get('PGPORT', CONF.get('DB_PORT', '5432'))
     DATABASES[db]['CONN_MAX_AGE'] = 600 # Persist DB connections
