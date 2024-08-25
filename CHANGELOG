@@ -1,3 +1,6 @@
+v3.33.1 2024-08-25 JP
+  - Add info_django to PostgreSQL search_path, where django objects will be rather than public
+
 v3.33.0 2024-08-25 JP
   - Implement DB_NANE in the APP_CONFIG file to support database name configuration, rather than hardcoded
 
