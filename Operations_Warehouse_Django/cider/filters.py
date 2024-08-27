@@ -1,6 +1,5 @@
 from django.db.models import Q
 from cider.models import *
-from itertools import chain
 
 ###############################################################################
 # Active CiDeR Resource Filtering Criteria

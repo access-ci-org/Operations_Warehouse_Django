@@ -1,0 +1,25 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}CiDeR Resource List{% endblock %}
+{% block content %}
+
+<h1 align="center">CiDeR Resource List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=info_resourceid">Info ResourceID</a></th>
+        <th><a href="?format=html&sort=cider_type">CiDeR Type</a></th>
+        <th><a href="?format=html&sort=resource_descriptive_name">Descriptive Name</a></th>
+        <th><a href="?format=html&sort=latest_status">Latest Status</a></th>
+        <th>Detail</th>
+    </tr>
+    {% for item in record_list %}
+    <tr>
+        <td>{{ item.info_resourceid }}</td>
+        <td>{{ item.cider_type }}</td>
+        <td>{{ item.resource_descriptive_name }}</td>
+        <td>{{ item.latest_status }}</td>
+	<td><a href="{{ item.cider_data_url }}?format=html">View</a></td>
+    </tr>
+    {% endfor %}
+{% endblock %}
