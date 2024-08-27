@@ -1,0 +1,66 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}CiDeR Resource Detail{% endblock %}
+{% block content %}
+
+<h1 align="center">CiDeR Resource Detail</h1>
+
+<a href="/wh2/cider/v1/access-active/?format=html">All Resources</a>
+
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+
+<table id ="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    
+    {% for item in record_list %}
+    <tr>
+        <th>Descriptive Name</th>
+        <td>{{ item.resource_descriptive_name }}</th>
+    </tr>
+    <tr>
+        <th>Info ResourceID</th>
+        <td>{{ item.info_resourceid }}</th>
+    </tr>
+    <tr>
+        <th>CiDeR Type</th>
+        <td>{{ item.cider_type }}</th>
+    </tr>
+    <tr>
+        <th>Latest Status</th>
+        <td>{{ item.latest_status }} from {{ item.latest_status_begin }} till {{ item.latest_status_end }}</th>
+    </tr>
+    <tr>
+        <th>Current Statuses</th>
+        <td>{{ item.current_statuses }}</th>
+    </tr>
+    <tr>
+        <th>CiDeR ID</th>
+        <td>{{ item.cider_resource_id }}</th>
+    </tr>
+    <tr>
+        <th>SiteID</th>
+        <td>{{ item.info_siteid }}</th>
+    </tr>
+    <tr>
+        <th>Description</th>
+        <td>{{ item.resource_description }}</th>
+    </tr>
+    <tr>
+        <th>Recommended Use</th>
+        <td>{{ item.recommended_use }}</th>
+    </tr>
+    <tr>
+        <th>Access Description</th>
+        <td>{{ item.access_description }}</th>
+    </tr>
+    <tr>
+        <th>Affiliation</th>
+        <td>{{ item.project_affiliation }}</th>
+    </tr>
+
+    <tr>
+        <th>Updated At</th>
+        <td>{{ item.updated_at }}</th>
+    </tr>
+    
+    {% endfor %}
+{% endblock %}

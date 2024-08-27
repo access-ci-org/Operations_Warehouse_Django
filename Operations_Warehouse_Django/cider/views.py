@@ -42,11 +42,20 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
         All ACCESS Active Allocated Compute and Storage Resources
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (JSONRenderer,)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
         objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
-        serializer = CiderInfrastructure_Summary_Serializer(objects, context={'request': request}, many=True)
+#        if request.accepted_renderer.format == 'html':
+#            return MyAPIResponse({'record_list': objects}, template_name='list.html')
+        sort_by = request.GET.get('sort')
+        try:
+            objects_sorted = objects.order_by(sort_by)
+        except:
+            objects_sorted = objects
+        serializer = CiderInfrastructure_Summary_Serializer(objects_sorted, context={'request': request}, many=True)
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse({'record_list': serializer.data}, template_name='list.html')
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v2_ACCESSActiveList(GenericAPIView):
@@ -143,7 +152,7 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
         An ACCESS Generic Resource Detail
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (JSONRenderer,)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer,)
     serializer_class = CiderInfrastructure_Detail_Serializer
     def get(self, request, format=None, **kwargs):
         # We need the base resource to pass to the serializer
@@ -162,6 +171,8 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
         else:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
         serializer = CiderInfrastructure_Detail_Serializer(item, context={'request': request})
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse({'record_list': [serializer.data]}, template_name='detail.html')
         return MyAPIResponse({'results': serializer.data})
 
 class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
