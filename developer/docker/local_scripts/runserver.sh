@@ -1,2 +1,2 @@
 #!/bin/bash
-docker exec -it docker-django-1 /soft/warehouse-2.0/sbin/warehouse_api.sh
+docker exec -it warehouse_django /soft/warehouse-2.0/sbin/warehouse_api.sh

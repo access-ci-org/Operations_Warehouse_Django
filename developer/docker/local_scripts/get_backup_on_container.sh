@@ -1,2 +1,2 @@
 #!/bin/bash
-docker exec -it docker-django-1 /opt/app/scripts/get_latest_backup.sh django.mindump
+docker exec -it warehouse_django /opt/app/scripts/get_latest_backup.sh django.mindump

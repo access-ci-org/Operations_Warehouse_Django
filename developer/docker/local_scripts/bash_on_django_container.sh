@@ -1,2 +1,2 @@
 #!/bin/bash
-docker exec -it docker-django-1 /bin/bash
+docker exec -it warehouse_django /bin/bash
