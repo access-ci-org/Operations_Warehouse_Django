@@ -1,7 +1,8 @@
 v3.34.0 2024-08-27 Andy and JP
   - COmpute COmparison json and html
   - Simplify developer container setup and instructions
-  - New /cider/vi/access-active html list and /cider/v1/cider_resource_id/ html detail
+  - New /wh2/cider/vi/access-active html list and /wh2/cider/v1/cider_resource_id/ html detail
+  - Add a main page link to /wh2/cider/v1/access-active/?sort=info_resourceid
 
 v3.33.1 2024-08-25 JP
   - Add info_django to PostgreSQL search_path, where django objects will be rather than public
