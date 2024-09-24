@@ -33,14 +33,14 @@ class Integration_Roadmap_Badge_Admin(admin.ModelAdmin):
 # Register your models here.
 admin.site.register(Integration_Roadmap_Badge, Integration_Roadmap_Badge_Admin)
 
-class Integration_Roadmap_Task_Admin(admin.ModelAdmin):
+class Integration_Task_Admin(admin.ModelAdmin):
     list_display = ('task_id', 'name', 'technical_summary', 'implementor_roles', 'task_experts', 'detailed_instructions_url')
     list_display_links = ['task_id']
     ordering = ['task_id']
     search_fields = ['name', 'technical_summary']
 
 # Register your models here.
-admin.site.register(Integration_Roadmap_Task, Integration_Roadmap_Task_Admin)
+admin.site.register(Integration_Task, Integration_Task_Admin)
 
 class Integration_Badge_Prerequisite_Badge_Admin(admin.ModelAdmin):
     list_display = ('id', 'badge_id', 'prerequisite_badge_id', 'sequence_no')

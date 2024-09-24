@@ -33,14 +33,14 @@ class Integration_Badge(models.Model):
     verification_summary = models.TextField(null=True)
     verification_method = models.CharField(max_length=20) # {Automated, Manual}
     default_badge_access_url = models.URLField()
-    default_badge_access_url_label = models.CharField(max_length=20)
+    default_badge_access_url_label = models.CharField(max_length=50)
 
     #prerequisite_badges = models.ManyToManyField("Integration_Badge")
 
 
-class Integration_Roadmap_Task(models.Model):
+class Integration_Task(models.Model):
     task_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=200)
     technical_summary = models.TextField(null=True)
     implementor_roles = models.CharField(max_length=200)
     task_experts = models.CharField(max_length=200)
@@ -71,7 +71,7 @@ class Integration_Roadmap_Badge(models.Model):
 class Integration_Badge_Task(models.Model):
     id = models.AutoField(primary_key=True)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
-    task_id = models.ForeignKey(Integration_Roadmap_Task, on_delete=models.CASCADE)
+    task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
 
     class Meta:
@@ -102,7 +102,7 @@ class Integration_Resource_Badge(models.Model):
     resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_badges', on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
     badge_access_url = models.URLField(null=True)
-    badge_access_url_label = models.CharField(max_length=20, null=True)
+    badge_access_url_label = models.CharField(max_length=50, null=True)
 
     class Meta:
         unique_together = ('resource_id', 'badge_id',)

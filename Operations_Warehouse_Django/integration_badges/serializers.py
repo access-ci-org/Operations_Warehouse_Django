@@ -237,13 +237,13 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
             return None
         
 
-class Integration_Roadmap_Task_Serializer(serializers.ModelSerializer):
+class Integration_Task_Serializer(serializers.ModelSerializer):
     '''
-    Return all fields of an Integration_Roadmap_Task object.
+    Return all fields of an Integration_Task object.
     '''
 
     class Meta:
-        model = Integration_Roadmap_Task
+        model = Integration_Task
         fields = "__all__"
 
 
@@ -260,7 +260,7 @@ class Integration_Badge_Task_Serializer(serializers.ModelSerializer):
 
     def get_task(self, obj):
         try:
-            return Integration_Roadmap_Task_Serializer(obj.task_id).data
+            return Integration_Task_Serializer(obj.task_id).data
         except:
             return None
 
