@@ -28,6 +28,7 @@ urlpatterns = [
     path('wh2/state/', include('warehouse_state.urls')),
     path('wh2/allocations/', include('allocations.urls') ),
     path('wh2/cider/', include('cider.urls') ),
+    path('wh2/integration_badges/', include('integration_badges.urls') ),
     path('wh2/glue2/', include('glue2.urls') ),
     path('wh2/news/', include('news.urls') ),
     path('wh2/resource/', include('resource_v4.urls') ),
