@@ -23,6 +23,9 @@ class Integration_Roadmap(models.Model):
     integration_coordinators = models.CharField(max_length=200)
     status = models.CharField(max_length=50)
 
+    def __str__(self):
+        return "%s (%d)" % (self.name, self.roadmap_id)
+
 
 class Integration_Badge(models.Model):
     badge_id = models.AutoField(primary_key=True)
@@ -37,6 +40,9 @@ class Integration_Badge(models.Model):
 
     #prerequisite_badges = models.ManyToManyField("Integration_Badge")
 
+    def __str__(self):
+        return "%s (%d)" % (self.name, self.badge_id)
+
 
 class Integration_Task(models.Model):
     task_id = models.AutoField(primary_key=True)
@@ -45,6 +51,8 @@ class Integration_Task(models.Model):
     implementor_roles = models.CharField(max_length=200)
     task_experts = models.CharField(max_length=200)
     detailed_instructions_url = models.URLField()
+    def __str__(self):
+        return "%s (%d)" % (self.name, self.task_id)
 
 
 class Integration_Badge_Prerequisite_Badge(models.Model):
@@ -95,6 +103,7 @@ class Integration_Workflow(models.Model):
     stateUpdatedBy = models.CharField(max_length=50)
     stateUpdatedAt = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
+
 
 
 class Integration_Resource_Badge(models.Model):

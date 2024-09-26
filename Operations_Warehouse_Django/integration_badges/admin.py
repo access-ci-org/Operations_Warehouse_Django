@@ -5,7 +5,7 @@ from integration_badges.models import *
 class Integration_Roadmap_Admin(admin.ModelAdmin):
     list_display = ('roadmap_id', 'name', 'graphic', 'executive_summary', 'infrastructure_types',
                     'integration_coordinators', 'status')
-    list_display_links = ['roadmap_id']
+    list_display_links = ['name']
     ordering = ['name', 'roadmap_id']
     search_fields = ['name', 'executive_summary']
 
@@ -16,7 +16,7 @@ class Integration_Badge_Admin(admin.ModelAdmin):
     list_display = ('badge_id', 'name', 'graphic', 'researcher_summary', 'resource_provider_summary',
                     'verification_summary', 'verification_method',
                     'default_badge_access_url', 'default_badge_access_url_label')
-    list_display_links = ['badge_id']
+    list_display_links = ['name']
     ordering = ['name', 'badge_id']
     search_fields = ['name', 'researcher_summary', 'resource_provider_summary']
 
@@ -35,7 +35,7 @@ admin.site.register(Integration_Roadmap_Badge, Integration_Roadmap_Badge_Admin)
 
 class Integration_Task_Admin(admin.ModelAdmin):
     list_display = ('task_id', 'name', 'technical_summary', 'implementor_roles', 'task_experts', 'detailed_instructions_url')
-    list_display_links = ['task_id']
+    list_display_links = ['name']
     ordering = ['task_id']
     search_fields = ['name', 'technical_summary']
 

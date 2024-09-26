@@ -21,7 +21,7 @@ class CiderInfrastructure(models.Model):
     other_attributes = models.JSONField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True)
     def __str__(self):
-       return str(self.cider_resource_id)
+       return "%s (%d)" % (self.resource_descriptive_name, self.cider_resource_id)
 
 class CiderOrganizations(models.Model):
     organization_id = models.IntegerField(primary_key=True)
