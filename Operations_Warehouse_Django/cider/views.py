@@ -31,6 +31,7 @@ class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
         template_name = 'coco.html'
         objects = CiderInfrastructure_Active_Filter( type='Compute' )
         serializer = CiderInfrastructure_OtherAttrs_Serializer(objects, context={'request': request}, many=True)
+        # return MyAPIResponse( { 'results': serializer.data }, template_name=template_name )
         coco_data = cider_to_coco( { 'results': serializer.data } )
         if returnformat != 'json':
             coco_data = mk_html_table( coco_data )

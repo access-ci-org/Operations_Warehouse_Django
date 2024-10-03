@@ -45,6 +45,9 @@ def get_resource_info( attrs ):
     ]
     resource_info = { k: attrs[k] for k in keys }
     resource_info.update( get_best_org_details( attrs['organizations'] ) )
+    #CTT-144 add info_resourceid
+    info_resourceid = attrs['parent_resource']['info_resourceid']
+    resource_info.update( {'info_resourceid':info_resourceid} )
     return resource_info
 
 
@@ -69,6 +72,7 @@ def get_resource_attribute_names():
         # gateway_recommended_use,
         'gpu_description',
         'graphics_card',
+        'info_resourceid',
         'interconnect',
         # ip_address,
         'job_manager',
@@ -120,14 +124,17 @@ def mk_headers( cols, resources ):
         org_name = resource[ 'organization_name' ]
         logo_url = resource[ 'organization_logo_url' ]
         abbr = resource[ 'organization_abbreviation' ]
+        # info_resourceid = resource[ 'info_resourceid' ]
         img_size=75
         h = (
             f'<!-- org_abbr: {abbr} -->'
-            f'<img width="{img_size}" height="{img_size}" src="{logo_url}" alt="{org_name}">'
-            '<br/>'
-            f'<a href="{org_url}">({abbr})</a>'
+            f'<a href="{org_url}">'
+            f'<img width="{img_size}" height="{img_size}" src="{logo_url}" alt="{abbr}">'
+            f'</a>'
             '<br/>'
             f'<a href="{resource_url}">{resource_short_name}</a>'
+            # '<br/>'
+            # f'&lt;{info_resourceid}&gt;'
         )
         headers.append( h )
     return headers
@@ -183,6 +190,13 @@ def cider_to_coco( objects ):
                 features[k][resource_id] = v
             except KeyError as e:
                 features[k] = { 'Attribute': k, resource_id: v }
+        #CTT-144 add info_resourceid
+        k = 'info_resourceid'
+        v = resources[ resource_id ][k]
+        try:
+            features[k][resource_id] = v
+        except KeyError as e:
+            features[k] = { 'Attribute': k, resource_id: v }
     data = { 'resources': resources, 'attributes': features }
     return data
 
