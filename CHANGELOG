@@ -1,5 +1,6 @@
-v3.35.? 2024-??-?? JP
+v3.35.0 2024-10-17 JP, Andy
   - Change Field to Fields, add Fields of Science to main page
+  - CTT-144 add info_resourceid
 
 v3.34.0 2024-08-27 Andy and JP
   - COmpute COmparison json and html
