@@ -62,12 +62,12 @@ urlpatterns = [
 
 # Complex model routes
     path(r'v1/software/', Software_List.as_view(), name='software-list'),
-    path(r'v1/software/ID/<str:id>/', Software_Detail.as_view(), name='software-detail'),
+    path(r'v1/software/ID/<path:id>/', Software_Detail.as_view(), name='software-detail'),
     path(r'v1/software/ResourceID/<str:resourceid>/', Software_Detail.as_view(), name='software-detail-onresource'),
     path(r'v1/software/AppName/<str:appname>/', Software_Detail.as_view(), name='software-detail'),
 
     path(r'v1/software_full/', Software_Full.as_view(), name='software-fulllist'),
-    path(r'v1/software_full/ID/<str:id>/', Software_Full.as_view(), name='software-fulldetail'),
+    path(r'v1/software_full/ID/<path:id>/', Software_Full.as_view(), name='software-fulldetail'),
     path(r'v1/software_full/ResourceID/<str:resourceid>/', Software_Full.as_view(), name='software-fulldetail-onresource'),
     path(r'v1/software_full/AppName/<str:appname>/', Software_Full.as_view(), name='software-fulldetail-byname'),
 
