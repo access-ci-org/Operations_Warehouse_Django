@@ -1,4 +1,6 @@
-v3.3x.x 2024-10-29 JP
+v3.36.0 2024-10-29 Eric, JP
+  - CTT-237 Change path converter of str to path for glue2 and resource_v4
+  software by ID routes
   - Fix /wh2/glue2/v1/software_full/ bug that wasn't returning info_sideid
 
 v3.35.0 2024-10-17 JP, Andy
