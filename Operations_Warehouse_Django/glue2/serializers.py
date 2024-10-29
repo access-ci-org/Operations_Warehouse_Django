@@ -230,7 +230,7 @@ class Software_Community_Serializer(serializers.ModelSerializer):
 
     def get_siteid(self, ApplicationHandle) -> str:
         try:
-            Cider_object = CiderInfrastructure.objects.filter(cider_type='resource').filter(info_resourceid=ApplicationHandle.ResourceID)
+            Cider_object = CiderInfrastructure.objects.filter(cider_type='Compute').filter(info_resourceid=ApplicationHandle.ResourceID)
             if Cider_object and Cider_object[0] and Cider_object[0].info_siteid:
                 return Cider_object[0].info_siteid
         except CiderInfrastructure.DoesNotExist:

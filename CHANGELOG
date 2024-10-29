@@ -1,3 +1,6 @@
+v3.3x.x 2024-10-29 JP
+  - Fix /wh2/glue2/v1/software_full/ bug that wasn't returning info_sideid
+
 v3.35.0 2024-10-17 JP, Andy
   - Change Field to Fields, add Fields of Science to main page
   - CTT-144 add info_resourceid
