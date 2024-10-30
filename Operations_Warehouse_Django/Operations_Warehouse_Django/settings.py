@@ -353,7 +353,7 @@ if SETTINGS_MODE == 'SERVER':
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
         'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
+            'rest_framework.permissions.IsAuthenticatedOrReadOnly',
         ],
         'DEFAULT_RENDERER_CLASSES': [
            'rest_framework.renderers.JSONRenderer',

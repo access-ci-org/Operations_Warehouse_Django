@@ -542,3 +542,8 @@ class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer)
             return str(object.other_attributes['requested_usernames']) or None
         except:
             return None
+
+class CiderGroups_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = CiderGroups
+        fields = ('__all__')

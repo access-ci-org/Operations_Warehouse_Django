@@ -198,3 +198,40 @@ class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
         serializer = CiderInfrastructure_Compute_Detail_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v1_Group_Detail(GenericAPIView):
+    '''
+        A Cider Group
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderGroups_Serializer
+    def get(self, request, format=None, **kwargs):
+        if not self.kwargs.get('info_groupid'):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        try:
+            item = CiderGroups.objects.get(pk=self.kwargs['info_groupid'])
+        except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderGroups_Serializer(item, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderInfrastructure_v1_Group_List(GenericAPIView):
+    '''
+        Selected Cider Groups
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderGroups_Serializer
+    def get(self, request, format=None, **kwargs):
+        try:
+            if self.kwargs.get('group_type'):
+                items = CiderGroups.objects.filter(group_types__has_key=self.kwargs['group_type'])
+            elif self.kwargs.get('info_resourceid'):
+                items = CiderGroups.objects.filter(info_resourceids__has_key=self.kwargs['info_resourceid'])
+            else:
+                items = objects = CiderGroups.objects.all()
+        except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})

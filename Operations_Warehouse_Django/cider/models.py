@@ -21,3 +21,14 @@ class CiderInfrastructure(models.Model):
     updated_at = models.DateTimeField(null=True)
     def __str__(self):
        return str(self.cider_resource_id)
+
+class CiderGroups(models.Model):
+    info_groupid = models.CharField(primary_key=True, max_length=40)
+    group_descriptive_name = models.CharField(max_length=120)
+    group_description = models.CharField(max_length=4000, null=True)
+    group_logo_url = models.CharField(max_length=320, null=True, blank=True)
+    group_types = models.JSONField(null=True, blank=True)
+    info_resourceids = models.JSONField(null=True, blank=True)
+    other_attributes = models.JSONField(null=True, blank=True)
+    def __str__(self):
+       return str(self.info_groupid)

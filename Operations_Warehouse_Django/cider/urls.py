@@ -13,5 +13,9 @@ urlpatterns = [
     path(r'v1/access-allocated/', CiderInfrastructure_v1_ACCESSAllocatedList.as_view(), name='cider-accessallocatedlist-v1'),
     path(r'v1/access-online-services/', CiderInfrastructure_v1_ACCESSOnlineServicesList.as_view(), name='cider-accessonlineserviceslist-v1'),
     path(r'v1/access-science-gateways/', CiderInfrastructure_v1_ACCESSScienceGatewaysList.as_view(), name='cider-accesssciencegatewayslist-v1'),
-#    path(r'v1/compute/<str:cider_resource_id>/', CiderInfrastructure_v1_Compute_Detail.as_view(), name='cider-compute-detail-v1-infoid'),
+    path(r'v1/cider-groups/', CiderInfrastructure_v1_Group_List.as_view(), name='cider-grouplist-v1'),
+    path(r'v1/cider-groups/info_groupid/<str:info_groupid>/', CiderInfrastructure_v1_Group_Detail.as_view(), name='cider-group-groupid-v1'),
+    path(r'v1/cider-groups/group_type/<str:group_type>/', CiderInfrastructure_v1_Group_List.as_view(), name='cider-group-type-v1'),
+    path(r'v1/cider-groups/info_resourceid/<str:info_resourceid>/', CiderInfrastructure_v1_Group_List.as_view(), name='cider-group-infoid-v1'),
+    #    path(r'v1/compute/<str:cider_resource_id>/', CiderInfrastructure_v1_Compute_Detail.as_view(), name='cider-compute-detail-v1-infoid'),
 ]
