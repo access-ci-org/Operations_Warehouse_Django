@@ -1,3 +1,6 @@
+v3.37.1 2024-10-30 JP
+  - Rename CiderGroups URLs from /cider-groups/ to /groups/ since they are inside the cider/ app
+
 v3.37.0 2024-10-30 JP
   - New CiderGroups model, views, etc. for the resource catalog
 
