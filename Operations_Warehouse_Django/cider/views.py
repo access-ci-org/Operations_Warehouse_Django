@@ -199,7 +199,49 @@ class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
         serializer = CiderInfrastructure_Compute_Detail_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
-class CiderInfrastructure_v1_Group_Detail(GenericAPIView):
+class CiderFeatures_v1_Detail(GenericAPIView):
+    '''
+        A Cider Feature Categories
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderFeatures_Serializer
+    def get(self, request, format=None, **kwargs):
+        if not self.kwargs.get('category_id'):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        try:
+            item = CiderFeatures.objects.get(pk=self.kwargs['category_id'])
+        except (CiderFeatures.DoesNotExist, CiderFeatures.MultipleObjectsReturned):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderFeatures_Serializer(item, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderFeatures_v1_List(GenericAPIView):
+    '''
+        Selected Cider Feature Categories
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderFeatures_Serializer
+    def get(self, request, format=None, **kwargs):
+        try:
+            items = objects = CiderFeatures.objects.all()
+        except (CiderFeatures.DoesNotExist):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderFeatures_Serializer(items, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
+# DENORMALIZE CODE THAT MAY BE USEFUL SOMEDAY
+#        features = []
+#        for category in items:
+#            for feature in category.features:
+#                key = '{}:{}'.format(category.feature_category_id, feature.get('id'))
+#                features.append({
+#                    **dict((k, getattr(category,k)) for k in ('feature_category_id', 'feature_category_name', 'feature_category_description')),
+#                    **dict((k, feature.get(k)) for k in ('id', 'name', 'description'))
+#                    })
+
+class CiderGroups_v1_Detail(GenericAPIView):
     '''
         A Cider Group
     '''
@@ -216,7 +258,7 @@ class CiderInfrastructure_v1_Group_Detail(GenericAPIView):
         serializer = CiderGroups_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
-class CiderInfrastructure_v1_Group_List(GenericAPIView):
+class CiderGroups_v1_List(GenericAPIView):
     '''
         Selected Cider Groups
     '''

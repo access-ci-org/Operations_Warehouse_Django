@@ -22,6 +22,15 @@ class CiderInfrastructure(models.Model):
     def __str__(self):
        return str(self.cider_resource_id)
 
+class CiderFeatures(models.Model):
+    feature_category_id = models.IntegerField(primary_key=True)
+    feature_category_name = models.CharField(max_length=120)
+    feature_category_description = models.CharField(max_length=4000, null=True)
+    features = models.JSONField(null=True, blank=True)
+    other_attributes = models.JSONField(null=True, blank=True)
+    def __str__(self):
+       return str(self.feature_category_id)
+
 class CiderGroups(models.Model):
     info_groupid = models.CharField(primary_key=True, max_length=40)
     group_descriptive_name = models.CharField(max_length=120)

@@ -543,6 +543,11 @@ class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer)
         except:
             return None
 
+class CiderFeatures_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = CiderFeatures
+        fields = ('__all__')
+
 class CiderGroups_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderGroups
