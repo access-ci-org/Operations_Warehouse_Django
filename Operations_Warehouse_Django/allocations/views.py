@@ -15,7 +15,7 @@ from .serializers import *
 
 class Allocations_v1_fos_List(ListAPIView):
     '''
-        Field of Science list
+        Fields of Science list
         
         Optional response argument(s):
         ```
