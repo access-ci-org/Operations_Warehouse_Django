@@ -1,4 +1,5 @@
 from django.contrib import admin
+from dal import autocomplete
 
 from integration_badges.models import *
 
@@ -25,6 +26,7 @@ admin.site.register(Integration_Badge, Integration_Badge_Admin)
 
 
 class Integration_Roadmap_Badge_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('roadmap_id', 'badge_id',)
     list_display = ('id', 'roadmap_id', 'badge_id', 'sequence_no', 'required')
     list_display_links = ['id']
     ordering = ['roadmap_id', 'badge_id']
@@ -43,6 +45,7 @@ class Integration_Task_Admin(admin.ModelAdmin):
 admin.site.register(Integration_Task, Integration_Task_Admin)
 
 class Integration_Badge_Prerequisite_Badge_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('badge_id', 'prerequisite_badge_id',)
     list_display = ('id', 'badge_id', 'prerequisite_badge_id', 'sequence_no')
     list_display_links = ['id']
     ordering = ['badge_id', 'prerequisite_badge_id']
@@ -53,6 +56,7 @@ admin.site.register(Integration_Badge_Prerequisite_Badge, Integration_Badge_Prer
 
 
 class Integration_Badge_Task_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('badge_id', 'task_id',)
     list_display = ('id', 'badge_id', 'task_id', 'sequence_no')
     list_display_links = ['id']
     ordering = ['badge_id', 'task_id']
@@ -63,30 +67,34 @@ admin.site.register(Integration_Badge_Task, Integration_Badge_Task_Admin)
 
 
 class Integration_Resource_Roadmap_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('resource_id', 'roadmap_id',)
     list_display = ('id', 'resource_id', 'roadmap_id')
     list_display_links = ['id']
     ordering = ['resource_id', 'roadmap_id']
     search_fields = ['id', 'resource_id', 'roadmap_id']
+
 
 # Register your models here.
 admin.site.register(Integration_Resource_Roadmap, Integration_Resource_Roadmap_Admin)
 
 
 class Integration_Resource_Badge_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('resource_id', 'badge_id',)
     list_display = ('id', 'resource_id', 'badge_id')
     list_display_links = ['id']
     ordering = ['resource_id', 'badge_id']
-    search_fields = ['id', 'resource_id', 'badge_id']
+    search_fields = ['resource_id', 'badge_id']
 
 # Register your models here.
 admin.site.register(Integration_Resource_Badge, Integration_Resource_Badge_Admin)
 
 
 class Integration_Workflow_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('resource_id', 'badge_id',)
     list_display = ('workflow_id', 'resource_id', 'badge_id', 'state', 'stateUpdatedBy', 'stateUpdatedAt')
     list_display_links = ['workflow_id']
-    ordering = ['workflow_id']
-    search_fields = ['state', 'stateUpdatedBy']
+    ordering = ['resource_id', 'badge_id', 'workflow_id']
+    search_fields = ['resource_id', 'badge_id', 'state', 'stateUpdatedBy']
 
 # Register your model here.
 admin.site.register(Integration_Workflow, Integration_Workflow_Admin)

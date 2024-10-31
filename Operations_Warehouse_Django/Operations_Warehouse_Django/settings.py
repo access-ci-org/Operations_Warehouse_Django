@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'warehouse_state',
     'warehouse_tools',
     'web',
+    'dal',
+    'dal_select2',
 ]
 
 MIDDLEWARE = [
