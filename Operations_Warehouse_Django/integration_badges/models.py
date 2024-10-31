@@ -23,6 +23,9 @@ class Integration_Roadmap(models.Model):
     integration_coordinators = models.CharField(max_length=200)
     status = models.CharField(max_length=50)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return "%s (%d)" % (self.name, self.roadmap_id)
 
@@ -40,6 +43,9 @@ class Integration_Badge(models.Model):
 
     #prerequisite_badges = models.ManyToManyField("Integration_Badge")
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return "%s (%d)" % (self.name, self.badge_id)
 
@@ -51,6 +57,10 @@ class Integration_Task(models.Model):
     implementor_roles = models.CharField(max_length=200)
     task_experts = models.CharField(max_length=200)
     detailed_instructions_url = models.URLField()
+
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return "%s (%d)" % (self.name, self.task_id)
 
