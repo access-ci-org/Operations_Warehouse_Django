@@ -1,3 +1,7 @@
+v3.39.0 2024-11-04 JP
+  - New access-active-groups by group type view
+  - Add groups to cider detail view
+
 v3.38.0 2024-10-31 JP
   - New CiderFeatures model, views, etc. for the resource catalog
 

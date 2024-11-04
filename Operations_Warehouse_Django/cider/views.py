@@ -277,3 +277,100 @@ class CiderGroups_v1_List(GenericAPIView):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
         serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
+
+class CiderCatalog_v1_ACCESSActiveGroups(GenericAPIView):
+    '''
+        Catalog summary of ACCESS Active Compute and Storage resource groups of a group type
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderCatalog_v1_ACCESSActiveGroups_Serializer
+    def get(self, request, format=None, **kwargs):
+        if not self.kwargs.get('group_type') and not self.kwargs.get('group_id'):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing query parameter')
+
+        all_feature_categories = {}
+        all_features = {}
+        # The CiderFeatures model contains Feature Categories, and associated features in the features json field
+        for feature_category in CiderFeatures.objects.all():
+            # Key by feature_category_name which are unique and are what resources reference
+            all_feature_categories[feature_category.feature_category_name] = {
+                    'counter': 0,                      # For counting references
+                    'feature_category_id': feature_category.feature_category_id,
+                    'feature_category_name': feature_category.feature_category_name,
+                    'feature_category_description': feature_category.feature_category_description
+                }
+            for feature in feature_category.features:
+                # Key by id which are unique and are what resources reference
+                all_features[feature['id']] = {
+                        'counter': 0,                 # For counting references
+                        'id': feature['id'],
+                        'name': feature['name'],
+                        'feature_category_id': feature_category.feature_category_id
+                    }
+
+        active_resinfo = {}
+        active_orginfo = {}
+        resources = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        for item in resources:
+            iid = item.info_resourceid
+            active_resinfo[iid] = {'org_ids': [], 'feature_ids': []}      # Initialize
+            if isinstance(item.other_attributes.get('organizations'), list):
+                for o in item.other_attributes['organizations']:
+                    active_resinfo[iid]['org_ids'].append(o['organization_id'])
+                    if o['organization_id'] not in active_orginfo:
+                        active_orginfo[o['organization_id']] = o
+            if isinstance(item.other_attributes.get('features'), list):
+                for f in item.other_attributes['features']:
+                    active_resinfo[iid]['feature_ids'].append(f['id'])
+                    if f['feature_category'] in all_feature_categories:
+                        all_feature_categories[f['feature_category']]['counter'] += 1     # Increment feature category used
+                    if f['id'] in all_features:
+                        all_features[f['id']]['counter'] += 1                             # Increment feature used
+
+        groups = []
+        groups_extra = {}
+        if self.kwargs.get('group_type'):
+            query = CiderGroups.objects.filter(group_types__has_key=self.kwargs['group_type'])
+        else:
+            query = CiderGroups.objects.filter(info_groupid=self.kwargs['group_id'])
+        for group in query:
+            if type(group.info_resourceids) is not list or group.info_resourceids is None:
+                continue                                # Ignore group with no resources
+            active_resources = [grid for grid in group.info_resourceids if grid in active_resinfo]
+            if not active_resources:
+                continue                                # Ignore group with no active resources
+            og = {                                      # Extra group information to pass and use in the serializer
+                'rollup_feature_ids': [],               # Feature id rollup for active resources in a group
+                'rollup_org_ids': [],                   # Organization id rollup for active resources in a group
+                'rollup_active_info_resourceids': active_resources
+            }
+            for ogrid in active_resources:
+                og['rollup_org_ids'].extend(active_resinfo[ogrid]['org_ids'])
+                og['rollup_feature_ids'].extend(active_resinfo[ogrid]['feature_ids'])
+            og['rollup_feature_ids'] = list(set(chain(og['rollup_feature_ids'])))       # Make unique
+            og['rollup_org_ids'] = list(set(chain(og['rollup_org_ids'])))               # Make unique
+            groups_extra[group.info_groupid] = og
+            groups.append(group)
+
+        serializer = CiderCatalog_v1_ACCESSActiveGroups_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
+        active_orgdata = [ {'organization_id': a['organization_id'],
+                            'organization_name': a['organization_name'],
+                            'organization_logo_url': a['organization_logo_url']}
+              for a in active_orginfo.values()]
+        active_categories = [ { 'feature_category_id': f['feature_category_id'],
+                                'feature_category_name': f['feature_category_name'],
+                                'feature_category_description': f['feature_category_description']}
+              for f in all_feature_categories.values() if f['counter'] > 0]
+        active_features = [ {   'feature_id': f['id'],
+                                'feature_name': f['name'],
+                                'feature_category_id': f['feature_category_id']}
+              for f in all_features.values() if f['counter'] > 0]
+        return MyAPIResponse({'results': {
+                'active_groups': serializer.data,
+                'feature_categories': active_categories,
+                'features': active_features,
+                'organizations': active_orgdata
+            }}
+        )
+

@@ -277,6 +277,7 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
     compute = serializers.SerializerMethodField()
     storage = serializers.SerializerMethodField()
     gateway = serializers.SerializerMethodField()
@@ -317,6 +318,11 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
     def get_features(self, object) -> dict:
         try:    # Gracefully ignore missing compute
             return object.other_attributes['features']
+        except:
+            return None
+    def get_groups(self, object) -> dict:
+        try:    # Gracefully ignore missing compute
+            return object.other_attributes['group_ids']
         except:
             return None
     def get_compute(self, object) -> dict:
@@ -552,3 +558,28 @@ class CiderGroups_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderGroups
         fields = ('__all__')
+
+class CiderCatalog_v1_ACCESSActiveGroups_Serializer(serializers.ModelSerializer):
+    rollup_info_resourceids = serializers.SerializerMethodField()
+    rollup_feature_ids = serializers.SerializerMethodField()
+    rollup_organization_ids = serializers.SerializerMethodField()
+    class Meta:
+        model = CiderGroups
+        fields = ('info_groupid', 'group_descriptive_name', 'group_description', 'group_logo_url', 'group_types', 'other_attributes',
+            'rollup_info_resourceids', 'rollup_feature_ids', 'rollup_organization_ids')
+
+    def get_rollup_info_resourceids(self, object) -> list[str]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_active_info_resourceids']
+        except:
+            return([])
+    def get_rollup_feature_ids(self, object) -> list[int]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_feature_ids']
+        except:
+            return([])
+    def get_rollup_organization_ids(self, object) -> list[str]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_org_ids']
+        except:
+            return([])
