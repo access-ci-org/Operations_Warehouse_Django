@@ -14,10 +14,10 @@ class CiderFeatures_Admin(admin.ModelAdmin):
     search_fields = ['feature_category_id', 'feature_category_name']
 
 class CiderGroups_Admin(admin.ModelAdmin):
-    list_display = ('info_groupid', 'group_descriptive_name')
-    list_display_links = ['info_groupid']
+    list_display = ('group_id', 'info_groupid', 'group_descriptive_name')
+    list_display_links = ['group_id']
     ordering = ['info_groupid']
-    search_fields = ['info_groupid__iexact', 'group_descriptive_name']
+    search_fields = ['group_id__iexact', 'info_groupid__iexact', 'group_descriptive_name']
 
 # Register your models here.
 admin.site.register(CiderInfrastructure, CiderInfrastructure_Admin)

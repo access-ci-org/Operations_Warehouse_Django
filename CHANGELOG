@@ -1,3 +1,7 @@
+v3.40.0 2024-11-05 JP
+  - Change CiderGroups pk to new group_id field, info_groupid becomes a normal index field
+  - Recreate CiderGroups and CiderFeatures models, requires out of band table drops and django_migrations cleanup
+
 v3.39.0 2024-11-04 JP
   - New access-active-groups by group type view
   - Add groups to cider detail view

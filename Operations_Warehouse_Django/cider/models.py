@@ -32,7 +32,8 @@ class CiderFeatures(models.Model):
        return str(self.feature_category_id)
 
 class CiderGroups(models.Model):
-    info_groupid = models.CharField(primary_key=True, max_length=40)
+    group_id = models.IntegerField(primary_key=True)
+    info_groupid = models.CharField(db_index=True, max_length=40)
     group_descriptive_name = models.CharField(max_length=120)
     group_description = models.CharField(max_length=4000, null=True)
     group_logo_url = models.CharField(max_length=320, null=True, blank=True)
@@ -40,4 +41,4 @@ class CiderGroups(models.Model):
     info_resourceids = models.JSONField(null=True, blank=True)
     other_attributes = models.JSONField(null=True, blank=True)
     def __str__(self):
-       return str(self.info_groupid)
+       return str(self.group_id)

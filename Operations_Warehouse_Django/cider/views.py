@@ -201,7 +201,7 @@ class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
 
 class CiderFeatures_v1_Detail(GenericAPIView):
     '''
-        A Cider Feature Categories
+        A CiDeR Feature Categories
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -218,7 +218,7 @@ class CiderFeatures_v1_Detail(GenericAPIView):
 
 class CiderFeatures_v1_List(GenericAPIView):
     '''
-        Selected Cider Feature Categories
+        Selected CiDeR Feature Categories
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -243,24 +243,27 @@ class CiderFeatures_v1_List(GenericAPIView):
 
 class CiderGroups_v1_Detail(GenericAPIView):
     '''
-        A Cider Group
+        A CiDeR Group
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderGroups_Serializer
     def get(self, request, format=None, **kwargs):
-        if not self.kwargs.get('info_groupid'):
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
         try:
-            item = CiderGroups.objects.get(pk=self.kwargs['info_groupid'])
+            if self.kwargs.get('group_id'):
+                item = CiderGroups.objects.get(pk=self.kwargs['group_id'])
+            elif self.kwargs.get('info_groupid'):
+                item = CiderGroups.objects.get(info_groupid=self.kwargs['info_groupid'])
+            else:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing query parameter')
         except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Not found or multiple found')
         serializer = CiderGroups_Serializer(item, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
 class CiderGroups_v1_List(GenericAPIView):
     '''
-        Selected Cider Groups
+        Selected CiDeR Groups
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -272,7 +275,7 @@ class CiderGroups_v1_List(GenericAPIView):
             elif self.kwargs.get('info_resourceid'):
                 items = CiderGroups.objects.filter(info_resourceids__has_key=self.kwargs['info_resourceid'])
             else:
-                items = objects = CiderGroups.objects.all()
+                items = CiderGroups.objects.all()
         except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
         serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
@@ -286,7 +289,7 @@ class CiderCatalog_v1_ACCESSActiveGroups(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderCatalog_v1_ACCESSActiveGroups_Serializer
     def get(self, request, format=None, **kwargs):
-        if not self.kwargs.get('group_type') and not self.kwargs.get('group_id'):
+        if not self.kwargs.get('group_type') and not self.kwargs.get('info_groupid'):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing query parameter')
 
         all_feature_categories = {}
@@ -333,7 +336,7 @@ class CiderCatalog_v1_ACCESSActiveGroups(GenericAPIView):
         if self.kwargs.get('group_type'):
             query = CiderGroups.objects.filter(group_types__has_key=self.kwargs['group_type'])
         else:
-            query = CiderGroups.objects.filter(info_groupid=self.kwargs['group_id'])
+            query = CiderGroups.objects.filter(info_groupid=self.kwargs['info_groupid'])
         for group in query:
             if type(group.info_resourceids) is not list or group.info_resourceids is None:
                 continue                                # Ignore group with no resources

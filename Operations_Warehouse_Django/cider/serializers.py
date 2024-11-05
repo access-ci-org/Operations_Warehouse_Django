@@ -565,7 +565,8 @@ class CiderCatalog_v1_ACCESSActiveGroups_Serializer(serializers.ModelSerializer)
     rollup_organization_ids = serializers.SerializerMethodField()
     class Meta:
         model = CiderGroups
-        fields = ('info_groupid', 'group_descriptive_name', 'group_description', 'group_logo_url', 'group_types', 'other_attributes',
+        fields = ('group_id', 'info_groupid', 'group_descriptive_name', 'group_description',
+            'group_logo_url', 'group_types', 'other_attributes',
             'rollup_info_resourceids', 'rollup_feature_ids', 'rollup_organization_ids')
 
     def get_rollup_info_resourceids(self, object) -> list[str]:
