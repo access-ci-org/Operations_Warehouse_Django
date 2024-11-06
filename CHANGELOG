@@ -1,3 +1,6 @@
+v3.41.0 2024-11-06 JP
+  - Additional /access-active-resource/ endpoints for all or selected groups
+
 v3.40.0 2024-11-05 JP
   - Change CiderGroups pk to new group_id field, info_groupid becomes a normal index field
   - Recreate CiderGroups and CiderFeatures models, requires out of band table drops and django_migrations cleanup

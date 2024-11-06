@@ -20,6 +20,8 @@ urlpatterns = [
     path(r'v1/groups/info_groupid/<str:info_groupid>/', CiderGroups_v1_Detail.as_view(), name='cider-group-info-groupid-v1'),
     path(r'v1/groups/group_type/<str:group_type>/', CiderGroups_v1_List.as_view(), name='cider-group-type-v1'),
     path(r'v1/groups/info_resourceid/<str:info_resourceid>/', CiderGroups_v1_List.as_view(), name='cider-group-infoid-v1'),
-    path(r'v1/access-active-groups/type/<str:group_type>/', CiderCatalog_v1_ACCESSActiveGroups.as_view(), name='cider-accessactivegroups-bytype-v1'),
-#    path(r'v1/access-active-group/id/<str:info_groupid>/', CiderCatalog_v1_ACCESSActiveGroups.as_view(), name='cider-accessactivegroups-byid-v1'),
+    path(r'v1/access-active-groups/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-v1'),
+    path(r'v1/access-active-groups/type/<str:group_type>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-bytype-v1'),
+    path(r'v1/access-active-groups/group_id/<str:group_id>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-byid-v1'),
+    path(r'v1/access-active-groups/info_groupid/<str:info_groupid>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-byinfoid-v1'),
 ]

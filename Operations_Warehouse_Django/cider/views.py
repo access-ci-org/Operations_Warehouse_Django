@@ -1,11 +1,8 @@
-from django.db.models import Q
-from django.shortcuts import render
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from itertools import chain
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
@@ -281,24 +278,31 @@ class CiderGroups_v1_List(GenericAPIView):
         serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
-class CiderCatalog_v1_ACCESSActiveGroups(GenericAPIView):
+# Design:
+#   1st get all features
+#   2nd get all ACCESS active resources
+#   3rd get all or select groups
+#       counting which resources are referenced in selected groups
+#   4th count referenced orgs, features, and feature groups for referenced resources
+class CiderACCESSActiveGroups_v1_List(GenericAPIView):
     '''
-        Catalog summary of ACCESS Active Compute and Storage resource groups of a group type
+        ACCESS Active Compute and Storage Resource Groups
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_class = CiderCatalog_v1_ACCESSActiveGroups_Serializer
+    serializer_class = CiderACCESSActiveGroups_v1_List_Serializer
     def get(self, request, format=None, **kwargs):
-        if not self.kwargs.get('group_type') and not self.kwargs.get('info_groupid'):
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing query parameter')
+#       Default to all groups
+#        if not self.kwargs.get('group_type') and not self.kwargs.get('group_id') and not self.kwargs.get('info_groupid'):
+#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
 
         all_feature_categories = {}
         all_features = {}
         # The CiderFeatures model contains Feature Categories, and associated features in the features json field
         for feature_category in CiderFeatures.objects.all():
-            # Key by feature_category_name which are unique and are what resources reference
-            all_feature_categories[feature_category.feature_category_name] = {
-                    'counter': 0,                      # For counting references
+            # Key by id which are unique
+            all_feature_categories[feature_category.feature_category_id] = {
+                    'counter': 0,                           # For counting references
                     'feature_category_id': feature_category.feature_category_id,
                     'feature_category_name': feature_category.feature_category_name,
                     'feature_category_description': feature_category.feature_category_description
@@ -306,61 +310,95 @@ class CiderCatalog_v1_ACCESSActiveGroups(GenericAPIView):
             for feature in feature_category.features:
                 # Key by id which are unique and are what resources reference
                 all_features[feature['id']] = {
-                        'counter': 0,                 # For counting references
+                        'counter': 0,                       # For counting references
                         'id': feature['id'],
                         'name': feature['name'],
+                        'description': feature['description'],
                         'feature_category_id': feature_category.feature_category_id
                     }
 
-        active_resinfo = {}
-        active_orginfo = {}
+        active_resources = {}
+        active_orgs = {}
         resources = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
-        for item in resources:
-            iid = item.info_resourceid
-            active_resinfo[iid] = {'org_ids': [], 'feature_ids': []}      # Initialize
-            if isinstance(item.other_attributes.get('organizations'), list):
-                for o in item.other_attributes['organizations']:
-                    active_resinfo[iid]['org_ids'].append(o['organization_id'])
-                    if o['organization_id'] not in active_orginfo:
-                        active_orginfo[o['organization_id']] = o
-            if isinstance(item.other_attributes.get('features'), list):
-                for f in item.other_attributes['features']:
-                    active_resinfo[iid]['feature_ids'].append(f['id'])
-                    if f['feature_category'] in all_feature_categories:
-                        all_feature_categories[f['feature_category']]['counter'] += 1     # Increment feature category used
-                    if f['id'] in all_features:
-                        all_features[f['id']]['counter'] += 1                             # Increment feature used
+        for resource in resources:
+            rid = resource.info_resourceid
+            active_resources[rid] = {
+                    'counter': 0,                             # For counting references in selected groups
+                    'info_resourceid': rid,
+                    'org_ids': [],
+                    'feature_ids': []
+                }
+            if isinstance(resource.other_attributes.get('organizations'), list):
+                for o in resource.other_attributes['organizations']:
+                    oid = o.get('organization_id')
+                    if not oid:
+                        continue
+                    active_resources[rid]['org_ids'].append(oid)
+                    if oid not in active_orgs:
+                        active_orgs[oid] = o
+                        active_orgs[oid]['counter'] = 0     # For counting references in select group active resources
+            if isinstance(resource.other_attributes.get('features'), list):
+                for f in resource.other_attributes['features']:
+                    fid = f.get('id')
+                    if not fid:
+                        continue
+                    if fid not in all_features:
+                        continue
+                    active_resources[rid]['feature_ids'].append(fid)                          # All resource feature ids
 
         groups = []
         groups_extra = {}
-        if self.kwargs.get('group_type'):
+        if self.kwargs.get('group_id'):
+            query = CiderGroups.objects.filter(group_id=self.kwargs['group_id'])
+        elif self.kwargs.get('info_groupid'):
+            query = CiderGroups.objects.filter(info_groupid=self.kwargs['info_groupid'])
+        elif self.kwargs.get('group_type'):
             query = CiderGroups.objects.filter(group_types__has_key=self.kwargs['group_type'])
         else:
-            query = CiderGroups.objects.filter(info_groupid=self.kwargs['info_groupid'])
+            query = CiderGroups.objects.all()
         for group in query:
             if type(group.info_resourceids) is not list or group.info_resourceids is None:
                 continue                                # Ignore group with no resources
-            active_resources = [grid for grid in group.info_resourceids if grid in active_resinfo]
-            if not active_resources:
+            group_active_resources = [grid for grid in group.info_resourceids if grid in active_resources]
+            if not group_active_resources:
                 continue                                # Ignore group with no active resources
             og = {                                      # Extra group information to pass and use in the serializer
                 'rollup_feature_ids': [],               # Feature id rollup for active resources in a group
                 'rollup_org_ids': [],                   # Organization id rollup for active resources in a group
-                'rollup_active_info_resourceids': active_resources
+                'rollup_active_info_resourceids': group_active_resources
             }
-            for ogrid in active_resources:
-                og['rollup_org_ids'].extend(active_resinfo[ogrid]['org_ids'])
-                og['rollup_feature_ids'].extend(active_resinfo[ogrid]['feature_ids'])
+            for grid in group_active_resources:
+                active_resources[grid]['counter'] += 1                                    # A reference resource
+                og['rollup_feature_ids'].extend(active_resources[grid]['feature_ids'])
+                og['rollup_org_ids'].extend(active_resources[grid]['org_ids'])
             og['rollup_feature_ids'] = list(set(chain(og['rollup_feature_ids'])))       # Make unique
             og['rollup_org_ids'] = list(set(chain(og['rollup_org_ids'])))               # Make unique
             groups_extra[group.info_groupid] = og
             groups.append(group)
 
-        serializer = CiderCatalog_v1_ACCESSActiveGroups_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
+        for ares in active_resources.values():
+            if ares['counter'] == 0:                                                    # Not a referenced resource
+                continue
+            rorgs = ares.get('org_ids')
+            if rorgs:
+                for oid in rorgs:
+                    active_orgs[oid]['counter'] += 1
+            rfeatures = ares.get('feature_ids')
+            if rfeatures:
+                for fid in rfeatures:
+                    all_features[fid]['counter'] += 1                                   # Increment feature used
+                    fcid = all_features[fid].get('feature_category_id')                 # Lookup the feature category id
+                    if not fcid:
+                        continue
+                    if fcid not in all_feature_categories:
+                        continue
+                    all_feature_categories[fcid]['counter'] += 1                        # Increment feature category used
+
+        serializer = CiderACCESSActiveGroups_v1_List_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
         active_orgdata = [ {'organization_id': a['organization_id'],
                             'organization_name': a['organization_name'],
                             'organization_logo_url': a['organization_logo_url']}
-              for a in active_orginfo.values()]
+              for a in active_orgs.values() if a['counter'] > 0]
         active_categories = [ { 'feature_category_id': f['feature_category_id'],
                                 'feature_category_name': f['feature_category_name'],
                                 'feature_category_description': f['feature_category_description']}
