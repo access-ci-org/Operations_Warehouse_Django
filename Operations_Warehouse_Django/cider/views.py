@@ -18,7 +18,7 @@ from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 
 class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
     '''
-        Comparison of ACCESS Active Allocated Compute Resources
+    Comparison of ACCESS Active Allocated Compute Resources
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
@@ -37,13 +37,22 @@ class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
 
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''
-        All ACCESS Active Allocated Compute and Storage Resources
+    ACCESS Active Allocated Compute and Storage Resources
+
+    Returns: resource summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
     serializer_class = CiderInfrastructure_Summary_Serializer
     def get(self, request, format=None, **kwargs):
-        objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        if self.kwargs.get('info_groupid'):
+            try:
+                group = CiderGroups.objects.get(info_groupid=self.kwargs.get('info_groupid'))
+            except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_groupid not found')
+            objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', group_id=group.group_id, result='OBJECTS')
+        else:
+            objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
 #        if request.accepted_renderer.format == 'html':
 #            return MyAPIResponse({'record_list': objects}, template_name='list.html')
         sort_by = request.GET.get('sort')
@@ -58,7 +67,9 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
 
 class CiderInfrastructure_v2_ACCESSActiveList(GenericAPIView):
     '''
-        All ACCESS Active Allocated Compute and Storage Resources and Central Online Services Resources
+    ACCESS Active Allocated Compute and Storage Resources and Central Online Services Resources
+
+    Returns: resource summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -71,7 +82,9 @@ class CiderInfrastructure_v2_ACCESSActiveList(GenericAPIView):
 
 class CiderInfrastructure_v2_ACCESSAllList(GenericAPIView):
     '''
-        All ACCESS Active and Inactive Compute and Storage Resources and Central Online Services Resources
+    ACCESS Active and Inactive Compute and Storage Resources and Central Online Services Resources
+
+    Returns: resource summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -84,7 +97,9 @@ class CiderInfrastructure_v2_ACCESSAllList(GenericAPIView):
     
 class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
     '''
-        All ACCESS Allocated Resources
+    ACCESS Allocated Resources
+
+    Returns: expanded summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -96,7 +111,9 @@ class CiderInfrastructure_v1_ACCESSAllocatedList(GenericAPIView):
 
 class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
     '''
-        All ACCESS Online Services
+    ACCESS Active Online Services
+
+    Returns: expanded summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -108,7 +125,9 @@ class CiderInfrastructure_v1_ACCESSOnlineServicesList(GenericAPIView):
 
 class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
     '''
-        All ACCESS Science Gateways
+    ACCESS Active Science Gateways
+
+    Returns: expanded summary
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -147,7 +166,9 @@ class CiderInfrastructure_v1_ACCESSScienceGatewaysList(GenericAPIView):
 
 class CiderInfrastructure_v1_Detail(GenericAPIView):
     '''
-        An ACCESS Generic Resource Detail
+    Generic Resource
+
+    Returns: all resource detail
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer,)
@@ -173,9 +194,32 @@ class CiderInfrastructure_v1_Detail(GenericAPIView):
             return MyAPIResponse({'record_list': [serializer.data]}, template_name='detail.html')
         return MyAPIResponse({'results': serializer.data})
 
+class CiderInfrastructure_v1_ACCESSActiveDetailList(GenericAPIView):
+    '''
+    ACCESS Active Resources
+
+    Returns: all resource detail
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer,)
+    serializer_class = CiderInfrastructure_Detail_Serializer
+    def get(self, request, format=None, **kwargs):
+        if self.kwargs.get('info_groupid'):
+            try:
+                group = CiderGroups.objects.get(info_groupid=self.kwargs.get('info_groupid'))
+            except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_groupid not found')
+            objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', group_id=group.group_id, result='OBJECTS')
+        else:
+            objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        serializer = CiderInfrastructure_Detail_Serializer(objects, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
     '''
-        An ACCESS Compute Resource Detail
+    Generic Compute Resource
+
+    Returns: compute resource detail        
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -198,7 +242,7 @@ class CiderInfrastructure_v1_Compute_Detail(GenericAPIView):
 
 class CiderFeatures_v1_Detail(GenericAPIView):
     '''
-        A CiDeR Feature Categories
+    A CiDeR Feature Categories
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -215,7 +259,7 @@ class CiderFeatures_v1_Detail(GenericAPIView):
 
 class CiderFeatures_v1_List(GenericAPIView):
     '''
-        Selected CiDeR Feature Categories
+    Selected CiDeR Feature Categories
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -240,7 +284,7 @@ class CiderFeatures_v1_List(GenericAPIView):
 
 class CiderGroups_v1_Detail(GenericAPIView):
     '''
-        A CiDeR Group
+    A CiDeR Group
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -260,7 +304,7 @@ class CiderGroups_v1_Detail(GenericAPIView):
 
 class CiderGroups_v1_List(GenericAPIView):
     '''
-        Selected CiDeR Groups
+    Selected CiDeR Groups
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -286,7 +330,9 @@ class CiderGroups_v1_List(GenericAPIView):
 #   4th count referenced orgs, features, and feature groups for referenced resources
 class CiderACCESSActiveGroups_v1_List(GenericAPIView):
     '''
-        ACCESS Active Compute and Storage Resource Groups
+    ACCESS Active Compute and Storage Resource Groups
+    
+    Returns: Selected groups with active resources; per group resource id, feature, and org rollup; details about all referenced features, feature groups, and orgs
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -368,7 +414,7 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
                 'rollup_active_info_resourceids': group_active_resources
             }
             for grid in group_active_resources:
-                active_resources[grid]['counter'] += 1                                    # A reference resource
+                active_resources[grid]['counter'] += 1                                  # A reference resource
                 og['rollup_feature_ids'].extend(active_resources[grid]['feature_ids'])
                 og['rollup_org_ids'].extend(active_resources[grid]['org_ids'])
             og['rollup_feature_ids'] = list(set(chain(og['rollup_feature_ids'])))       # Make unique
@@ -382,11 +428,11 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
             rorgs = ares.get('org_ids')
             if rorgs:
                 for oid in rorgs:
-                    active_orgs[oid]['counter'] += 1
+                    active_orgs[oid]['counter'] += 1                                    # Increment org referenced
             rfeatures = ares.get('feature_ids')
             if rfeatures:
                 for fid in rfeatures:
-                    all_features[fid]['counter'] += 1                                   # Increment feature used
+                    all_features[fid]['counter'] += 1                                   # Increment feature referenced
                     fcid = all_features[fid].get('feature_category_id')                 # Lookup the feature category id
                     if not fcid:
                         continue
@@ -414,4 +460,3 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
                 'organizations': active_orgdata
             }}
         )
-

@@ -19,11 +19,13 @@ from cider.models import *
 active_statuses = ('friendly', 'coming soon', 'pre-production', 'production', 'post-production')
 allocated_types = ('Compute', 'Storage')
 
-def CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS'):
+def CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', group_id=None, result='OBJECTS'):
     resources = CiderInfrastructure.objects.filter(
             Q(cider_type__in=allocated_types) &
             Q(latest_status__in=active_statuses) &
             Q(project_affiliation__icontains=affiliation) )
+    if group_id:
+        resources = resources.filter(other_attributes__group_ids__contains=group_id)
     if result.upper() == 'RESOURCEID':
         return(list(resources.values_list('info_resourceid', flat=True)))
     else: # Model objects

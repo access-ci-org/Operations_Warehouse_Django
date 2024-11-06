@@ -7,8 +7,8 @@ urlpatterns = [
     path(r'v1/cider_resource_id/<str:cider_resource_id>/', CiderInfrastructure_v1_Detail.as_view(), name='cider-detail-v1-id'),
     path(r'v1/info_resourceid/<str:info_resourceid>/', CiderInfrastructure_v1_Detail.as_view(), name='cider-detail-v1-infoid'),
     path(r'v1/access-active/', CiderInfrastructure_v1_ACCESSActiveList.as_view(), name='cider-accessactivelist-v1'),
-    path(r'v2/access-active/', CiderInfrastructure_v2_ACCESSActiveList.as_view(), name='cider-accessactivelist-v2'),
-    path(r'v2/access-all/', CiderInfrastructure_v2_ACCESSAllList.as_view(), name='cider-accessalllist-v2'),
+    path(r'v1/access-active/info_groupid/<str:info_groupid>/', CiderInfrastructure_v1_ACCESSActiveList.as_view(), name='cider-accessactivelist-infogroupid-v1'),
+    path(r'v1/access-active-detail/info_groupid/<str:info_groupid>/', CiderInfrastructure_v1_ACCESSActiveDetailList.as_view(), name='cider-accessactivedeetail-infogroupid-v1'),
     path(r'v1/access-allocated/', CiderInfrastructure_v1_ACCESSAllocatedList.as_view(), name='cider-accessallocatedlist-v1'),
     path(r'v1/access-online-services/', CiderInfrastructure_v1_ACCESSOnlineServicesList.as_view(), name='cider-accessonlineserviceslist-v1'),
     path(r'v1/access-science-gateways/', CiderInfrastructure_v1_ACCESSScienceGatewaysList.as_view(), name='cider-accesssciencegatewayslist-v1'),
@@ -24,4 +24,6 @@ urlpatterns = [
     path(r'v1/access-active-groups/type/<str:group_type>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-bytype-v1'),
     path(r'v1/access-active-groups/group_id/<str:group_id>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-byid-v1'),
     path(r'v1/access-active-groups/info_groupid/<str:info_groupid>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-byinfoid-v1'),
+    path(r'v2/access-active/', CiderInfrastructure_v2_ACCESSActiveList.as_view(), name='cider-accessactivelist-v2'),
+    path(r'v2/access-all/', CiderInfrastructure_v2_ACCESSAllList.as_view(), name='cider-accessalllist-v2'),
 ]

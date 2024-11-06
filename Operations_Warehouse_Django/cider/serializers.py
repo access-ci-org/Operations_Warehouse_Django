@@ -4,7 +4,6 @@ from django.utils.encoding import uri_to_iri
 from cider.models import *
 from rest_framework import serializers
 
-
 class CiderInfrastructure_OtherAttrs_Serializer( serializers.ModelSerializer ):
     class Meta:
         model = CiderInfrastructure
@@ -268,7 +267,6 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
         except:
             return None
 
-
 class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
 #    cider_type = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
@@ -286,9 +284,6 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
         model = CiderInfrastructure
         exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
         
-#    def get_cider_type(self, object) -> str:
-#        return('compute')
-#
     def get_cider_view_url(self, object) -> str:
         try:
             return str(object.other_attributes['public_url']) or None

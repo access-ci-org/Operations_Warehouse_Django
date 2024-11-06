@@ -1,3 +1,8 @@
+v3.42.0 2024-11-06 JP
+  - New /access-active-detail/ endpoints returning all resource details for a group
+  - Improved CiderInfrastructure_ActiveAllocated_Filter with optional group_id filtering
+  - Improve CiDeR views comments visible in OpenAPI documentation
+
 v3.41.0 2024-11-06 JP
   - Additional /access-active-resource/ endpoints for all or selected groups
 
