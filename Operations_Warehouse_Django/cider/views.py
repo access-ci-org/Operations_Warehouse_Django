@@ -201,7 +201,7 @@ class CiderInfrastructure_v1_ACCESSActiveDetailList(GenericAPIView):
     Returns: all resource detail
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer,)
+    renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Detail_Serializer
     def get(self, request, format=None, **kwargs):
         if self.kwargs.get('info_groupid'):

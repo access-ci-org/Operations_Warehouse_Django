@@ -1,3 +1,6 @@
+v3.42.1 2024-11-06 JP
+  - Remove TemplateHTMLRenderer from CiderInfrastructure_v1_ACCESSActiveDetailList 
+
 v3.42.0 2024-11-06 JP
   - New /access-active-detail/ endpoints returning all resource details for a group
   - Improved CiderInfrastructure_ActiveAllocated_Filter with optional group_id filtering
