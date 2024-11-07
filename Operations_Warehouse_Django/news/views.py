@@ -1,3 +1,4 @@
+from django.db.models import Subquery
 from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -11,6 +12,8 @@ from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 
 from .models import *
 from .serializers import *
+
+outage_types = ['Degraded', 'Outage Full', 'Outage Partial', 'Reconfiguration']
 
 # Create your views here.
 class News_v1_Detail(GenericAPIView):
@@ -92,7 +95,7 @@ class Operations_Outages_v1(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = Operations_Outages_v1_List_Expand_Serializer
     def get(self, request, format=None, **kwargs):
-        items = News.objects.filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])
+        items = News.objects.filter(NewsType__in=outage_types)
         serializer = Operations_Outages_v1_List_Expand_Serializer(items, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
@@ -106,7 +109,36 @@ class News_v1_Current_Outages(GenericAPIView):
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
-                            .filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])
+                            .filter(NewsType__in=outage_types)
+        items1 = items.filter(NewsStart__lte=now, NewsEnd__gte=now)
+        items2 = items.filter(NewsStart__lte=now, NewsEnd__isnull=True)
+        items = items1 | items2
+        items = items.order_by('NewsStart')
+        serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class News_v2_Current_Outages(GenericAPIView):
+    '''
+        Current outage type news items for selected group
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = News_v1_Outage_Serializer
+    def get(self, request, format=None, **kwargs):
+        resource_ids = None
+        if self.kwargs.get('info_groupid'):
+            try:
+                group = CiderGroups.objects.get(info_groupid=self.kwargs['info_groupid'])
+            except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_groupid not found')
+            resource_ids = group.info_resourceids
+        now = timezone.now()
+        items = News.objects.filter(NewsType__in=outage_types)
+        if self.kwargs.get('affiliation'):
+            items = items.objects.filter(Affiliation__exact=self.kwargs['affiliation'])
+        if resource_ids:
+            related_to = News_Associations.objects.filter(AssociatedType='Resource', AssociatedID__in=resource_ids)
+            items = items.filter(URN__in=Subquery(related_to.values('NewsItem')))
         items1 = items.filter(NewsStart__lte=now, NewsEnd__gte=now)
         items2 = items.filter(NewsStart__lte=now, NewsEnd__isnull=True)
         items = items1 | items2
@@ -124,9 +156,36 @@ class News_v1_Future_Outages(GenericAPIView):
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
-                            .filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])\
+                            .filter(NewsType__in=outage_types)\
                             .filter(NewsStart__gte=now)\
                             .order_by('NewsStart')
+        serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class News_v2_Future_Outages(GenericAPIView):
+    '''
+        All future outage type news items for selected group
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = News_v1_Outage_Serializer
+    def get(self, request, format=None, **kwargs):
+        resource_ids = None
+        if self.kwargs.get('info_groupid'):
+            try:
+                group = CiderGroups.objects.get(info_groupid=self.kwargs['info_groupid'])
+            except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_groupid not found')
+            resource_ids = group.info_resourceids
+        now = timezone.now()
+        items = News.objects.filter(NewsType__in=outage_types)\
+                            .filter(NewsStart__gte=now)\
+                            .order_by('NewsStart')
+        if self.kwargs.get('affiliation'):
+            items = items.objects.filter(Affiliation__exact=self.kwargs['affiliation'])
+        if resource_ids:
+            related_resources = News_Associations.objects.filter(AssociatedType='Resource', AssociatedID__in=resource_ids)
+            items = items.filter(URN__in=Subquery(related_resources.values('NewsItem_id')))
         serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
         return MyAPIResponse({'results': serializer.data})
 
@@ -145,7 +204,7 @@ class News_v1_Past_Outages(ListAPIView):
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         queryset = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
-                            .filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])\
+                            .filter(NewsType__in=outage_types)\
                             .filter(NewsStart__lte=now)\
                             .exclude(NewsEnd__isnull=False, NewsEnd__gt=now)\
                             .order_by('-NewsStart')
@@ -185,6 +244,6 @@ class News_v1_All_Outages(GenericAPIView):
     def get(self, request, format=None, **kwargs):
         now = timezone.now()
         items = News.objects.filter(Affiliation__exact=self.kwargs['affiliation'])\
-                            .filter(NewsType__in=['Outage Full', 'Outage Partial', 'Reconfiguration'])
+                            .filter(NewsType__in=outage_types)
         serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
         return MyAPIResponse({'results': serializer.data})

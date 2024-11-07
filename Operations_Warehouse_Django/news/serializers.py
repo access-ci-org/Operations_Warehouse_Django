@@ -53,9 +53,7 @@ class News_v1_Outage_Serializer(serializers.ModelSerializer):
             return('Full')
         if object.NewsType == 'Outage Partial':
             return('Partial')
-        if object.NewsType == 'Reconfiguration':
-            return('Reconfiguration')
-        return('Unknown')
+        return(object.NewsType)
 
     def get_DistributionOptionsEmailSubscribers(self, object) -> bool:
         # The 'or' convert None to string so that split works
