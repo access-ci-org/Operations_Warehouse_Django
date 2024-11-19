@@ -1,3 +1,6 @@
+v3.45.0 2024-11-19 JP
+  - Improve the /access-actice-groups/ APIs to return all available Organization attributes
+
 v3.44.0 2024-11-19 JP
   - New CiderOrganizations model, views, etc. for the resource catalog
 
