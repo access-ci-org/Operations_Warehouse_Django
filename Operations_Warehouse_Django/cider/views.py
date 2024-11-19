@@ -322,6 +322,38 @@ class CiderGroups_v1_List(GenericAPIView):
         serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
+class CiderOrganizations_v1_Detail(GenericAPIView):
+    '''
+    All CiDeR Organizations
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
+    def get(self, request, format=None, **kwargs):
+        if not self.kwargs.get('organization_id'):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        try:
+            item = CiderOrganizations.objects.get(pk=self.kwargs['organization_id'])
+        except (CiderOrganizations.DoesNotExist, CiderOrganizations.MultipleObjectsReturned):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderOrganizations_Serializer(item, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderOrganizations_v1_List(GenericAPIView):
+    '''
+    Selected CiDeR Organization
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
+    def get(self, request, format=None, **kwargs):
+        try:
+            items = objects = CiderOrganizations.objects.all()
+        except (CiderOrganizations.DoesNotExist):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderOrganizations_Serializer(items, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 # Design:
 #   1st get all features
 #   2nd get all ACCESS active resources

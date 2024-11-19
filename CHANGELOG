@@ -1,5 +1,8 @@
+v3.44.0 2024-11-19 JP
+  - New CiderOrganizations model, views, etc. for the resource catalog
+
 v3.43.0 2024-11-07 JP
-  - Bug: remove TemplateHTMLRenderer from CiderInfrastructure_v1_ACCESSActiveDetailList 
+  - Bug: remove TemplateHTMLRenderer from CiderInfrastructure_v1_ACCESSActiveDetailList
   - Bug: add News Type 'Degraded' to the outage set
   - New News Current and Future News APIs selected by info_groupid
 

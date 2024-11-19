@@ -554,6 +554,11 @@ class CiderGroups_Serializer(serializers.ModelSerializer):
         model = CiderGroups
         fields = ('__all__')
 
+class CiderOrganizations_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = CiderOrganizations
+        fields = ('__all__')
+
 class CiderACCESSActiveGroups_v1_List_Serializer(serializers.ModelSerializer):
     rollup_info_resourceids = serializers.SerializerMethodField()
     rollup_feature_ids = serializers.SerializerMethodField()
