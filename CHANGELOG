@@ -1,3 +1,6 @@
+v3.44.0 2024-12-01 jlambertson
+  - upgrading Django to 5.0.*; django-bootstrap-v5 to django-bootstrap5 24.*
+
 v3.43.0 2024-11-07 JP
   - Bug: remove TemplateHTMLRenderer from CiderInfrastructure_v1_ACCESSActiveDetailList 
   - Bug: add News Type 'Degraded' to the outage set

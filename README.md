@@ -8,7 +8,7 @@ This platform aggregates ACCESS integrated infrastructure information and makes 
 
 ## Platform Tools
 
-- Django 4.1
+- Django 5.0
 - Python 3.10
 - OAuth 2
 - AWS Aurora PostgreSQL 14.5
