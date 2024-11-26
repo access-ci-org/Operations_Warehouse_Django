@@ -22,6 +22,15 @@ class CiderInfrastructure(models.Model):
     def __str__(self):
        return str(self.cider_resource_id)
 
+class CiderOrganizations(models.Model):
+    organization_id = models.IntegerField(primary_key=True)
+    organization_name = models.CharField(max_length=120)
+    organization_abbrev = models.CharField(max_length=20)
+    organization_url = models.CharField(max_length=320, null=True, blank=True)
+    other_attributes = models.JSONField(null=True, blank=True)
+    def __str__(self):
+       return str(self.organization_id)
+
 class CiderFeatures(models.Model):
     feature_category_id = models.IntegerField(primary_key=True)
     feature_category_name = models.CharField(max_length=120)

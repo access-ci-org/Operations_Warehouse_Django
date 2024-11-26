@@ -322,6 +322,38 @@ class CiderGroups_v1_List(GenericAPIView):
         serializer = CiderGroups_Serializer(items, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
+class CiderOrganizations_v1_Detail(GenericAPIView):
+    '''
+    All CiDeR Organizations
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
+    def get(self, request, format=None, **kwargs):
+        if not self.kwargs.get('organization_id'):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+        try:
+            item = CiderOrganizations.objects.get(pk=self.kwargs['organization_id'])
+        except (CiderOrganizations.DoesNotExist, CiderOrganizations.MultipleObjectsReturned):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderOrganizations_Serializer(item, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class CiderOrganizations_v1_List(GenericAPIView):
+    '''
+    Selected CiDeR Organization
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
+    def get(self, request, format=None, **kwargs):
+        try:
+            items = objects = CiderOrganizations.objects.all()
+        except (CiderOrganizations.DoesNotExist):
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified search failed')
+        serializer = CiderOrganizations_Serializer(items, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 # Design:
 #   1st get all features
 #   2nd get all ACCESS active resources
@@ -441,18 +473,21 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
                     all_feature_categories[fcid]['counter'] += 1                        # Increment feature category used
 
         serializer = CiderACCESSActiveGroups_v1_List_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
-        active_orgdata = [ {'organization_id': a['organization_id'],
-                            'organization_name': a['organization_name'],
-                            'organization_logo_url': a['organization_logo_url']}
-              for a in active_orgs.values() if a['counter'] > 0]
+
+        active_oids = [ org['organization_id'] for org in active_orgs.values() if org['counter'] > 0 ]
+        active_orgdata = [ org.other_attributes
+            for org in CiderOrganizations.objects.filter(organization_id__in=active_oids) ]
+        
         active_categories = [ { 'feature_category_id': f['feature_category_id'],
                                 'feature_category_name': f['feature_category_name'],
                                 'feature_category_description': f['feature_category_description']}
               for f in all_feature_categories.values() if f['counter'] > 0]
+              
         active_features = [ {   'feature_id': f['id'],
                                 'feature_name': f['name'],
                                 'feature_category_id': f['feature_category_id']}
               for f in all_features.values() if f['counter'] > 0]
+        
         return MyAPIResponse({'results': {
                 'active_groups': serializer.data,
                 'feature_categories': active_categories,

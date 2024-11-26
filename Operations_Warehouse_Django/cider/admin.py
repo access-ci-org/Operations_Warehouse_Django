@@ -7,6 +7,12 @@ class CiderInfrastructure_Admin(admin.ModelAdmin):
     ordering = ['info_resourceid', 'cider_type']
     search_fields = ['cider_resource_id__iexact', 'info_resourceid__iexact', 'resource_descriptive_name']
 
+class CiderOrganizations_Admin(admin.ModelAdmin):
+    list_display = ('organization_id', 'organization_abbrev', 'organization_name')
+    list_display_links = ['organization_id']
+    ordering = ['organization_abbrev', 'organization_name']
+    search_fields = ['organization_id__iexact', 'organization_abbrev', 'organization_name']
+
 class CiderFeatures_Admin(admin.ModelAdmin):
     list_display = ('feature_category_id', 'feature_category_name')
     list_display_links = ['feature_category_id']
@@ -21,5 +27,6 @@ class CiderGroups_Admin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(CiderInfrastructure, CiderInfrastructure_Admin)
+admin.site.register(CiderOrganizations, CiderOrganizations_Admin)
 admin.site.register(CiderFeatures, CiderFeatures_Admin)
 admin.site.register(CiderGroups, CiderGroups_Admin)
