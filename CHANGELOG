@@ -1,5 +1,11 @@
-v3.44.0 2024-12-01 jlambertson
+v3.46.0 2024-11-26 jlambertson
   - upgrading Django to 5.0.*; django-bootstrap-v5 to django-bootstrap5 24.*
+
+v3.45.0 2024-11-19 JP
+  - Improve the /access-actice-groups/ APIs to return all available Organization attributes
+
+v3.44.0 2024-11-19 JP
+  - New CiderOrganizations model, views, etc. for the resource catalog
 
 v3.43.0 2024-11-07 JP
   - Bug: remove TemplateHTMLRenderer from CiderInfrastructure_v1_ACCESSActiveDetailList 
