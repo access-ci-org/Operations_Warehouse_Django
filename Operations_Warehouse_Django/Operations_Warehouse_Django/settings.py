@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'web',
     'dal',
     'dal_select2',
+    'cilogon_tokenauth',
 ]
 
 MIDDLEWARE = [
@@ -351,7 +352,9 @@ if SETTINGS_MODE == 'SERVER':
     STATICFILES_DIRS = (
         os.path.join( os.path.dirname(__file__),  '../static' ),
     )
-
+    # For cilogon_tokenauth
+    CLIENT_KEY = CONF.get('CLIENT_KEY', None)
+    CLIENT_SECRET = CONF.get('CLIENT_SECRET', None)
     #
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
@@ -367,6 +370,9 @@ if SETTINGS_MODE == 'SERVER':
         'DEFAULT_PAGINATION_CLASS': "rest_framework.pagination.PageNumberPagination",
         'PAGE_SIZE': 25,
         'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'cilogon_tokenauth.auth.CITokenAuthentication',
+        ],
     }
 
 #    REST_AUTH_REGISTER_PERMISSION_CLASSES = (
@@ -409,6 +415,10 @@ if SETTINGS_MODE == 'SERVER':
                 'level': 'DEBUG'
             },
             'services': {
+                'handlers': ['file'],
+                'level': 'DEBUG'
+            },
+            'cilogon_tokenauth': {
                 'handlers': ['file'],
                 'level': 'DEBUG'
             }
