@@ -1,3 +1,6 @@
+v3.46.0 2024-12-06 JP
+  - Add cider resource protected_attributes json field, exclude it from public serializers
+
 v3.45.0 2024-11-19 JP
   - Improve the /access-actice-groups/ APIs to return all available Organization attributes
 
