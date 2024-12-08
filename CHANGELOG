@@ -1,6 +1,8 @@
-
-v3.46.0 2024-11-26 jlambertson
+v3.47.0 2024-12-08 jlambertson
   - upgrading Django to 5.0.*; django-bootstrap-v5 to django-bootstrap5 24.*
+
+v3.46.0 2024-12-06 JP
+  - Add cider resource protected_attributes json field, exclude it from public serializers
 
 v3.45.0 2024-11-19 JP
   - Improve the /access-actice-groups/ APIs to return all available Organization attributes

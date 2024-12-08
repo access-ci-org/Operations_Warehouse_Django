@@ -17,7 +17,8 @@ class CiderInfrastructure(models.Model):
     access_description = models.CharField(max_length=4000, null=True)
     project_affiliation = models.CharField(max_length=64, null=True)
     provider_level = models.CharField(max_length=16, null=True)
-    other_attributes = models.JSONField()
+    protected_attributes = models.JSONField(null=True, blank=True)
+    other_attributes = models.JSONField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True)
     def __str__(self):
        return str(self.cider_resource_id)

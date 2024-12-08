@@ -282,7 +282,7 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = CiderInfrastructure
-        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes')
+        exclude = ('parent_resource', 'recommended_use', 'access_description', 'provider_level', 'other_attributes', 'protected_attributes')
         
     def get_cider_view_url(self, object) -> str:
         try:
