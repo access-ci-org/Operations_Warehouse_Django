@@ -353,8 +353,8 @@ if SETTINGS_MODE == 'SERVER':
         os.path.join( os.path.dirname(__file__),  '../static' ),
     )
     # For cilogon_tokenauth
-    CLIENT_KEY = CONF.get('CLIENT_KEY', None)
-    CLIENT_SECRET = CONF.get('CLIENT_SECRET', None)
+    CILOGON_CLIENT_KEY = CONF.get('CILOGON_CLIENT_KEY', None)
+    CILOGON_CLIENT_SECRET = CONF.get('CILOGON_CLIENT_SECRET', None)
     #
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
