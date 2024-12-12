@@ -397,7 +397,9 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
 
         active_resources = {}
         active_orgs = {}
-        resources = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+#       Expanding beyond Allocated Compute and Storage
+#        resources = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        resources = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS')
         for resource in resources:
             rid = resource.info_resourceid
             active_resources[rid] = {
