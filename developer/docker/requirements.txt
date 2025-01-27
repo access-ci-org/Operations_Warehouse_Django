@@ -8,7 +8,7 @@ django-cors-headers
 django-rest-framework
 amqp
 django-allauth == 0.52.*
-django-bootstrap5 = "==24.*"
+django-bootstrap5 == 24.*
 djangorestframework
 drf-spectacular == 0.24.*
 gunicorn == 22.*

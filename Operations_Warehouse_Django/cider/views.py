@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from itertools import chain
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -25,16 +25,29 @@ class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
     serializer_class = CiderInfrastructure_OtherAttrs_Serializer
     def get(self, request, format=None, **kwargs):
         returnformat = request.query_params.get('format' )
-        template_name = 'coco.html'
         objects = CiderInfrastructure_Active_Filter( type='Compute' )
         serializer = CiderInfrastructure_OtherAttrs_Serializer(objects, context={'request': request}, many=True)
-        # return MyAPIResponse( { 'results': serializer.data }, template_name=template_name )
         coco_data = cider_to_coco( { 'results': serializer.data } )
         if returnformat != 'json':
             coco_data = mk_html_table( coco_data )
-        return MyAPIResponse( { 'results': coco_data }, template_name=template_name )
+        return MyAPIResponse( { 'results': coco_data }, template_name='coco.html' )
 
-
+#class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
+#    '''
+#    ACCESS Active Resource Contacts
+#    '''
+#    permission_classes = (IsAuthenticated,)
+#    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+#    serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
+#    def get(self, request, format=None, **kwargs):
+#        returnformat = request.query_params.get('format' )
+#        objects = CiderInfrastructure_Active_Filter( type='Compute' )
+#        serializer = CiderInfrastructure_OtherAttrs_Serializer(objects, context={'request': request}, many=True)
+#        coco_data = cider_to_coco( { 'results': serializer.data } )
+#        if returnformat != 'json':
+#            coco_data = mk_html_table( coco_data )
+#        return MyAPIResponse( { 'results': coco_data }, template_name='contacts.html' )
+    
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''
     ACCESS Active Allocated Compute and Storage Resources
@@ -53,8 +66,6 @@ class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
             objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', group_id=group.group_id, result='OBJECTS')
         else:
             objects = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
-#        if request.accepted_renderer.format == 'html':
-#            return MyAPIResponse({'record_list': objects}, template_name='list.html')
         sort_by = request.GET.get('sort')
         try:
             objects_sorted = objects.order_by(sort_by)
@@ -476,24 +487,31 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
 
         serializer = CiderACCESSActiveGroups_v1_List_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
 
+        active_resource_data = [ {'info_resourceid': resource.info_resourceid,
+                                'cider_type': resource.cider_type,
+                                'resource_descriptive_name': resource.resource_descriptive_name }
+            for resource in resources if active_resources[resource.info_resourceid]['counter'] > 0 ]
+
         active_oids = [ org['organization_id'] for org in active_orgs.values() if org['counter'] > 0 ]
-        active_orgdata = [ org.other_attributes
+        active_org_data = [ org.other_attributes
             for org in CiderOrganizations.objects.filter(organization_id__in=active_oids) ]
         
-        active_categories = [ { 'feature_category_id': f['feature_category_id'],
+        active_category_data = [ { 'feature_category_id': f['feature_category_id'],
                                 'feature_category_name': f['feature_category_name'],
                                 'feature_category_description': f['feature_category_description']}
               for f in all_feature_categories.values() if f['counter'] > 0]
               
-        active_features = [ {   'feature_id': f['id'],
+        active_feature_data = [ {   'feature_id': f['id'],
                                 'feature_name': f['name'],
                                 'feature_category_id': f['feature_category_id']}
               for f in all_features.values() if f['counter'] > 0]
         
         return MyAPIResponse({'results': {
                 'active_groups': serializer.data,
-                'feature_categories': active_categories,
-                'features': active_features,
-                'organizations': active_orgdata
+                'resources': active_resource_data,
+                'feature_categories': active_category_data,
+                'features': active_feature_data,
+                'organizations': active_org_data
             }}
         )
+

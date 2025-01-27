@@ -344,57 +344,33 @@ class CiderInfrastructure_Detail_Serializer(serializers.ModelSerializer):
 
 class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer):
     access_description = serializers.SerializerMethodField()
-    user_guide_url = serializers.SerializerMethodField()
-    cpu_type = serializers.SerializerMethodField()
-    operating_system = serializers.SerializerMethodField()
-    gpu_description = serializers.SerializerMethodField()
-    job_manager = serializers.SerializerMethodField()
     batch_system = serializers.SerializerMethodField()
+    cpu_count_per_node = serializers.SerializerMethodField()
+    cpu_speed_ghz = serializers.SerializerMethodField()
+    cpu_type = serializers.SerializerMethodField()
+    gpu_description = serializers.SerializerMethodField()
     interconnect = serializers.SerializerMethodField()
-    storage_network = serializers.SerializerMethodField()
+    job_manager = serializers.SerializerMethodField()
+    local_storage_per_node_gb = serializers.SerializerMethodField()
     machine_type = serializers.SerializerMethodField()
     manufacturer = serializers.SerializerMethodField()
-    cpu_speed_ghz = serializers.SerializerMethodField()
-    platform_name = serializers.SerializerMethodField()
     memory_per_cpu_gb = serializers.SerializerMethodField()
-    cpu_count_per_node = serializers.SerializerMethodField()
-    xsedenet_participation = serializers.SerializerMethodField()
-    supports_senstitive_data = serializers.SerializerMethodField()
+    node_count = serializers.SerializerMethodField()
+    operating_system = serializers.SerializerMethodField()
+    platform_name = serializers.SerializerMethodField()
     sensitive_data_support_description = serializers.SerializerMethodField()
-    local_storage_per_node_gb = serializers.SerializerMethodField()
-    
+    storage_network = serializers.SerializerMethodField()
+    supports_senstitive_data = serializers.SerializerMethodField()
+    user_guide_url = serializers.SerializerMethodField()
+    xsedenet_participation = serializers.SerializerMethodField()
+
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'recommended_use', 'access_description', 'user_guide_url', 'cpu_type', 'operating_system', 'gpu_description', 'job_manager', 'batch_system', 'interconnect', 'storage_network', 'machine_type', 'manufacturer', 'cpu_speed_ghz', 'platform_name', 'memory_per_cpu_gb', 'cpu_count_per_node', 'xsedenet_participation', 'supports_senstitive_data', 'sensitive_data_support_description', 'local_storage_per_node_gb')
+        fields = ('cider_resource_id', 'recommended_use', 'access_description', 'user_guide_url', 'cpu_type', 'operating_system', 'gpu_description', 'job_manager', 'batch_system', 'interconnect', 'storage_network', 'machine_type', 'manufacturer', 'cpu_speed_ghz', 'platform_name', 'memory_per_cpu_gb', 'cpu_count_per_node', 'xsedenet_participation', 'node_count', 'supports_senstitive_data', 'sensitive_data_support_description', 'local_storage_per_node_gb')
 
     def get_access_description(self, object) -> str:
         try:
             return str(object.access_description) or None
-        except:
-            return None
-    def get_user_guide_url(self, object) -> str:
-        try:
-            return str(object.other_attributes['user_guide_url']) or None
-        except:
-            return None
-    def get_cpu_type(self, object) -> str:
-        try:
-            return str(object.other_attributes['cpu_type']) or None
-        except:
-            return None
-    def get_operating_system(self, object) -> str:
-        try:
-            return str(object.other_attributes['operating_system']) or None
-        except:
-            return None
-    def get_gpu_description(self, object) -> str:
-        try:
-            return str(object.other_attributes['gpu_description']) or None
-        except:
-            return None
-    def get_job_manager(self, object) -> str:
-        try:
-            return str(object.other_attributes['job_manager']) or None
         except:
             return None
     def get_batch_system(self, object) -> str:
@@ -402,14 +378,39 @@ class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer)
             return str(object.other_attributes['batch_system']) or None
         except:
             return None
+    def get_cpu_count_per_node(self, object) -> int:
+        try:
+            return object.other_attributes['cpu_count_per_node']
+        except:
+            return None
+    def get_cpu_speed_ghz(self, object) -> int:
+        try:
+            return object.other_attributes['cpu_speed_ghz']
+        except:
+            return None
+    def get_cpu_type(self, object) -> str:
+        try:
+            return str(object.other_attributes['cpu_type']) or None
+        except:
+            return None
+    def get_gpu_description(self, object) -> str:
+        try:
+            return str(object.other_attributes['gpu_description']) or None
+        except:
+            return None
     def get_interconnect(self, object) -> str:
         try:
             return str(object.other_attributes['interconnect']) or None
         except:
             return None
-    def get_storage_network(self, object) -> str:
+    def get_job_manager(self, object) -> str:
         try:
-            return str(object.other_attributes['storage_network']) or None
+            return str(object.other_attributes['job_manager']) or None
+        except:
+            return None
+    def get_local_storage_per_node_gb(self, object) -> int:
+        try:
+            return object.other_attributes['local_storage_per_node_gb']
         except:
             return None
     def get_machine_type(self, object) -> str:
@@ -422,9 +423,19 @@ class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer)
             return str(object.other_attributes['manufacturer']) or None
         except:
             return None
-    def get_cpu_speed_ghz(self, object) -> int:
+    def get_memory_per_cpu_gb(self, object) -> int:
         try:
-            return object.other_attributes['cpu_speed_ghz']
+            return object.other_attributes['memory_per_cpu_gb']
+        except:
+            return None
+    def get_node_count(self, object) -> int:
+        try:
+            return object.other_attributes['node_count']
+        except:
+            return None
+    def get_operating_system(self, object) -> str:
+        try:
+            return str(object.other_attributes['operating_system']) or None
         except:
             return None
     def get_platform_name(self, object) -> str:
@@ -432,20 +443,14 @@ class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer)
             return str(object.other_attributes['platform_name']) or None
         except:
             return None
-    def get_memory_per_cpu_gb(self, object) -> int:
+    def get_sensitive_data_support_description(self, object) -> str:
         try:
-            return object.other_attributes['memory_per_cpu_gb']
+            return str(object.other_attributes['sensitive_data_support_description']) or None
         except:
             return None
-    def get_cpu_count_per_node(self, object) -> int:
+    def get_storage_network(self, object) -> str:
         try:
-            return object.other_attributes['cpu_count_per_node']
-        except:
-            return None
-            
-    def get_xsedenet_participation(self, object) -> str:
-        try:
-            return object.other_attributes['xsedenet_participation']
+            return str(object.other_attributes['storage_network']) or None
         except:
             return None
     def get_supports_senstitive_data(self, object) -> bool:
@@ -453,14 +458,14 @@ class CiderInfrastructure_Compute_Detail_Serializer(serializers.ModelSerializer)
             return object.other_attributes['supports_senstitive_data']
         except:
             return None
-    def get_sensitive_data_support_description(self, object) -> str:
+    def get_user_guide_url(self, object) -> str:
         try:
-            return str(object.other_attributes['sensitive_data_support_description']) or None
+            return str(object.other_attributes['user_guide_url']) or None
         except:
             return None
-    def get_local_storage_per_node_gb(self, object) -> int:
+    def get_xsedenet_participation(self, object) -> str:
         try:
-            return object.other_attributes['local_storage_per_node_gb']
+            return object.other_attributes['xsedenet_participation']
         except:
             return None
 

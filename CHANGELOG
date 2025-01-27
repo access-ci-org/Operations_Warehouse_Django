@@ -1,3 +1,8 @@
+v3.49.0 2025-01-27 JP
+  - Enhance cider/v1/info_resourceid/ to return node_count (CTT-419)
+  - Enhance cider/v1/access-active-groups/ to return resource summary (CTT-420)
+  - Fix docker requirements.txt django-bootstrap5 syntax
+
 v3.48.0 2024-12-12 JP
   - Expand filter so that resource catalog Group APIs include Other type resources also
 

@@ -1197,7 +1197,6 @@ class Jobs_per_Resource_by_ProfileID(APIView):
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = ComputingActivity_Expand_Serializer
     def get(self, request, format=None, **kwargs):
-        import requests
         fullusername = None
         username = None
         if request.user.is_authenticated:
@@ -1227,7 +1226,6 @@ class Jobs_by_ProfileID(APIView):
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = ComputingActivity_Expand_Serializer
     def get(self, request, format=None, **kwargs):
-        import requests
         fullusername = None
         username = None
         if request.user.is_authenticated:
