@@ -89,12 +89,23 @@ class Integration_Resource_Badge_Admin(admin.ModelAdmin):
 admin.site.register(Integration_Resource_Badge, Integration_Resource_Badge_Admin)
 
 
-class Integration_Workflow_Admin(admin.ModelAdmin):
+class Integration_Badge_Workflow_Admin(admin.ModelAdmin):
     autocomplete_fields = ('resource_id', 'badge_id',)
-    list_display = ('workflow_id', 'resource_id', 'badge_id', 'state', 'stateUpdatedBy', 'stateUpdatedAt')
+    list_display = ('workflow_id', 'resource_id', 'badge_id', 'state', 'state_updated_by', 'state_updated_at')
     list_display_links = ['workflow_id']
     ordering = ['resource_id', 'badge_id', 'workflow_id']
-    search_fields = ['resource_id', 'badge_id', 'state', 'stateUpdatedBy']
+    search_fields = ['resource_id', 'badge_id', 'state', 'state_updated_by']
 
 # Register your model here.
-admin.site.register(Integration_Workflow, Integration_Workflow_Admin)
+admin.site.register(Integration_Badge_Workflow, Integration_Badge_Workflow_Admin)
+
+
+class Integration_Badge_Task_Workflow_Admin(admin.ModelAdmin):
+    autocomplete_fields = ('resource_id', 'badge_id', 'task_id')
+    list_display = ('workflow_id', 'resource_id', 'badge_id', 'task_id', 'state', 'state_updated_by', 'state_updated_at')
+    list_display_links = ['workflow_id']
+    ordering = ['resource_id', 'badge_id', 'task_id', 'workflow_id']
+    search_fields = ['resource_id', 'badge_id', 'task_id', 'state', 'state_updated_by']
+
+# Register your model here.
+admin.site.register(Integration_Badge_Task_Workflow, Integration_Badge_Task_Workflow_Admin)

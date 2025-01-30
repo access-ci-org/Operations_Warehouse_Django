@@ -247,12 +247,12 @@ class Integration_Resource_Badge_Task_Completed_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
         
         # Update the state to "TASK_COMPLETED"
-        workflow = Integration_Workflow(
+        workflow = Integration_Badge_Workflow(
             resource_id=resource,
             badge_id=badge,
-            state=WORKFLOW_STATE["TASK_COMPLETED"],
-            stateUpdatedBy=get_current_username(),
-            stateUpdatedAt=timezone.now()
+            state=BADGE_WORKFLOW_STATE["TASK_COMPLETED"],
+            state_updated_by=get_current_username(),
+            state_updated_at=timezone.now()
         )
         workflow.save()
 
@@ -287,12 +287,12 @@ class Integration_Resource_Badge_Task_Uncompleted_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
 
         # Update the state back to "PLANNED"
-        workflow = Integration_Workflow(
+        workflow = Integration_Badge_Workflow(
             resource_id=resource,
             badge_id=badge,
-            state=WORKFLOW_STATE["PLANNED"],
-            stateUpdatedBy=get_current_username(),
-            stateUpdatedAt=timezone.now()
+            state=BADGE_WORKFLOW_STATE["PLANNED"],
+            state_updated_by=get_current_username(),
+            state_updated_at=timezone.now()
         )
         workflow.save()
 

@@ -1,11 +1,13 @@
 from django.db import models
 from cider.models import *
 
+
 def get_current_username():
     # TODO integrate the cilogon credentials
     return "admin"
 
-WORKFLOW_STATE = {
+
+BADGE_WORKFLOW_STATE = {
     "NOT_PLANNED": "Not Planned",
     "PLANNED": "Planned",
     "TASK_COMPLETED": "Task Completed",
@@ -13,6 +15,7 @@ WORKFLOW_STATE = {
     "VERIFIED": "Verified",
     "DEPRECATED": "Deprecated"
 }
+
 
 class Integration_Roadmap(models.Model):
     roadmap_id = models.AutoField(primary_key=True)
@@ -37,11 +40,11 @@ class Integration_Badge(models.Model):
     researcher_summary = models.TextField(null=True)
     resource_provider_summary = models.TextField(null=True)
     verification_summary = models.TextField(null=True)
-    verification_method = models.CharField(max_length=20) # {Automated, Manual}
+    verification_method = models.CharField(max_length=20)  # {Automated, Manual}
     default_badge_access_url = models.URLField()
     default_badge_access_url_label = models.CharField(max_length=50)
 
-    #prerequisite_badges = models.ManyToManyField("Integration_Badge")
+    # prerequisite_badges = models.ManyToManyField("Integration_Badge")
 
     class Meta:
         ordering = ['name']
@@ -68,7 +71,8 @@ class Integration_Task(models.Model):
 class Integration_Badge_Prerequisite_Badge(models.Model):
     id = models.AutoField(primary_key=True)
     badge_id = models.ForeignKey(Integration_Badge, related_name='badge_prerequisites', on_delete=models.CASCADE)
-    prerequisite_badge_id = models.ForeignKey(Integration_Badge, related_name='badge_required_by', on_delete=models.CASCADE)
+    prerequisite_badge_id = models.ForeignKey(Integration_Badge, related_name='badge_required_by',
+                                              on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
 
     class Meta:
@@ -77,8 +81,10 @@ class Integration_Badge_Prerequisite_Badge(models.Model):
 
 class Integration_Roadmap_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE, related_name="badge_set", related_query_name="badge_ref")
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE, related_name="roadmap_set", related_query_name="roadmap")
+    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE, related_name="badge_set",
+                                   related_query_name="badge_ref")
+    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE, related_name="roadmap_set",
+                                 related_query_name="roadmap")
     sequence_no = models.IntegerField()
     required = models.BooleanField(max_length=20)
 
@@ -88,7 +94,7 @@ class Integration_Roadmap_Badge(models.Model):
 
 class Integration_Badge_Task(models.Model):
     id = models.AutoField(primary_key=True)
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+    badge_id = models.ForeignKey(Integration_Badge, related_name="badge_tasks", on_delete=models.CASCADE)
     task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
 
@@ -105,15 +111,27 @@ class Integration_Resource_Roadmap(models.Model):
         unique_together = ('resource_id', 'roadmap_id',)
 
 
-class Integration_Workflow(models.Model):
+class Integration_Badge_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
     resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+
     state = models.CharField(max_length=20)
-    stateUpdatedBy = models.CharField(max_length=50)
-    stateUpdatedAt = models.DateTimeField(auto_now_add=True)
+    state_updated_by = models.CharField(max_length=50)
+    state_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
 
+
+class Integration_Badge_Task_Workflow(models.Model):
+    workflow_id = models.AutoField(primary_key=True)
+    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
+    task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
+
+    state = models.CharField(max_length=20)
+    state_updated_by = models.CharField(max_length=50)
+    state_updated_at = models.DateTimeField(auto_now_add=True)
+    comment = models.TextField(null=True, blank=True)
 
 
 class Integration_Resource_Badge(models.Model):
@@ -127,27 +145,74 @@ class Integration_Resource_Badge(models.Model):
         unique_together = ('resource_id', 'badge_id',)
 
     @property
+    def resource_badge_access_url(self):
+        if self.badge_access_url is None:
+            return self.badge.badge_access_url
+        else:
+            return self.badge_access_url
+
+    @property
+    def resource_badge_access_url_label(self):
+        if self.badge_access_url_label is None:
+            return self.badge.badge_access_url_label
+        else:
+            return self.badge_access_url_label
+
+    @property
+    def badge(self):
+        return self.badge_id
+
+    @property
+    def resource(self):
+        return self.resource_id
+
+    @property
+    def task_status(self):
+        _tast_status = []
+        badge_tasks = Integration_Badge_Task.objects.filter(badge_id=self.badge_id)
+        for badge_task in badge_tasks:
+            task_workflow = Integration_Badge_Task_Workflow.objects.filter(
+                resource_id=self.resource_id,
+                badge_id=self.badge_id,
+                task_id=badge_task.task_id
+            ).order_by('-state_updated_at').first()
+            if task_workflow is not None:
+                _tast_status.append({
+                    "task_id": badge_task.task_id.pk,
+                    "state": task_workflow.state,
+                    "state_updated_by": task_workflow.state_updated_by,
+                    "state_updated_at": task_workflow.state_updated_at
+                })
+            else:
+                _tast_status.append({
+                    "task_id": badge_task.task_id.pk,
+                    "state": "Not Started",
+                    "state_updated_by": None,
+                    "state_updated_at": None
+                })
+
+        return _tast_status
+
+    @property
     def workflow(self):
-        return Integration_Workflow.objects.filter(
+        return Integration_Badge_Workflow.objects.filter(
             resource_id=self.resource_id,
             badge_id=self.badge_id
-        ).order_by('-stateUpdatedAt').first()
-    
+        ).order_by('-state_updated_at').first()
+
     @property
     def state(self):
         if self.workflow is None:
-            return WORKFLOW_STATE["NOT_PLANNED"]
+            return BADGE_WORKFLOW_STATE["NOT_PLANNED"]
         return self.workflow.state
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            workflow = Integration_Workflow(
-                state=WORKFLOW_STATE["PLANNED"],
-                stateUpdatedBy=get_current_username(),
+            workflow = Integration_Badge_Workflow(
+                state=BADGE_WORKFLOW_STATE["PLANNED"],
+                state_updated_by=get_current_username(),
                 resource_id=self.resource_id,
                 badge_id=self.badge_id
             )
             workflow.save()
         super().save(*args, **kwargs)
-
-
