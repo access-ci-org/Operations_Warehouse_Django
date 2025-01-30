@@ -217,19 +217,23 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
         
     def get_badge_status(self, obj):
         try:
-            badges = obj.resource_badges.all()
-        
+            resource_badges = obj.resource_badges.all()
+
             badge_status = []
-            for badge in badges:
+            for resource_badge in resource_badges:
+                print("### resource_badge.badge.name ", resource_badge.badge.name)
+                print("### resource_badge.task_status ", resource_badge.task_status)
                 badge_data = {
-                    'badge_id': badge.badge_id.badge_id,
-                    'badge_access_url': badge.badge_access_url,
-                    'badge_access_url_label': badge.badge_access_url_label,
-                    'state': badge.workflow.state,
-                    'state_updated_by': badge.workflow.stateUpdatedBy if badge.workflow else None,
-                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None,
-                    'comment': badge.workflow.comment if badge.workflow else None
+                    'badge_id': resource_badge.badge.badge_id,
+                    'badge_access_url': resource_badge.resource_badge_access_url,
+                    'badge_access_url_label': resource_badge.resource_badge_access_url_label,
+                    'state': resource_badge.state,
+                    'state_updated_by': resource_badge.workflow.state_updated_by if resource_badge.workflow else None,
+                    'state_updated_at': resource_badge.workflow.state_updated_at if resource_badge.workflow else None,
+                    'comment': resource_badge.workflow.comment if resource_badge.workflow else None,
+                    'task_status': resource_badge.task_status
                 }
+
                 badge_status.append(badge_data)
             
             return badge_status
@@ -311,8 +315,8 @@ class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
                     'badge_access_url': badge.badge_access_url,
                     'badge_access_url_label': badge.badge_access_url_label,
                     'state': badge.workflow.state,
-                    'state_updated_by': badge.workflow.stateUpdatedBy if badge.workflow else None,
-                    'state_updated_at': badge.workflow.stateUpdatedAt if badge.workflow else None
+                    'state_updated_by': badge.workflow.state_updated_by if badge.workflow else None,
+                    'state_updated_at': badge.workflow.state_updated_at if badge.workflow else None
                 }
                 badge_status.append(badge_data)
             
