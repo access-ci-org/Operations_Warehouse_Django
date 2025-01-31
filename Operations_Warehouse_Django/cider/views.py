@@ -32,21 +32,34 @@ class CiderInfrastructure_v1_ACCESSComputeCompare(GenericAPIView):
             coco_data = mk_html_table( coco_data )
         return MyAPIResponse( { 'results': coco_data }, template_name='coco.html' )
 
-#class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
-#    '''
-#    ACCESS Active Resource Contacts
-#    '''
-#    permission_classes = (IsAuthenticated,)
-#    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
-#    serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
-#    def get(self, request, format=None, **kwargs):
-#        returnformat = request.query_params.get('format' )
-#        objects = CiderInfrastructure_Active_Filter( type='Compute' )
-#        serializer = CiderInfrastructure_OtherAttrs_Serializer(objects, context={'request': request}, many=True)
-#        coco_data = cider_to_coco( { 'results': serializer.data } )
-#        if returnformat != 'json':
-#            coco_data = mk_html_table( coco_data )
-#        return MyAPIResponse( { 'results': coco_data }, template_name='contacts.html' )
+class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
+    '''
+    ACCESS Active Resource Contacts
+    '''
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
+    def get(self, request, format=None, **kwargs):
+        returnformat = request.query_params.get('format' )
+        objects1 = CiderInfrastructure_Active_Filter( type='Compute' )
+        objects2 = CiderInfrastructure_Active_Filter( type='Storage' )
+        all_contacts = {}
+        for resource in chain(objects1, objects2):
+            if 'contacts' not in resource.protected_attributes:
+                continue
+            for contact in resource.protected_attributes['contacts']:
+                for ct in contact['contact_types']:
+                    if ct not in all_contacts:
+                        all_contacts[ct] = set()
+                    all_contacts[ct].add(f"{contact['name']} <{contact['email']}>")
+        sorted_contacts = {}
+        if returnformat == 'html':
+            for key in sorted(all_contacts):
+                sorted_contacts[key] = ', '.join(sorted(all_contacts[key]))
+        else:
+            for key in sorted(all_contacts):
+                sorted_contacts[key] = sorted(all_contacts[key])
+        return MyAPIResponse( { 'results': sorted_contacts }, template_name='contacts.html' )
     
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''

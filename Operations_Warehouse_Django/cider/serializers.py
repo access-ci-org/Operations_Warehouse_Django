@@ -9,6 +9,11 @@ class CiderInfrastructure_OtherAttrs_Serializer( serializers.ModelSerializer ):
         model = CiderInfrastructure
         fields = ( 'other_attributes', )
 
+class CiderInfrastructure_ACCESSContacts_Serializer( serializers.ModelSerializer ):
+    class Meta:
+        model = CiderInfrastructure
+        fields = ( 'protected_attributes', )
+
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()

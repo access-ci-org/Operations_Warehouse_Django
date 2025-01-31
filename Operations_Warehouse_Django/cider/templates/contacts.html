@@ -1,0 +1,22 @@
+{% extends "web/base_nav_none.html" %}
+
+{% block title %}Resource Contacts{% endblock %}
+
+{% block content %}
+
+<h1>ACCESS Active Resource Contacts</h1>
+
+<table>
+  <tr>
+      <th>Contact Role</th>
+      <th>E-mails</th>
+  </tr>
+  {% for key, item in results.items %}
+  <tr>
+    <td style="vertical-align:top">{{key}}</td>
+    <td>{{item}}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
