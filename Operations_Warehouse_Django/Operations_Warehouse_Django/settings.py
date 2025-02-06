@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'web',
     'dal',
     'dal_select2',
-    'cilogon_tokenauth',
+    #'cilogon_tokenauth',
 ]
 
 MIDDLEWARE = [
@@ -225,6 +225,7 @@ if SETTINGS_MODE == 'SERVER':
         'allauth.socialaccount',
         'allauth.socialaccount.providers.cilogon',
         'django_bootstrap5',
+        'cilogon_tokenauth',
     )
     
     SITE_ID = 1
