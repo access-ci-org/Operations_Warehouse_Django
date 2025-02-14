@@ -191,7 +191,7 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
                 required=True,
                 location=OpenApiParameter.PATH,
                 enum=BadgeTaskWorkflowStatus,
-                default=BadgeTaskWorkflowStatus.COMPLETE
+                default=BadgeTaskWorkflowStatus.COMPLETED
             )
         ]
     )

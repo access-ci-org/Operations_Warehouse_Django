@@ -3,6 +3,8 @@ from django.utils.encoding import uri_to_iri
 from integration_badges.models import *
 from rest_framework import serializers
 
+import traceback
+
 
 class Integration_Badge_Serializer(serializers.ModelSerializer):
     '''
@@ -237,7 +239,11 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
                 badge_status.append(badge_data)
             
             return badge_status
-        except:
+        except Exception as e:
+            # Handle the exception
+            #print(f"An error occurred: {e}")
+            #traceback.print_exc()
+
             return None
         
 

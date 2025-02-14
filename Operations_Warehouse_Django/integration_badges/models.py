@@ -15,8 +15,8 @@ class BadgeWorkflowStatus(models.TextChoices):
     DEPRECATED = "deprecated", "Depredated"
 
 class BadgeTaskWorkflowStatus(models.TextChoices):
-    COMPLETE = "completed", "Completed"
-    NOT_COMPLETE = "not-completed", "Not Completed"
+    COMPLETED = "completed", "Completed"
+    NOT_COMPLETED = "not-completed", "Not Completed"
 
 
 class Integration_Roadmap(models.Model):
@@ -163,14 +163,14 @@ class Integration_Resource_Badge(models.Model):
     @property
     def resource_badge_access_url(self):
         if self.badge_access_url is None:
-            return self.badge.badge_access_url
+            return self.badge.default_badge_access_url
         else:
             return self.badge_access_url
 
     @property
     def resource_badge_access_url_label(self):
         if self.badge_access_url_label is None:
-            return self.badge.badge_access_url_label
+            return self.badge.default_badge_access_url_label
         else:
             return self.badge_access_url_label
 
@@ -202,7 +202,7 @@ class Integration_Resource_Badge(models.Model):
             else:
                 _tast_status.append({
                     "task_id": badge_task.task_id.pk,
-                    "state": "Not Started",
+                    "state": BadgeTaskWorkflowStatus.NOT_COMPLETED,
                     "state_updated_by": None,
                     "state_updated_at": None
                 })
