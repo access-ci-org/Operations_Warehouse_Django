@@ -6,15 +6,17 @@ def get_current_username():
     # TODO integrate the cilogon credentials
     return "admin"
 
+class BadgeWorkflowStatus(models.TextChoices):
+    NOT_PLANNED = "not-planned", "Not Planned"
+    PLANNED = "planned", "Planned"
+    TASK_COMPLETED = "task-completed", "Task Completed"
+    VERIFICATION_FAILED = "verification-failed", "Verification Failed"
+    VERIFIED = "verified", "Verified"
+    DEPRECATED = "deprecated", "Depredated"
 
-BADGE_WORKFLOW_STATE = {
-    "NOT_PLANNED": "Not Planned",
-    "PLANNED": "Planned",
-    "TASK_COMPLETED": "Task Completed",
-    "VERIFICATION_FAILED": "Verification Failed",
-    "VERIFIED": "Verified",
-    "DEPRECATED": "Deprecated"
-}
+class BadgeTaskWorkflowStatus(models.TextChoices):
+    COMPLETE = "completed", "Completed"
+    NOT_COMPLETE = "not-completed", "Not Completed"
 
 
 class Integration_Roadmap(models.Model):
@@ -116,10 +118,24 @@ class Integration_Badge_Workflow(models.Model):
     resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
 
-    state = models.CharField(max_length=20)
+    state = models.CharField(max_length=20, choices=BadgeWorkflowStatus.choices)
     state_updated_by = models.CharField(max_length=50)
     state_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        resource_badge = Integration_Resource_Badge.objects.filter(
+            resource_id=self.resource_id,
+            badge_id=self.badge_id,
+        ).first()
+        if resource_badge is None:
+            resource_badge = Integration_Resource_Badge(
+                resource_id=self.resource_id,
+                badge_id=self.badge_id
+            )
+            resource_badge.save()
+
+        super().save(*args, **kwargs)
 
 
 class Integration_Badge_Task_Workflow(models.Model):
@@ -128,7 +144,7 @@ class Integration_Badge_Task_Workflow(models.Model):
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
     task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
 
-    state = models.CharField(max_length=20)
+    state = models.CharField(max_length=20, choices=BadgeTaskWorkflowStatus.choices)
     state_updated_by = models.CharField(max_length=50)
     state_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
@@ -203,16 +219,5 @@ class Integration_Resource_Badge(models.Model):
     @property
     def state(self):
         if self.workflow is None:
-            return BADGE_WORKFLOW_STATE["NOT_PLANNED"]
+            return BadgeWorkflowStatus.NOT_PLANNED
         return self.workflow.state
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            workflow = Integration_Badge_Workflow(
-                state=BADGE_WORKFLOW_STATE["PLANNED"],
-                state_updated_by=get_current_username(),
-                resource_id=self.resource_id,
-                badge_id=self.badge_id
-            )
-            workflow.save()
-        super().save(*args, **kwargs)

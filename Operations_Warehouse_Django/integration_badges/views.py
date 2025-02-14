@@ -1,6 +1,3 @@
-from django.db.models import Q
-from django.shortcuts import render
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -10,11 +7,12 @@ from django.db import transaction
 from django.utils import timezone
 
 from integration_badges.models import *
-# from integration_badges.filters import *
 from integration_badges.serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
+
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 
 
@@ -123,155 +121,33 @@ class Integration_Task_v1(GenericAPIView):
             return MyAPIResponse({'results': []})
 
 
-class Integration_Resource_Badge_Plan_v1(GenericAPIView):
-    '''
-    Plan or update a badge for a resource.
-    '''
-    permission_classes = (AllowAny,)
-    renderer_classes = (JSONRenderer,)
-    serializer_class = Integration_Resource_Badge_Plan_Serializer
-
-    def post(self, request, *args, **kwargs):
-        resource_id = kwargs.get('cider_resource_id')
-        badge_id = kwargs.get('integration_badge_id')
-
-        if not resource_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID and Badge ID are required') 
-
-        try:
-            resource = CiderInfrastructure.objects.get(pk=resource_id)
-            badge = Integration_Badge.objects.get(pk=badge_id)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
-        except Integration_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
-
-       # Check if the resource_badge already exists
-        try:
-            resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
-            serializer = self.serializer_class(resource_badge, data=request.data, partial=True)
-        except Integration_Resource_Badge.DoesNotExist:
-            # if the resource_badge does not exist, create a new one
-            serializer = self.serializer_class(data=request.data)
-
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    resource_badge = serializer.save(resource=resource, badge=badge)
-                    status_code = status.HTTP_201_CREATED if 'resource_badge' not in locals() else status.HTTP_200_OK
-                    return MyAPIResponse({"resource_badge_id": resource_badge.id}, code=status_code)
-            except Exception as e:
-                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail="Error saving the resource_badge: " + str(e))
-        else:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail="Invalid data: " + str(serializer.errors))
-
-
-class Integration_Resource_Badge_Unplan_v1(GenericAPIView):
-    '''
-    Delete a resource-badge object.
-    '''
-    permission_classes = (AllowAny,)
-    renderer_classes = (JSONRenderer,)
-    
-    def post(self, request, *args, **kwargs):
-        resource_id = kwargs.get('cider_resource_id')
-        badge_id = kwargs.get('integration_badge_id')
-
-        if not resource_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID and Badge ID are required')
-
-        try:
-            resource = CiderInfrastructure.objects.get(pk=resource_id)
-            badge = Integration_Badge.objects.get(pk=badge_id)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
-        except Integration_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
-
-        try:
-            resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
-            resource_badge.delete()
-            return MyAPIResponse({"detail": "Resource badge deleted successfully"}, code=status.HTTP_204_NO_CONTENT)
-        except Integration_Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Resource badge not found')
-
 
 class Integration_Resource_Badge_Status_v1(GenericAPIView):
-    '''
-    Retrieve badge status of a resource.
-    '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (JSONRenderer,)
-    serializer_class = Integration_Resource_Badge_Status_Serializer
-
-    def get(self, request, format=None, **kwargs):
-        resource_id = kwargs.get('cider_resource_id')
-        if not resource_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID is required')
-
-        try:
-            item = CiderInfrastructure.objects.get(pk=resource_id)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified resource not found')
-
-        serializer = self.serializer_class(item, context={'request': request}, many=False)
-        return MyAPIResponse({'results': serializer.data})
-
-
-class Integration_Resource_Badge_Task_Completed_v1(GenericAPIView):
-    '''
-    Mark a badge as task completed.
-    '''
-    permission_classes = (AllowAny,)
-    renderer_classes = (JSONRenderer,)
-
-    def post(self, request, *args, **kwargs):
-        resource_id = kwargs.get('cider_resource_id')
-        badge_id = kwargs.get('integration_badge_id')
-
-        if not resource_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID and Badge ID are required') 
-
-        try:
-            resource = CiderInfrastructure.objects.get(pk=resource_id)
-            badge = Integration_Badge.objects.get(pk=badge_id)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
-        except Integration_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
-        
-        try:
-            resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
-        except Integration_Resource_Badge.DoesNotExist:
-            # if the resource_badge does not exist, throw an error
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
-        
-        # Update the state to "TASK_COMPLETED"
-        workflow = Integration_Badge_Workflow(
-            resource_id=resource,
-            badge_id=badge,
-            state=BADGE_WORKFLOW_STATE["TASK_COMPLETED"],
-            state_updated_by=get_current_username(),
-            state_updated_at=timezone.now()
-        )
-        workflow.save()
-
-        return MyAPIResponse({'message': 'Task marked as completed'})
-
-
-class Integration_Resource_Badge_Task_Uncompleted_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
     permission_classes = (AllowAny,)
     renderer_classes = (JSONRenderer,)
 
-    def post(self, request, *args, **kwargs):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='badge_workflow_status',
+                description='Filter by status',
+                type=str,
+                required=True,
+                location=OpenApiParameter.PATH,
+                enum=BadgeWorkflowStatus,
+                default=BadgeWorkflowStatus.PLANNED
+            )
+        ]
+    )
+    def post(self, request, badge_workflow_status, *args, **kwargs):
         resource_id = kwargs.get('cider_resource_id')
         badge_id = kwargs.get('integration_badge_id')
 
-        if not resource_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID and Badge ID are required')
+        if not resource_id or not badge_id or not badge_workflow_status:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID, Badge ID and status are required')
 
         try:
             resource = CiderInfrastructure.objects.get(pk=resource_id)
@@ -286,14 +162,76 @@ class Integration_Resource_Badge_Task_Uncompleted_v1(GenericAPIView):
         except Integration_Resource_Badge.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
 
+
         # Update the state back to "PLANNED"
         workflow = Integration_Badge_Workflow(
             resource_id=resource,
             badge_id=badge,
-            state=BADGE_WORKFLOW_STATE["PLANNED"],
+            state=badge_workflow_status,
             state_updated_by=get_current_username(),
             state_updated_at=timezone.now()
         )
         workflow.save()
 
-        return MyAPIResponse({'message': 'Task marked as uncompleted (state as planned)'})
+        return MyAPIResponse({'message': 'Badge marked as %s' % badge_workflow_status})
+
+class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
+    '''
+    Mark a badge as task uncompleted.
+    '''
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='badge_task_workflow_status',
+                description='Filter by status',
+                type=str,
+                required=True,
+                location=OpenApiParameter.PATH,
+                enum=BadgeTaskWorkflowStatus,
+                default=BadgeTaskWorkflowStatus.COMPLETE
+            )
+        ]
+    )
+    def post(self, request, badge_task_workflow_status, *args, **kwargs):
+        resource_id = kwargs.get('cider_resource_id')
+        badge_id = kwargs.get('integration_badge_id')
+        task_id = kwargs.get('integration_task_id')
+
+        if not resource_id or not badge_id or not task_id or not badge_task_workflow_status:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID, Badge ID, Task ID and status are required')
+
+        try:
+            resource = CiderInfrastructure.objects.get(pk=resource_id)
+            badge = Integration_Badge.objects.get(pk=badge_id)
+            task = Integration_Task.objects.get(pk=task_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
+        except Integration_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
+
+        try:
+            resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
+        except Integration_Resource_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
+
+
+        try:
+            resource_badge = Integration_Badge_Task.objects.get(badge_id=badge, task_id=task)
+        except Integration_Resource_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge-task relationship not found')
+
+        # Update the state back to "PLANNED"
+        workflow = Integration_Badge_Task_Workflow(
+            resource_id=resource,
+            badge_id=badge,
+            task_id=task,
+            state=badge_task_workflow_status,
+            state_updated_by=get_current_username(),
+            state_updated_at=timezone.now()
+        )
+        workflow.save()
+
+        return MyAPIResponse({'message': 'Badge task marked as %s' % badge_task_workflow_status})

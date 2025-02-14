@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path, re_path, register_converter
 
 from integration_badges.views import *
 
@@ -12,13 +12,8 @@ urlpatterns = [
      path(r'v1/resources/', Integration_Resource_List_v1.as_view(), name='integration-resources-list-v1-all'),
      path(r'v1/resource/<str:cider_resource_id>/', Integration_Resource_v1.as_view(), name='integration-resource-v1-id'),
      path(r'v1/task/<str:integration_badge_id>/', Integration_Task_v1.as_view(), name='integration-tasks-v1-id'),
-     path(r'v1/resource/<str:cider_resource_id>/<str:integration_badge_id>/plan', 
-          Integration_Resource_Badge_Plan_v1.as_view(), name='integration-resource-badge-v1-id-plan'),
-     path(r'v1/resource/<str:cider_resource_id>/<str:integration_badge_id>/unplan', 
-          Integration_Resource_Badge_Unplan_v1.as_view(), name='integration-resource-badge-v1-id-unplan'),
-     path(r'v1/resource/<str:cider_resource_id>/state', Integration_Resource_Badge_Status_v1.as_view(), name='integration-resource-badge-status-v1-id'),
-     path(r'v1/resource/<str:cider_resource_id>/<str:integration_badge_id>/task_completed', 
-          Integration_Resource_Badge_Task_Completed_v1.as_view(), name='integration-resource-badge-task_completed-v1-id'),
-     path(r'v1/resource/<str:cider_resource_id>/<str:integration_badge_id>/task_uncompleted', 
-          Integration_Resource_Badge_Task_Uncompleted_v1.as_view(), name='integration-resource-badge-task_uncompleted-v1-id'),
+     path(r'v1/resource/<str:cider_resource_id>/badge/<str:integration_badge_id>/workflow/<str:badge_workflow_status>',
+          Integration_Resource_Badge_Status_v1.as_view(), name='integration-resource-badge-status-v1-id'),
+     path(r'v1/resource/<str:cider_resource_id>/badge/<str:integration_badge_id>/task/<str:integration_task_id>/workflow/<str:badge_task_workflow_status>',
+          Integration_Resource_Badge_Task_Status_v1.as_view(), name='integration-resource-badge-task-status-v1-id'),
 ]
