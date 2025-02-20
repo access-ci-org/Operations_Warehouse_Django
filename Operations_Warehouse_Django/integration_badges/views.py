@@ -160,7 +160,12 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
         try:
             resource_badge = Integration_Resource_Badge.objects.get(resource_id=resource, badge_id=badge)
         except Integration_Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
+            resource_badge = Integration_Resource_Badge(
+                resource_id=resource,
+                badge_id=badge
+            )
+            resource_badge.save()
+            #raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
 
 
         # Update the state back to "PLANNED"
