@@ -79,7 +79,7 @@ class Integration_Resource_List_v1(GenericAPIView):
 class Integration_Resource_v1(GenericAPIView):
     '''
     Retrieve details of a specific resource, including roadmaps and their badges. 
-    It also includes the list of badge states of the badges that are at least planned.
+    It also includes the list of badge statuses of the badges that are at least planned.
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -168,13 +168,13 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
             #raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
 
 
-        # Update the state back to "PLANNED"
+        # Update the status back to "PLANNED"
         workflow = Integration_Badge_Workflow(
             resource_id=resource,
             badge_id=badge,
-            state=badge_workflow_status,
-            state_updated_by=get_current_username(),
-            state_updated_at=timezone.now()
+            status=badge_workflow_status,
+            status_updated_by=get_current_username(),
+            status_updated_at=timezone.now()
         )
         workflow.save()
 
@@ -228,14 +228,14 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
         except Integration_Resource_Badge.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge-task relationship not found')
 
-        # Update the state back to "PLANNED"
+        # Update the status back to "PLANNED"
         workflow = Integration_Badge_Task_Workflow(
             resource_id=resource,
             badge_id=badge,
             task_id=task,
-            state=badge_task_workflow_status,
-            state_updated_by=get_current_username(),
-            state_updated_at=timezone.now()
+            status=badge_task_workflow_status,
+            status_updated_by=get_current_username(),
+            status_updated_at=timezone.now()
         )
         workflow.save()
 

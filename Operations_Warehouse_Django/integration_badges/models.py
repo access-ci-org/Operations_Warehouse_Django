@@ -119,9 +119,9 @@ class Integration_Badge_Workflow(models.Model):
     resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
 
-    state = models.CharField(max_length=20, choices=BadgeWorkflowStatus.choices)
-    state_updated_by = models.CharField(max_length=50)
-    state_updated_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=BadgeWorkflowStatus.choices)
+    status_updated_by = models.CharField(max_length=50)
+    status_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -145,9 +145,9 @@ class Integration_Badge_Task_Workflow(models.Model):
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
     task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
 
-    state = models.CharField(max_length=20, choices=BadgeTaskWorkflowStatus.choices)
-    state_updated_by = models.CharField(max_length=50)
-    state_updated_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=BadgeTaskWorkflowStatus.choices)
+    status_updated_by = models.CharField(max_length=50)
+    status_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
 
 
@@ -192,20 +192,20 @@ class Integration_Resource_Badge(models.Model):
                 resource_id=self.resource_id,
                 badge_id=self.badge_id,
                 task_id=badge_task.task_id
-            ).order_by('-state_updated_at').first()
+            ).order_by('-status_updated_at').first()
             if task_workflow is not None:
                 _tast_status.append({
                     "task_id": badge_task.task_id.pk,
-                    "state": task_workflow.state,
-                    "state_updated_by": task_workflow.state_updated_by,
-                    "state_updated_at": task_workflow.state_updated_at
+                    "status": task_workflow.status,
+                    "status_updated_by": task_workflow.status_updated_by,
+                    "status_updated_at": task_workflow.status_updated_at
                 })
             else:
                 _tast_status.append({
                     "task_id": badge_task.task_id.pk,
-                    "state": BadgeTaskWorkflowStatus.NOT_COMPLETED,
-                    "state_updated_by": None,
-                    "state_updated_at": None
+                    "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                    "status_updated_by": None,
+                    "status_updated_at": None
                 })
 
         return _tast_status
@@ -215,10 +215,10 @@ class Integration_Resource_Badge(models.Model):
         return Integration_Badge_Workflow.objects.filter(
             resource_id=self.resource_id,
             badge_id=self.badge_id
-        ).order_by('-state_updated_at').first()
+        ).order_by('-status_updated_at').first()
 
     @property
-    def state(self):
+    def status(self):
         if self.workflow is None:
             return BadgeWorkflowStatus.NOT_PLANNED
-        return self.workflow.state
+        return self.workflow.status

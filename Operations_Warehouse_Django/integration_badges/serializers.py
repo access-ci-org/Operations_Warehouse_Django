@@ -100,20 +100,20 @@ class Integration_Roadmap_Serializer(serializers.ModelSerializer):
 
 class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
     '''
-    Return all fields of an Integration_Resource_Badge object, including the badge state. 
+    Return all fields of an Integration_Resource_Badge object, including the badge status. 
     The badges returned are at least planned.
     '''
 
-    state = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     comment = serializers.SerializerMethodField()
 
     class Meta:
         model = Integration_Resource_Badge
-        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'state', 'comment')
+        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'status', 'comment')
     
-    def get_state(self, obj):
+    def get_status(self, obj):
         try:
-            return obj.workflow.state
+            return obj.workflow.status
         except:
             return None
         
@@ -177,7 +177,7 @@ class Integration_Resource_Roadmap_Serializer(serializers.ModelSerializer):
 class Integration_Resource_Serializer(serializers.ModelSerializer):
     '''
     Return fields of a CiderInfrastructure object, as well as roadmaps and 
-    badges states of associated badges that are at least planned.
+    badges statuses of associated badges that are at least planned.
     '''
 
     roadmaps = Integration_Resource_Roadmap_Serializer(source='resource_roadmaps', many=True)
@@ -229,9 +229,9 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
                     'badge_id': resource_badge.badge.badge_id,
                     'badge_access_url': resource_badge.resource_badge_access_url,
                     'badge_access_url_label': resource_badge.resource_badge_access_url_label,
-                    'state': resource_badge.state,
-                    'state_updated_by': resource_badge.workflow.state_updated_by if resource_badge.workflow else None,
-                    'state_updated_at': resource_badge.workflow.state_updated_at if resource_badge.workflow else None,
+                    'status': resource_badge.status,
+                    'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
+                    'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
                     'comment': resource_badge.workflow.comment if resource_badge.workflow else None,
                     'task_status': resource_badge.task_status
                 }
@@ -301,7 +301,7 @@ class Integration_Resource_Badge_Plan_Serializer(serializers.ModelSerializer):
 
 class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
     '''
-    Return the states of all badges (at least planned) associated with a resource.
+    Return the statuses of all badges (at least planned) associated with a resource.
     '''
 
     badge_status = serializers.SerializerMethodField()
@@ -320,9 +320,9 @@ class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
                     'badge_id': badge.badge_id.badge_id,
                     'badge_access_url': badge.badge_access_url,
                     'badge_access_url_label': badge.badge_access_url_label,
-                    'state': badge.workflow.state,
-                    'state_updated_by': badge.workflow.state_updated_by if badge.workflow else None,
-                    'state_updated_at': badge.workflow.state_updated_at if badge.workflow else None
+                    'status': badge.workflow.status,
+                    'status_updated_by': badge.workflow.status_updated_by if badge.workflow else None,
+                    'status_updated_at': badge.workflow.status_updated_at if badge.workflow else None
                 }
                 badge_status.append(badge_data)
             
