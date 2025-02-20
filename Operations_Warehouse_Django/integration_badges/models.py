@@ -88,7 +88,7 @@ class Integration_Roadmap_Badge(models.Model):
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE, related_name="roadmap_set",
                                  related_query_name="roadmap")
     sequence_no = models.IntegerField()
-    required = models.BooleanField(max_length=20)
+    required = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('roadmap_id', 'badge_id',)
@@ -99,6 +99,7 @@ class Integration_Badge_Task(models.Model):
     badge_id = models.ForeignKey(Integration_Badge, related_name="badge_tasks", on_delete=models.CASCADE)
     task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
+    required = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('badge_id', 'task_id',)
