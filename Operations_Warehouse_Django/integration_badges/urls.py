@@ -16,4 +16,5 @@ urlpatterns = [
           Integration_Resource_Badge_Status_v1.as_view(), name='integration-resource-badge-status-v1-id'),
      path(r'v1/resource/<str:cider_resource_id>/badge/<str:integration_badge_id>/task/<str:integration_task_id>/workflow/<str:badge_task_workflow_status>',
           Integration_Resource_Badge_Task_Status_v1.as_view(), name='integration-resource-badge-task-status-v1-id'),
+     path(r'v1/files/<str:file_id>/', DatabaseFile_v1.as_view(), name='database-file-v1-id'),
 ]

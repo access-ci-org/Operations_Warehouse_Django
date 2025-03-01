@@ -3,6 +3,15 @@ from dal import autocomplete
 
 from integration_badges.models import *
 
+class DatabaseFile_Admin(admin.ModelAdmin):
+    list_display = ('file_id', 'file_name', 'file_data', 'uploaded_at')
+    list_display_links = ['file_name']
+    ordering = ['file_name']
+    search_fields = ['file_name', 'file_data', 'uploaded_at']
+
+# Register your models here.
+admin.site.register(DatabaseFile, DatabaseFile_Admin)
+
 class Integration_Roadmap_Admin(admin.ModelAdmin):
     list_display = ('roadmap_id', 'name', 'graphic', 'executive_summary', 'infrastructure_types',
                     'integration_coordinators', 'status')
@@ -12,6 +21,7 @@ class Integration_Roadmap_Admin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(Integration_Roadmap, Integration_Roadmap_Admin)
+
 
 class Integration_Badge_Admin(admin.ModelAdmin):
     list_display = ('badge_id', 'name', 'graphic', 'researcher_summary', 'resource_provider_summary',

@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from django.db import transaction
 from django.utils import timezone
+from django.http import HttpResponse
 
 from integration_badges.models import *
 from integration_badges.serializers import *
@@ -240,3 +241,27 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
         workflow.save()
 
         return MyAPIResponse({'message': 'Badge task marked as %s' % badge_task_workflow_status})
+
+
+class DatabaseFile_v1(GenericAPIView):
+    '''
+    Retrieve tasks of a specific badge.
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = DatabaseFile_Serializer
+
+    def get(self, request, *args, **kwargs):
+        file_id = kwargs.get('file_id')
+        if not file_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='File ID is required')
+
+        try:
+            file = DatabaseFile.objects.get(pk=file_id)
+        except DatabaseFile.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='File not found')
+
+        response = HttpResponse(file.file_data, content_type=file.content_type)
+        response['Content-Disposition'] = 'inline; filename="%s"' % file.file_name
+
+        return response

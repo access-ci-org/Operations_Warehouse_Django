@@ -6,6 +6,15 @@ from rest_framework import serializers
 import traceback
 
 
+class DatabaseFile_Serializer(serializers.ModelSerializer):
+    '''
+    Returns the badge_id and name of an Integration_Badge object
+    '''
+
+    class Meta:
+        model = DatabaseFile
+        fields = ('file_id', 'file_name', 'file_data', 'uploaded_at')
+
 class Integration_Badge_Serializer(serializers.ModelSerializer):
     '''
     Returns the badge_id and name of an Integration_Badge object
