@@ -1,0 +1,16 @@
+,ACCESS Resource Description,ACCESS Allocated,ACCESS Ticketing Support,ACCESS Enhanced Networking,ACCESS CyberSecurity Coordination,ACCESS System Status News,Globus High-Performance Data Transfer,ACCESS Software Publishing,ACCESS Open OnDemand,ACCESS Pegagus,ACCESS Documentation,ACCESS Training,ACCESS Affinity Group,ACCESS Usage Metrics,ACCESS Performance Metrics
+ACCESS Resource Description,,No,No,No,No,No,No,No,No,No,No,No,No,No,No
+ACCESS Allocated,No,,No,No,No,No,No,No,No,No,No,No,No,No,No
+ACCESS Ticketing Support,No,No,,No,No,No,No,No,No,No,No,No,No,No,No
+ACCESS Enhanced Networking,No,No,No,,No,No,No,No,No,No,No,No,No,No,No
+ACCESS CyberSecurity Coordination,No,No,No,No,,No,No,No,No,No,No,No,No,No,No
+ACCESS System Status News,No,No,No,No,No,,No,No,No,No,No,No,No,No,No
+Globus High-Performance Data Transfer,No,No,No,No,No,No,,No,No,No,No,No,No,No,No
+ACCESS Software Publishing,No,No,No,No,No,No,No,,No,No,No,No,No,No,No
+ACCESS Open OnDemand,No,No,No,No,No,No,No,No,,No,No,No,No,No,No
+ACCESS Pegagus,No,No,No,No,No,No,No,No,No,,No,No,No,No,No
+ACCESS Documentation,No,No,No,No,No,No,No,No,No,No,,No,No,No,No
+ACCESS Training,No,No,No,No,No,No,No,No,No,No,No,,No,No,No
+ACCESS Affinity Group,No,No,No,No,No,No,No,No,No,No,No,No,,No,No
+ACCESS Usage Metrics,No,No,No,No,No,No,No,No,No,No,No,No,No,,No
+ACCESS Performance Metrics,No,No,No,No,No,No,No,No,No,No,No,No,No,No,

@@ -1,6 +1,6 @@
 Cider resource id,"1 
 Info resourceid","2 
-Cider type",Resource descriptive name,Roadmap,ACCESS Resource Description,ACCESS Allocated,ACCESS Ticketing Support,ACCESS Enhanced Networking,ACCESS CyberSecurity Coordination,ACCESS System Status News,Globus High-Performance Data Transfer,ACCESS Software Publishing,ACCESS Open On Demand,ACCESS Pegagus,ACCESS Documentation,ACCESS Training,ACCESS Affinity Group,ACCESS Usage Metrics,ACCESS Performance Metrics
+Cider type",Resource descriptive name,Roadmap,ACCESS Resource Description,ACCESS Allocated,ACCESS Ticketing Support,ACCESS Enhanced Networking,ACCESS CyberSecurity Coordination,ACCESS System Status News,Globus High-Performance Data Transfer,ACCESS Software Publishing,ACCESS Open OnDemand,ACCESS Pegagus,ACCESS Documentation,ACCESS Training,ACCESS Affinity Group,ACCESS Usage Metrics,ACCESS Performance Metrics
 1659,aces.tamu.access-ci.org,Compute,TAMU ACES,ACCESS Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,No
 406,anton2.psc.access-ci.org,Compute,PSC Anton 2 Special-Purpose Supercomputer for Molecular Dynamics,ACCESS Compute Roadmap,Yes,No,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No
 867,anvil-gpu.purdue.access-ci.org,Compute,Purdue Anvil GPU,ACCESS Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No

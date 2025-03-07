@@ -10,43 +10,34 @@ django.setup()
 
 from integration_badges.models import *
 
+roadmap_set = {}
+roadmaps = Integration_Roadmap.objects.all()
+for roadmap in roadmaps:
+    roadmap_set[roadmap.name] = roadmap
+
+
+task_set = {}
+tasks = Integration_Task.objects.all()
+for task in tasks:
+    task_set[task.name] = task
+
+
+badge_set = {}
+badge_tasks_set = {}
+badges = Integration_Badge.objects.all()
+for badge in badges:
+    badge_set[badge.name] = badge
+
+    badge_tasks = Integration_Badge_Task.objects.filter(badge_id=badge.badge_id).all()
+    badge_tasks_set[badge.name] = badge_tasks
+
+
 csv_filepath="Roadmap and badge composition of resources - Sheet1.csv"
 
 with open(csv_filepath, 'r') as file:
     reader = csv.reader(file)
     header = next(reader)  # Skip the header row
     #print(header)
-
-    badge_set = {}
-    badge_tasks_set = {}
-    for col_index in range(5, len(header)):
-        badge_name = header[col_index]
-        badge = Integration_Badge.objects.filter(name=badge_name).first()
-        if badge is not None:
-            print(f"YES - {badge.badge_id} {header[col_index]}")
-            badge_set[col_index] = badge
-
-            badge_tasks = Integration_Badge_Task.objects.filter(badge_id=badge.badge_id).all()
-            badge_tasks_set[col_index] = badge_tasks
-        else:
-            print(f"No  -  {header[col_index]}")
-
-    # print("badge_set ", badge_set)
-
-    roadmap_set = {}
-    roadmaps = Integration_Roadmap.objects.all()
-    for roadmap in roadmaps:
-        roadmap_set[roadmap.name] = roadmap
-
-    # print("roadmap_set ", roadmap_set)
-
-
-    task_set = {}
-    tasks = Integration_Task.objects.all()
-    for task in tasks:
-        task_set[task.task_id] = task
-
-    # print("task_set ", task_set)
 
     Integration_Badge_Task_Workflow.objects.all().delete()
     Integration_Badge_Workflow.objects.all().delete()
@@ -70,7 +61,8 @@ with open(csv_filepath, 'r') as file:
                 ).save()
 
                 for col_index in range(5, len(header)):
-                    badge = badge_set[col_index]
+                    badge_name = header[col_index]
+                    badge = badge_set[badge_name]
 
                     if row[col_index] == "Yes":
                         Integration_Badge_Workflow(
@@ -79,10 +71,10 @@ with open(csv_filepath, 'r') as file:
                             status=BadgeWorkflowStatus.VERIFIED
                         ).save()
 
-                        badge_tasks = badge_tasks_set[col_index]
+                        badge_tasks = badge_tasks_set[badge_name]
 
                         for badge_task in badge_tasks:
-                            task = task_set[badge_task.task_id.task_id]
+                            task = task_set[badge_task.task_id.name]
                             Integration_Badge_Task_Workflow(
                                 resource_id=resource,
                                 badge_id=badge,
@@ -94,4 +86,66 @@ with open(csv_filepath, 'r') as file:
 
             print(traceback.format_exc())
 
-print("CSV data processing complete.")
+print(f"{csv_filepath} CSV data processing complete.")
+
+csv_filepath="Proposed Roadmap to Badges Combination - Roadmap-Badge.csv"
+
+with open(csv_filepath, 'r') as file:
+    reader = csv.reader(file)
+    header = next(reader)  # Skip the header row
+    #print(header)
+
+    Integration_Roadmap_Badge.objects.all().delete()
+
+    sequence_no = 0
+    for row in reader:
+        try:
+            badge_name = row[0]
+            badge = badge_set[badge_name]
+            for col_index in range(1, len(header)):
+                roadmap_name = header[col_index]
+                roadmap = roadmap_set[roadmap_name]
+                Integration_Roadmap_Badge(roadmap_id=roadmap, badge_id=badge, sequence_no=sequence_no).save()
+        except Exception as e:
+            print(f"Error processing row: {row[0]} {row[4]}")
+
+            print(traceback.format_exc())
+        sequence_no += 1
+
+    # print("roadmap_set ", roadmap_set)
+
+
+
+
+print(f"{csv_filepath} CSV data processing complete.")
+
+
+
+csv_filepath="Proposed Roadmap to Badges Combination - Badge-Prerequisite.csv"
+
+with open(csv_filepath, 'r') as file:
+    reader = csv.reader(file)
+    header = next(reader)  # Skip the header row
+    #print(header)
+
+    Integration_Badge_Prerequisite_Badge.objects.all().delete()
+
+    for row in reader:
+        try:
+            badge_name = row[0]
+            badge = badge_set[badge_name]
+
+            sequence_no = 0
+            for col_index in range(1, len(header)):
+                if row[col_index] == "Yes":
+                    prerequisite_badge_name = header[col_index]
+                    prerequisite_badge = badge_set[prerequisite_badge_name]
+                    Integration_Badge_Prerequisite_Badge(badge_id=badge, prerequisite_badge_id=prerequisite_badge, sequence_no=sequence_no).save()
+                sequence_no += 1
+        except Exception as e:
+            print(f"Error processing row: {row[0]} {row[4]}")
+
+            print(traceback.format_exc())
+
+
+print(f"{csv_filepath} CSV data processing complete.")
