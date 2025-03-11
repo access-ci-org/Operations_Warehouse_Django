@@ -146,9 +146,16 @@ class Integration_Resource_List_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description',
-                  'resource_descriptive_name', 'badges', 
-                  'organization_name', 'organization_url', 'organization_logo_url')
+        # fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description',
+        #           'resource_descriptive_name', 'badges',
+        #           'organization_name', 'organization_url', 'organization_logo_url')
+
+        fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
+            'resource_descriptive_name', 'resource_description',
+            'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
+            'organization_name', 'organization_url', 'organization_logo_url',
+            'cider_view_url', 'cider_data_url', 'updated_at')
+
 
     def get_organization_name(self, obj) -> str:
         try:
@@ -232,8 +239,6 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
 
             badge_status = []
             for resource_badge in resource_badges:
-                print("### resource_badge.badge.name ", resource_badge.badge.name)
-                print("### resource_badge.task_status ", resource_badge.task_status)
                 badge_data = {
                     'badge_id': resource_badge.badge.badge_id,
                     'badge_access_url': resource_badge.resource_badge_access_url,

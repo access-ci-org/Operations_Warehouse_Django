@@ -6,9 +6,11 @@ from rest_framework.generics import GenericAPIView
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
+from django.db.models import Q
 
 from integration_badges.models import *
 from integration_badges.serializers import *
+from cider.serializers import *
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
@@ -67,13 +69,18 @@ class Integration_Resource_List_v1(GenericAPIView):
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_class = Integration_Resource_List_Serializer
+    serializer_class = CiderInfrastructure_Summary_Serializer
+    # serializer_class = Integration_Resource_List_Serializer
 
     def get(self, request, format=None, **kwargs):
-        # Filter out only Compute and Storage resources
-        item = CiderInfrastructure.objects.filter(cider_type__in=['Compute', 'Storage'])
+        badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
+        badging_types = ('Compute', 'Storage')
 
-        serializer = self.serializer_class(item, context={'request': request}, many=True)
+        resources = CiderInfrastructure.objects.filter(
+            Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) & Q(
+                project_affiliation__icontains='ACCESS'))
+
+        serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 
