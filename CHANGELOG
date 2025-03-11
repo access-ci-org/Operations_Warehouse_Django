@@ -1,3 +1,6 @@
+v3.50.1 2025-03-01 JP
+  - Fix cider/v1/contacts/ view when a resource has no contacts
+
 v3.50.0 2025-01-31 JP
   - New cider/v1/contacts/ view
 

@@ -36,6 +36,7 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
     '''
     ACCESS Active Resource Contacts
     '''
+#    permission_classes = (IsAuthenticatedOrReadOnly,)
     permission_classes = (IsAuthenticated,)
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
     serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
@@ -45,7 +46,7 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
         objects2 = CiderInfrastructure_Active_Filter( type='Storage' )
         all_contacts = {}
         for resource in chain(objects1, objects2):
-            if 'contacts' not in resource.protected_attributes:
+            if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
                 continue
             for contact in resource.protected_attributes['contacts']:
                 for ct in contact['contact_types']:
