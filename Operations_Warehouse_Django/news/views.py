@@ -1,6 +1,7 @@
 from django.db.models import Subquery
 from django.shortcuts import render
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView
@@ -119,7 +120,7 @@ class News_v1_Current_Outages(GenericAPIView):
 
 class News_v2_Current_Outages(GenericAPIView):
     '''
-        Current outage type news items for selected group
+        Current outage type news items for a selected group
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -164,7 +165,7 @@ class News_v1_Future_Outages(GenericAPIView):
 
 class News_v2_Future_Outages(GenericAPIView):
     '''
-        All future outage type news items for selected group
+        All future outage type news items for a selected group
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -181,6 +182,48 @@ class News_v2_Future_Outages(GenericAPIView):
         items = News.objects.filter(NewsType__in=outage_types)\
                             .filter(NewsStart__gte=now)\
                             .order_by('NewsStart')
+        if self.kwargs.get('affiliation'):
+            items = items.objects.filter(Affiliation__exact=self.kwargs['affiliation'])
+        if resource_ids:
+            related_resources = News_Associations.objects.filter(AssociatedType='Resource', AssociatedID__in=resource_ids)
+            items = items.filter(URN__in=Subquery(related_resources.values('NewsItem_id')))
+        serializer = News_v1_Outage_Serializer(items, many=True, context={'request': request})
+        return MyAPIResponse({'results': serializer.data})
+
+class News_v2_Filter_Outages(GenericAPIView):
+    '''
+        All outage type news items for a selected group with filtering parameters
+        
+        - Optionally filter within window_start_date and window_end_date 
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = News_v1_Outage_Serializer
+    @extend_schema(parameters=[
+            OpenApiParameter('window_start_date', OpenApiTypes.DATE, OpenApiParameter.QUERY),
+            OpenApiParameter('window_end_date', OpenApiTypes.DATE, OpenApiParameter.QUERY)
+        ])
+    def get(self, request, format=None, **kwargs):
+        resource_ids = None
+        if self.kwargs.get('info_groupid'):
+            try:
+                group = CiderGroups.objects.get(info_groupid=self.kwargs['info_groupid'])
+            except (CiderGroups.DoesNotExist, CiderGroups.MultipleObjectsReturned):
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Specified info_groupid not found')
+            resource_ids = group.info_resourceids
+        items = News.objects.filter(NewsType__in=outage_types)\
+                            .order_by('NewsStart')
+        # If start_date specified, include no end_date or NewsEnd equal to or after start_date
+        window_start = request.GET.get('window_start_date')
+        if window_start:
+            items1 = items.filter(NewsEnd__isnull=True)
+            items2 = items.filter(NewsEnd__gte=window_start)
+            items = items1 | items2
+        # If end_date specified, include events with a NewsStart equal to or before end_date
+        window_end = request.GET.get('window_end_date')
+        if window_end:
+            items = items.filter(NewsStart__lte=window_end)
+        now = timezone.now()
         if self.kwargs.get('affiliation'):
             items = items.objects.filter(Affiliation__exact=self.kwargs['affiliation'])
         if resource_ids:

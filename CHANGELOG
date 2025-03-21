@@ -1,3 +1,6 @@
+v3.51.0 2025-03-21 JP
+  - Enhance news/v1/info_groupid/ with optional window start and end filtering parameters
+
 v3.50.1 2025-03-01 JP
   - Fix cider/v1/contacts/ view when a resource has no contacts
 
