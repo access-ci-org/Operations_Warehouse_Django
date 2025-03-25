@@ -89,7 +89,7 @@ class Integration_Resource_v1(GenericAPIView):
     Retrieve details of a specific resource, including roadmaps and their badges. 
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (AllowAny,)
     renderer_classes = (JSONRenderer,)
     serializer_class = Integration_Resource_Serializer
 
@@ -104,6 +104,35 @@ class Integration_Resource_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
 
         serializer = self.serializer_class(item, context={'request': request}, many=False)
+        return MyAPIResponse({'results': serializer.data})
+
+    def post(self, request, format=None, **kwargs):
+        resource_id = kwargs.get('cider_resource_id')
+
+        if not resource_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Resource ID is required')
+
+        try:
+            resource = CiderInfrastructure.objects.get(pk=resource_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource not found')
+
+
+        request_data = request.data
+        badge_ids = request_data.get("badge_ids")
+
+        try:
+            badges = Integration_Badge.objects.filter(badge_id__in = badge_ids)
+        except Integration_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badges not found')
+
+        Integration_Resource_Badge.objects.filter(resource_id=resource).delete()
+
+        for badge in badges:
+            Integration_Resource_Badge(badge_id=badge, resource_id=resource).save()
+
+
+        serializer = self.serializer_class(resource, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
 
 
