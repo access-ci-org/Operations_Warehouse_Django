@@ -1,7 +1,7 @@
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.generics import GenericAPIView
 from django.db import transaction
 from django.utils import timezone
@@ -16,7 +16,10 @@ from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+import logging
+from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, ReadOnly
 
+log = logging.getLogger(__name__)
 
 
 class Integration_Roadmap_v1(GenericAPIView):
@@ -89,7 +92,8 @@ class Integration_Resource_v1(GenericAPIView):
     Retrieve details of a specific resource, including roadmaps and their badges. 
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
-    permission_classes = (AllowAny,)
+    #permission_classes = (AllowAny,)
+    permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
     serializer_class = Integration_Resource_Serializer
 
@@ -163,7 +167,8 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
-    permission_classes = (AllowAny,)
+    #permission_classes = (AllowAny,)
+    permission_classes = [IsCoordinator] 
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
@@ -221,7 +226,8 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
-    permission_classes = (AllowAny,)
+    #permission_classes = (AllowAny,)
+    permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
