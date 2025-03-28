@@ -356,6 +356,7 @@ if SETTINGS_MODE == 'SERVER':
     # For cilogon_tokenauth
     CILOGON_CLIENT_KEY = CONF.get('CILOGON_CLIENT_KEY', None)
     CILOGON_CLIENT_SECRET = CONF.get('CILOGON_CLIENT_SECRET', None)
+    TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION = CONF.get('TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION', None)
     #
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
