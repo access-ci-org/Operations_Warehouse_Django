@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 content_type = ContentType.objects.get_for_model(CiderGroups)
 
 # Create RoadmapMaintainer permission and group
-try
+try:
     permission = Permission.objects.get(codename="roadmap_maintainer", name='RoadmapMaintainer', content_type=content_type)
 except Permission.DoesNotExist:
     try:
