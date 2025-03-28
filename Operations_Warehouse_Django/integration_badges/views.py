@@ -123,18 +123,28 @@ class Integration_Resource_v1(GenericAPIView):
 
 
         request_data = request.data
+        roadmap_ids = request_data.get("roadmap_ids")
         badge_ids = request_data.get("badge_ids")
+
+        try:
+            roadmaps = Integration_Roadmap.objects.filter(roadmap_id__in=roadmap_ids)
+        except Integration_Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified roadmaps not found')
 
         try:
             badges = Integration_Badge.objects.filter(badge_id__in = badge_ids)
         except Integration_Badge.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badges not found')
 
+        Integration_Resource_Roadmap.objects.filter(resource_id=resource).delete()
         Integration_Resource_Badge.objects.filter(resource_id=resource).delete()
 
-        for badge in badges:
-            Integration_Resource_Badge(badge_id=badge, resource_id=resource).save()
+        for roadmap in roadmaps:
+            Integration_Resource_Roadmap(roadmap_id=roadmap, resource_id=resource).save()
 
+        for badge in badges:
+            # TODO validate if the badge is a part of enrolled roadmaps
+            Integration_Resource_Badge(badge_id=badge, resource_id=resource).save()
 
         serializer = self.serializer_class(resource, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
