@@ -52,12 +52,16 @@ INSTALLED_APPS = [
     'django_opensearch_dsl',
     'allocations',
     'cider',
+    'integration_badges',
     'glue2',
     'news',
     'resource_v4',
     'warehouse_state',
     'warehouse_tools',
     'web',
+    'dal',
+    'dal_select2',
+    #'cilogon_tokenauth',
 ]
 
 MIDDLEWARE = [
@@ -221,6 +225,7 @@ if SETTINGS_MODE == 'SERVER':
         'allauth.socialaccount',
         'allauth.socialaccount.providers.cilogon',
         'django_bootstrap5',
+        'cilogon_tokenauth',
     )
     
     SITE_ID = 1
@@ -348,7 +353,10 @@ if SETTINGS_MODE == 'SERVER':
     STATICFILES_DIRS = (
         os.path.join( os.path.dirname(__file__),  '../static' ),
     )
-
+    # For cilogon_tokenauth
+    CILOGON_CLIENT_KEY = CONF.get('CILOGON_CLIENT_KEY', None)
+    CILOGON_CLIENT_SECRET = CONF.get('CILOGON_CLIENT_SECRET', None)
+    TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION = CONF.get('TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION', None)
     #
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {
@@ -364,6 +372,9 @@ if SETTINGS_MODE == 'SERVER':
         'DEFAULT_PAGINATION_CLASS': "rest_framework.pagination.PageNumberPagination",
         'PAGE_SIZE': 25,
         'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'cilogon_tokenauth.auth.CITokenAuthentication',
+        ],
     }
 
 #    REST_AUTH_REGISTER_PERMISSION_CLASSES = (
@@ -406,6 +417,10 @@ if SETTINGS_MODE == 'SERVER':
                 'level': 'DEBUG'
             },
             'services': {
+                'handlers': ['file'],
+                'level': 'DEBUG'
+            },
+            'cilogon_tokenauth': {
                 'handlers': ['file'],
                 'level': 'DEBUG'
             }

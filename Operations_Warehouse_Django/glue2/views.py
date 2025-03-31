@@ -1056,7 +1056,9 @@ class Software_Full(APIView):
     '''
         GLUE2 Software detailed information ApplicationHandle, ApplicationEnvironment, ...
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    authentication_Classes = [   'cilogon_tokenauth.auth.TokenAuthentication']
+    #permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = Software_Community_Serializer
     def get(self, request, format=None, **kwargs):
         if 'id' in self.kwargs:

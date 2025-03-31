@@ -1,0 +1,45 @@
+Cider resource id,"1 
+Info resourceid","2 
+Cider type",Resource descriptive name,Roadmap,ACCESS Resource Description,ACCESS Allocated,ACCESS Ticketing Support,ACCESS Enhanced Networking,ACCESS CyberSecurity Coordination,ACCESS System Status News,Globus High-Performance Data Transfer,ACCESS Software Publishing,ACCESS Open OnDemand,ACCESS Pegasus,ACCESS Documentation,ACCESS Training,ACCESS Affinity Group,ACCESS Usage Metrics,ACCESS Performance Metrics
+1659,aces.tamu.access-ci.org,Compute,TAMU ACES,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,No
+406,anton2.psc.access-ci.org,Compute,PSC Anton 2 Special-Purpose Supercomputer for Molecular Dynamics,ACCESS Allocated Compute Roadmap,Yes,No,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+867,anvil-gpu.purdue.access-ci.org,Compute,Purdue Anvil GPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No
+738,anvil.purdue.access-ci.org,Compute,Purdue Anvil CPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No
+2121,bil.psc.access-ci.org,Storage,PSC Brain Image Library (BIL),ACCESS Allocated Storage Roadmap,Yes,No,Yes,Yes,Yes,No,Yes,No,No,No,No,No,No,No,No
+645,bridges2-em.psc.access-ci.org,Compute,PSC Bridges-2 Extreme Memory (Bridges-2 EM),ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+705,bridges2-gpu-ai.psc.access-ci.org,Compute,PSC Bridges-2 GPU-AI (Bridges-2 GPU Artificial Intelligence),ACCESS Allocated Compute Roadmap,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+646,bridges2-gpu.psc.access-ci.org,Compute,PSC Bridges-2 GPU (Bridges-2 GPU),ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+644,bridges2-ocean.psc.access-ci.org,Storage,PSC Bridges-2 Storage (Bridges-2 Ocean),ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,No,No
+643,bridges2-rm.psc.access-ci.org,Compute,PSC Bridges-2 Regular Memory (Bridges-2 RM),ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+736,darwin-gpu.udel.access-ci.org,Compute,UD DARWIN GPU Nodes (DARWIN GPU),ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,No,Yes,No,No,No,Yes,No,No,Yes,No
+737,darwin-storage.udel.access-ci.org,Storage,UD DARWIN Storage (DARWIN Storage),ACCESS Allocated Storage Roadmap,Yes,No,Yes,No,No,No,Yes,No,No,No,Yes,No,No,No,No
+735,darwin.udel.access-ci.org,Compute,UD DARWIN Compute Nodes (DARWIN),ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,No,Yes,Yes,No,No,Yes,No,No,Yes,No
+2418,deltaai.ncsa.access-ci.org,Compute,NCSA DeltaAI,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,Yes,Yes,No,Yes,No
+741,delta-cpu.ncsa.access-ci.org,Compute,NCSA Delta CPU (Delta CPU),ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes
+742,delta-gpu.ncsa.access-ci.org,Compute,NCSA Delta GPU (Delta GPU),ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes
+743,delta-storage.ncsa.access-ci.org,Storage,NCSA Delta Storage (Delta Storage),ACCESS Allocated Storage Roadmap,Yes,No,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,No,No
+968,derecho-gpu.ncar.ucar.edu,Compute,Derecho-GPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,No,No,No,No,No,No,No,No
+967,derecho.ncar.ucar.edu,Compute,Derecho,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,No,No,No,No,No,No,No,No
+638,expanse-gpu.sdsc.access-ci.org,Compute,SDSC Expanse GPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+642,expanse-ps.sdsc.access-ci.org,Storage,SDSC Expanse Projects Storage,ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,No,No
+637,expanse.sdsc.access-ci.org,Compute,SDSC Expanse CPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+740,faster.tamu.access-ci.org,Compute,TAMU FASTER,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,No
+1528,granite.ncsa.access-ci.org,Storage,NCSA Granite Tape Archive System,ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No
+48,grid1.osg.access-ci.org,Compute,OSG Open Science Pool,ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,Yes,No,No,No,No,Yes,Yes,Yes,No,No
+1561,hive.gatech.access-ci.org,Compute,GaTech Hive Cluster,ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,Yes,Yes,No,Yes,No,No,No,No,No,No
+904,jetstream2-gpu.indiana.access-ci.org,Compute,Indiana Jetstream2 GPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,Yes,Yes,No
+902,jetstream2.indiana.access-ci.org,Compute,Indiana Jetstream2 CPU,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,Yes,No,Yes,Yes,Yes,Yes,Yes,No
+905,jetstream2-lm.indiana.access-ci.org,Compute,Indiana Jetstream2 Large Memory,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,Yes,Yes,No
+903,jetstream2-storage.indiana.access-ci.org,Storage,Indiana Jetstream2 Storage,ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,Yes,Yes,Yes,No,No
+94,jetstream-storage.tacc.xsede.org,Storage,IU/TACC Storage (Jetstream Storage),ACCESS Allocated Storage Roadmap,Yes,No,Yes,Yes,Yes,Yes,No,No,No,No,Yes,Yes,Yes,No,No
+704,kyric.uky.access-ci.org,Compute,Kentucky Research Informatics Cloud (KyRIC) Large Memory Nodes,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,No,Yes,Yes,No,Yes,No,Yes,No,No
+2286,launch.tamu.access-ci.org,Compute,TAMU Launch,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,No,Yes,No,No,No,Yes,No,No
+2517,neocortex-sdflex.psc.access-ci.org,Compute,PSC Neocortex Superdome Flex Server,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,No,Yes,Yes,No,Yes,No
+966,ookami.sbu.access-ci.org,Compute,IACS at Stony Brook Ookami,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,Yes,No,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes
+537,osn.osn.access-ci.org,Storage,Open Storage Network (OSN),ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,No,No,No,No
+90,ranch.tacc.access-ci.org,Storage,TACC Long-term tape Archival Storage (Ranch),ACCESS Allocated Storage Roadmap,Yes,Yes,Yes,No,Yes,Yes,Yes,No,No,No,Yes,No,Yes,No,No
+901,rockfish-a100.jhu.access-ci.org,Compute,Rockfish cluster at Johns Hopkins University - GPU nodes,ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,No,Yes,No,No,No,Yes,No,Yes,No,No
+739,rockfish.jhu.access-ci.org,Compute,Rockfish cluster at Johns Hopkins University - Regular Memory nodes,ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,No,Yes,No,No,No,Yes,No,Yes,No,No
+900,rockfish-LM.jhu.access-ci.org,Compute,Rockfish cluster at Johns Hopkins University - Large Memory nodes,ACCESS Allocated Compute Roadmap,Yes,No,Yes,No,No,No,Yes,No,No,No,Yes,No,Yes,No,No
+1923,stampede3.tacc.access-ci.org,Compute,"TACC Dell/Intel Sapphire Rapids, Ice Lake, Skylake (Stampede3)",ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,No,Yes,No,Yes,Yes,No,No,Yes,No,Yes,Yes,No
+2088,voyager.sdsc.access-ci.org,Compute,SDSC Voyager Habana Training and Inference Processor based AI System,ACCESS Allocated Compute Roadmap,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,No,No,No

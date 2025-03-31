@@ -30,3 +30,9 @@ admin.site.register(CiderInfrastructure, CiderInfrastructure_Admin)
 admin.site.register(CiderOrganizations, CiderOrganizations_Admin)
 admin.site.register(CiderFeatures, CiderFeatures_Admin)
 admin.site.register(CiderGroups, CiderGroups_Admin)
+
+# Register Permissions model with the admin page so that we can see them
+# in the web interface
+from django.contrib.auth.models import Permission
+from django.contrib import admin
+admin.site.register(Permission)
