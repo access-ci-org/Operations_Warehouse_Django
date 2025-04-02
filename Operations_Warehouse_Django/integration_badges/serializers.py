@@ -15,6 +15,7 @@ class DatabaseFile_Serializer(serializers.ModelSerializer):
         model = DatabaseFile
         fields = ('file_id', 'file_name', 'file_data', 'uploaded_at')
 
+
 class Integration_Badge_Serializer(serializers.ModelSerializer):
     '''
     Returns the badge_id and name of an Integration_Badge object
@@ -58,7 +59,7 @@ class Integration_Badge_Full_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Integration_Badge
         fields = "__all__"
-    
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         prerequisites = representation.get('prerequisites', [])
@@ -95,9 +96,11 @@ class Integration_Roadmap_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = Integration_Roadmap
-        fields = ('roadmap_id', 'name', 'badges')
+        fields = (
+        'roadmap_id', 'name', 'graphic', 'executive_summary', 'infrastructure_types', 'integration_coordinators',
+        'status', 'badges')
         exclude = ()
-    
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         badges = representation.get('badges', [])
@@ -119,19 +122,19 @@ class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Integration_Resource_Badge
         fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'status', 'comment')
-    
+
     def get_status(self, obj):
         try:
             return obj.workflow.status
         except:
             return None
-        
+
     def get_comment(self, obj):
         try:
             return obj.workflow.comment
         except:
             return None
-    
+
 
 class Integration_Resource_List_Serializer(serializers.ModelSerializer):
     '''
@@ -151,11 +154,10 @@ class Integration_Resource_List_Serializer(serializers.ModelSerializer):
         #           'organization_name', 'organization_url', 'organization_logo_url')
 
         fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
-            'resource_descriptive_name', 'resource_description',
-            'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
-            'organization_name', 'organization_url', 'organization_logo_url',
-            'cider_view_url', 'cider_data_url', 'updated_at')
-
+                  'resource_descriptive_name', 'resource_description',
+                  'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
+                  'organization_name', 'organization_url', 'organization_logo_url',
+                  'cider_view_url', 'cider_data_url', 'updated_at')
 
     def get_organization_name(self, obj) -> str:
         try:
@@ -206,9 +208,9 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
-                  'resource_descriptive_name', 'roadmaps', 'organization_name', 'organization_url', 
+                  'resource_descriptive_name', 'roadmaps', 'organization_name', 'organization_url',
                   'organization_logo_url', 'user_guide_url', 'badge_status')
-        
+
     def get_organization_name(self, obj) -> str:
         try:
             return obj.other_attributes['organizations'][0]['organization_name']
@@ -226,13 +228,13 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
             return obj.other_attributes['organizations'][0]['organization_logo_url']
         except:
             return None
-        
+
     def get_user_guide_url(self, obj) -> str:
         try:
             return obj.other_attributes['user_guide_url']
         except:
             return None
-        
+
     def get_badge_status(self, obj):
         try:
             resource_badges = obj.resource_badges.all()
@@ -251,15 +253,15 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
                 }
 
                 badge_status.append(badge_data)
-            
+
             return badge_status
         except Exception as e:
             # Handle the exception
-            #print(f"An error occurred: {e}")
-            #traceback.print_exc()
+            # print(f"An error occurred: {e}")
+            # traceback.print_exc()
 
             return None
-        
+
 
 class Integration_Task_Serializer(serializers.ModelSerializer):
     '''
@@ -323,11 +325,11 @@ class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Integration_Resource_Badge
         fields = ['badge_status']
-    
+
     def get_badge_status(self, obj):
         try:
             badges = obj.resource_badges.all()
-        
+
             badge_status = []
             for badge in badges:
                 badge_data = {
@@ -339,7 +341,7 @@ class Integration_Resource_Badge_Status_Serializer(serializers.ModelSerializer):
                     'status_updated_at': badge.workflow.status_updated_at if badge.workflow else None
                 }
                 badge_status.append(badge_data)
-            
+
             return badge_status
         except:
             return None

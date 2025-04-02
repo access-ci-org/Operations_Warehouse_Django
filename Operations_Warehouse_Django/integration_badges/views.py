@@ -92,8 +92,8 @@ class Integration_Resource_v1(GenericAPIView):
     Retrieve details of a specific resource, including roadmaps and their badges. 
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
-    #permission_classes = (AllowAny,)
-    permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    permission_classes = (AllowAny,)
+    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
     serializer_class = Integration_Resource_Serializer
 
@@ -177,8 +177,8 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
-    #permission_classes = (AllowAny,)
-    permission_classes = [IsCoordinator] 
+    permission_classes = (AllowAny,)
+    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
@@ -236,8 +236,8 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
-    #permission_classes = (AllowAny,)
-    permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    permission_classes = (AllowAny,)
+    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
