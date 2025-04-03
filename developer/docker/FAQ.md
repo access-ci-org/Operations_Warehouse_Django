@@ -43,6 +43,25 @@ docker ps -a | grep -F 'opensearch-node' | head -1 | cut -d' ' -f1 | xargs -r do
     - `sudo sysctl vm.max_map_count`
 
 
+## ...unapplied migration(s). Your project may not work properly until you apply the migrations for the app(s): ...
+#### Scenario
+Get the warning above when starting the server with `./local_scripts/runserver.sh`
+
+#### What to check
+n/a
+
+#### Possible causes
+?
+
+#### Possible resolutions
+1. Run the migrations
+   - `./local_scripts/bash_on_django_container.sh`
+   - `bash /soft/warehouse-2.0/sbin/manage.prod.sh migrate`
+
+Migrations are a Django DB model sync mechanism.
+See also: https://docs.djangoproject.com/en/5.1/topics/migrations/
+
+
 ## DB initialization throws lots of errors
 #### Scenario
 Running the script
