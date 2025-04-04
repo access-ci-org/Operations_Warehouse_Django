@@ -274,7 +274,7 @@ class Software_Community_Serializer(serializers.ModelSerializer):
             return []
 
 # Optimized for fast retrieval of all available software
-# JP Experiment 2025-04-04, 
+# JP Experiment 2025-04-04,
 #class Software_Fast_Serializer(serializers.ModelSerializer):
 #    SiteID = serializers.SerializerMethodField('get_siteid')
 #    AppName = serializers.CharField(source='ApplicationEnvironment.AppName')
@@ -317,19 +317,26 @@ class Software_Community_Serializer(serializers.ModelSerializer):
 #            return []
 
 def Serialize_Software(handle: ApplicationHandle) -> Dict[str, Any]:
-    ResourceID = handle.ResourceID
-    Handle = {'HandleType': handle.Type, 'HandleKey': handle.Value }
+    soft = {'ResourceID': handle.ResourceID,
+            'Handle': {'HandleType': handle.Type, 'HandleKey': handle.Value },
+            'ID': handle.ID
+            }
     App = handle.ApplicationEnvironment
-    AppName, AppVersion, Description, Domain, Keywords = (None, None, None, None, None)
     if App:
-        AppName = App.AppName
-        AppVersion = App.AppVersion
-        Description = App.Description
+        soft['AppName'] = App.AppName
+        soft['AppVersion'] = App.AppVersion
+        if App.Description:
+            soft['Description'] = App.Description
         try:
             Domain = App.EntityJSON['Extension']['Category']
+            if Domain:
+                soft['Domain'] = Domain
         except:
             pass
         try:
             Keywords = App.EntityJSON['Keywords']
+            if Keywords:
+                soft['Keywords'] = Keywords
         except:
             pass
+    return(soft)
