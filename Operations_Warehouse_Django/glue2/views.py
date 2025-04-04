@@ -1076,6 +1076,20 @@ class Software_Full(APIView):
             serializer = Software_Community_Serializer(objects, many=True)
         return MyAPIResponse({'results': serializer.data})
 
+class Software_Fast(APIView):
+    '''
+        GLUE2 Software detailed information from ApplicationHandle and ApplicationEnvironment, ...
+        FAST serialization designed for download
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = None
+    def get(self, request, format=None, **kwargs):
+        objects = ApplicationHandle.objects.all().select_related('ApplicationEnvironment')
+        output = [ Serialize_Software(object) for object in objects ]
+#        serializer = Software_Fast_Serializer(objects, many=True)
+#        return MyAPIResponse({'results': serializer.data})
+        return MyAPIResponse({'results': output})
+
 # Service information comes from Endpoint and the parent AbstractService
 class Services_List(APIView):
     '''

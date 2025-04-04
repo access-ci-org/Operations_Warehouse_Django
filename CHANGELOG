@@ -1,3 +1,6 @@
+v3.52.0 2025-04-04 JP
+  - New glue2/v1/software_fast/ for fast and efficient download of all ApplicationHandle and ApplicationEnvironment information
+
 v3.51.0 2025-03-21 JP
   - Enhance news/v1/info_groupid/ with optional window start and end filtering parameters
 
