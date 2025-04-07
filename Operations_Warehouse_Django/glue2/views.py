@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
+from cider.filters import CiderInfrastructure_All_Filter
 from glue2.models import *
 from glue2.serializers import *
 from glue2.process import glue2_process_raw_ipf
@@ -1084,8 +1085,10 @@ class Software_Fast(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = None
     def get(self, request, format=None, **kwargs):
+        cider = CiderInfrastructure_All_Filter(type='Compute')
+        site_lookup = { item.info_resourceid: item.info_siteid for item in cider }
         objects = ApplicationHandle.objects.all().select_related('ApplicationEnvironment')
-        output = [ Serialize_Software(object) for object in objects ]
+        output = [ Serialize_Software(object, site_lookup) for object in objects ]
 #        serializer = Software_Fast_Serializer(objects, many=True)
 #        return MyAPIResponse({'results': serializer.data})
         return MyAPIResponse({'results': output})

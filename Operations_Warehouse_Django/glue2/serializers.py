@@ -316,11 +316,14 @@ class Software_Community_Serializer(serializers.ModelSerializer):
 #        except:
 #            return []
 
-def Serialize_Software(handle: ApplicationHandle) -> Dict[str, Any]:
+def Serialize_Software(handle: ApplicationHandle, site_lookup: Dict) -> Dict[str, Any]:
     soft = {'ResourceID': handle.ResourceID,
             'Handle': {'HandleType': handle.Type, 'HandleKey': handle.Value },
+            'CreationTime': handle.CreationTime,
             'ID': handle.ID
             }
+    if handle.ResourceID in site_lookup:
+        soft['SiteID'] = site_lookup[handle.ResourceID]
     App = handle.ApplicationEnvironment
     if App:
         soft['AppName'] = App.AppName

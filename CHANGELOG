@@ -1,3 +1,6 @@
+v3.53.0 2025-04-07 JP
+  - Add SiteID, CreationTime to glue2/v1/software_fast/
+
 v3.52.1 2025-04-04 JP
   - Fix new glue2/v1/software_fast/
 
