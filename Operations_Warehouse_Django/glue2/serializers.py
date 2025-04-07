@@ -342,4 +342,9 @@ def Serialize_Software(handle: ApplicationHandle, site_lookup: Dict) -> Dict[str
                 soft['Keywords'] = Keywords
         except:
             pass
+        try:
+            soft['SupportContact'] = App.EntityJSON['Extension']['SupportContact']
+            soft['SupportStatus'] = App.EntityJSON['Extension']['SupportStatus']
+        except:
+            pass
     return(soft)
