@@ -1,6 +1,7 @@
 import copy
 from django.utils.encoding import uri_to_iri
 from rest_framework import serializers
+from typing import Dict, Any
 
 from glue2.models import *
 from cider.models import *
@@ -211,7 +212,7 @@ class EntityHistory_Usage_Serializer(serializers.ModelSerializer):
 # Special serializers that combine multiples types of glue2 information
 #
 
-# Same as Software_Full_Serializer but adds SupportContact
+# Expanded from historical Software_Full_Serializer but with SupportContact
 class Software_Community_Serializer(serializers.ModelSerializer):
     SiteID = serializers.SerializerMethodField('get_siteid')
     AppName = serializers.CharField(source='ApplicationEnvironment.AppName')
@@ -271,3 +272,79 @@ class Software_Community_Serializer(serializers.ModelSerializer):
             return ApplicationHandle.ApplicationEnvironment.EntityJSON['Repository']
         except:
             return []
+
+# Optimized for fast retrieval of all available software
+# JP Experiment 2025-04-04,
+#class Software_Fast_Serializer(serializers.ModelSerializer):
+#    SiteID = serializers.SerializerMethodField('get_siteid')
+#    AppName = serializers.CharField(source='ApplicationEnvironment.AppName')
+#    AppVersion = serializers.CharField(source='ApplicationEnvironment.AppVersion')
+#    Description = serializers.CharField(source='ApplicationEnvironment.Description')
+#    Handle = serializers.SerializerMethodField('get_handle')
+#    Domain = serializers.SerializerMethodField('get_category')
+#    Keywords = serializers.SerializerMethodField('get_keywords')
+#    class Meta:
+#        model = ApplicationHandle
+#        fields = ('ResourceID', 'SiteID', 'AppName', 'AppVersion', 'Description', 'Handle', 'Domain',
+#                  'Keywords', 'CreationTime', 'ID')
+#        read_only_fields = fields
+#        read_only = True
+#
+#    def get_siteid(self, ApplicationHandle) -> str:
+#        try:
+#            Cider_object = CiderInfrastructure.objects.filter(cider_type='Compute').filter(info_resourceid=ApplicationHandle.ResourceID)
+#            if Cider_object and Cider_object[0] and Cider_object[0].info_siteid:
+#                return Cider_object[0].info_siteid
+#        except CiderInfrastructure.DoesNotExist:
+#            pass
+#        return None
+#
+#    def get_handle(self, ApplicationHandle) -> dict:
+#        return({'HandleType': ApplicationHandle.Type,
+#                'HandleKey': ApplicationHandle.Value
+#               })
+#    
+#    def get_category(self, ApplicationHandle) -> str:
+#        try:
+#            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Extension']['Category']
+#        except:
+#            return []
+#
+#    def get_keywords(self, ApplicationHandle) -> str:
+#        try:
+#            return ApplicationHandle.ApplicationEnvironment.EntityJSON['Keywords']
+#        except:
+#            return []
+
+def Serialize_Software(handle: ApplicationHandle, site_lookup: Dict) -> Dict[str, Any]:
+    soft = {'ResourceID': handle.ResourceID,
+            'Handle': {'HandleType': handle.Type, 'HandleKey': handle.Value },
+            'CreationTime': handle.CreationTime,
+            'ID': handle.ID
+            }
+    if handle.ResourceID in site_lookup:
+        soft['SiteID'] = site_lookup[handle.ResourceID]
+    App = handle.ApplicationEnvironment
+    if App:
+        soft['AppName'] = App.AppName
+        soft['AppVersion'] = App.AppVersion
+        if App.Description:
+            soft['Description'] = App.Description
+        try:
+            Domain = App.EntityJSON['Extension']['Category']
+            if Domain:
+                soft['Domain'] = Domain
+        except:
+            pass
+        try:
+            Keywords = App.EntityJSON['Keywords']
+            if Keywords:
+                soft['Keywords'] = Keywords
+        except:
+            pass
+        try:
+            soft['SupportContact'] = App.EntityJSON['Extension']['SupportContact']
+            soft['SupportStatus'] = App.EntityJSON['Extension']['SupportStatus']
+        except:
+            pass
+    return(soft)

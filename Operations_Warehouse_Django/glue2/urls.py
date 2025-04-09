@@ -71,6 +71,8 @@ urlpatterns = [
     path(r'v1/software_full/ResourceID/<str:resourceid>/', Software_Full.as_view(), name='software-fulldetail-onresource'),
     path(r'v1/software_full/AppName/<str:appname>/', Software_Full.as_view(), name='software-fulldetail-byname'),
 
+    path(r'v1/software_fast/', Software_Fast.as_view(), name='software-fastlist'),
+
     path(r'v1/services/', Services_List.as_view(), name='services-list'),
     path(r'v1/services/ID/<str:id>/', Services_Detail.as_view(), name='services-detail'),
     path(r'v1/services/ResourceID/<str:resourceid>/', Services_Detail.as_view(), name='services-detail'),
