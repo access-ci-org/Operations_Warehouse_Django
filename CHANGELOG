@@ -1,3 +1,7 @@
+v3.5?.0 2025-04-14 JP
+  - Replace resource_id with info_resourceid; remove cider foreign key; manage resource badges in a roadmap; enforce unique roadmap, badge, and task names
+  - Fix CiDeR and other DB queries to use info_resourceid
+
 v3.54.0 2025-04-07 JP
   - Add SupportContact, SupportStatus to glue2/v1/software_fast/
 
