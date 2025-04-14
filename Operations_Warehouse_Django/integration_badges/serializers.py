@@ -121,7 +121,7 @@ class Integration_Resource_Badge_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = Integration_Resource_Badge
-        fields = ('id', 'resource_id', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'status', 'comment')
+        fields = ('id', 'info_resourceid', 'badge_id', 'badge_access_url', 'badge_access_url_label', 'status', 'comment')
 
     def get_status(self, obj):
         try:
@@ -149,11 +149,11 @@ class Integration_Resource_List_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = CiderInfrastructure
-        # fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description',
+        # fields = ('info_resourceid', 'info_resourceid', 'cider_type', 'resource_description',
         #           'resource_descriptive_name', 'badges',
         #           'organization_name', 'organization_url', 'organization_logo_url')
 
-        fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
+        fields = ('info_resourceid', 'cider_type', 'info_resourceid', 'project_affiliation',
                   'resource_descriptive_name', 'resource_description',
                   'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
                   'organization_name', 'organization_url', 'organization_logo_url',
@@ -189,7 +189,7 @@ class Integration_Resource_Roadmap_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = Integration_Resource_Roadmap
-        fields = ('id', 'resource_id', 'roadmap_id', 'roadmap')
+        fields = ('id', 'info_resourceid', 'roadmap_id', 'roadmap')
 
 
 class Integration_Resource_Serializer(serializers.ModelSerializer):
@@ -207,7 +207,7 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
+        fields = ('info_resourceid', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
                   'resource_descriptive_name', 'roadmaps', 'organization_name', 'organization_url',
                   'organization_logo_url', 'user_guide_url', 'badge_status')
 
@@ -308,7 +308,7 @@ class Integration_Resource_Badge_Plan_Serializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Resource and badge must be provided.")
 
         resource_badge = Integration_Resource_Badge.objects.create(
-            resource_id=resource,
+            info_resourceid=resource,
             badge_id=badge,
             **validated_data
         )

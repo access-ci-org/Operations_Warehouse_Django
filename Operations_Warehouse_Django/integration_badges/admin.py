@@ -77,11 +77,11 @@ admin.site.register(Integration_Badge_Task, Integration_Badge_Task_Admin)
 
 
 class Integration_Resource_Roadmap_Admin(admin.ModelAdmin):
-    autocomplete_fields = ('resource_id', 'roadmap_id',)
-    list_display = ('id', 'resource_id', 'roadmap_id')
+    autocomplete_fields = ('roadmap_id',)
+    list_display = ('id', 'info_resourceid', 'roadmap_id')
     list_display_links = ['id']
-    ordering = ['resource_id', 'roadmap_id']
-    search_fields = ['id', 'resource_id', 'roadmap_id']
+    ordering = ['info_resourceid', 'roadmap_id']
+    search_fields = ['id', 'info_resourceid', 'roadmap_id']
 
 
 # Register your models here.
@@ -89,33 +89,33 @@ admin.site.register(Integration_Resource_Roadmap, Integration_Resource_Roadmap_A
 
 
 class Integration_Resource_Badge_Admin(admin.ModelAdmin):
-    autocomplete_fields = ('resource_id', 'badge_id',)
-    list_display = ('id', 'resource_id', 'badge_id')
+    autocomplete_fields = ('roadmap_id', 'badge_id',)
+    list_display = ('id', 'info_resourceid', 'roadmap_id', 'badge_id')
     list_display_links = ['id']
-    ordering = ['resource_id', 'badge_id']
-    search_fields = ['resource_id', 'badge_id']
+    ordering = ['info_resourceid', 'roadmap_id', 'badge_id']
+    search_fields = ['info_resourceid', 'roadmap_id', 'badge_id']
 
 # Register your models here.
 admin.site.register(Integration_Resource_Badge, Integration_Resource_Badge_Admin)
 
 
 class Integration_Badge_Workflow_Admin(admin.ModelAdmin):
-    autocomplete_fields = ('resource_id', 'badge_id',)
-    list_display = ('workflow_id', 'resource_id', 'badge_id', 'status', 'status_updated_by', 'status_updated_at')
+    autocomplete_fields = ('roadmap_id', 'badge_id',)
+    list_display = ('workflow_id', 'info_resourceid', 'roadmap_id', 'badge_id', 'status', 'status_updated_by', 'status_updated_at')
     list_display_links = ['workflow_id']
-    ordering = ['resource_id', 'badge_id', 'workflow_id']
-    search_fields = ['resource_id', 'badge_id', 'status', 'status_updated_by']
+    ordering = ['info_resourceid', 'roadmap_id', 'badge_id', 'workflow_id']
+    search_fields = ['info_resourceid', 'roadmap_id', 'badge_id', 'status', 'status_updated_by']
 
 # Register your model here.
 admin.site.register(Integration_Badge_Workflow, Integration_Badge_Workflow_Admin)
 
 
 class Integration_Badge_Task_Workflow_Admin(admin.ModelAdmin):
-    autocomplete_fields = ('resource_id', 'badge_id', 'task_id')
-    list_display = ('workflow_id', 'resource_id', 'badge_id', 'task_id', 'status', 'status_updated_by', 'status_updated_at')
+    autocomplete_fields = ('roadmap_id', 'badge_id', 'task_id')
+    list_display = ('workflow_id', 'info_resourceid', 'roadmap_id', 'badge_id', 'task_id', 'status', 'status_updated_by', 'status_updated_at')
     list_display_links = ['workflow_id']
-    ordering = ['resource_id', 'badge_id', 'task_id', 'workflow_id']
-    search_fields = ['resource_id', 'badge_id', 'task_id', 'status', 'status_updated_by']
+    ordering = ['info_resourceid', 'roadmap_id', 'badge_id', 'task_id', 'workflow_id']
+    search_fields = ['info_resourceid', 'roadmap_id', 'badge_id', 'task_id', 'status', 'status_updated_by']
 
 # Register your model here.
 admin.site.register(Integration_Badge_Task_Workflow, Integration_Badge_Task_Workflow_Admin)

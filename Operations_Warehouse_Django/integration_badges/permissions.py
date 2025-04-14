@@ -28,8 +28,8 @@ class IsBadgeRole(permissions.BasePermission):
         self.rolename = rolename
 
     def has_permission(self, request, view):
-        resource_id = request.parser_context["kwargs"]['cider_resource_id']
-        resource = CiderInfrastructure.objects.get(pk=resource_id)
+        info_resourceid = request.parser_context["kwargs"]['info_resourceid']
+        resource = CiderInfrastructure.objects.get(pk=info_resourceid)
         info_resourceid = resource.info_resourceid
         try:
             cidergroup = CiderGroups.objects.filter(info_resourceids__contains=[info_resourceid]).first()
@@ -78,8 +78,8 @@ class IsCoordinator(IsBadgeRole):
 class IsFooCoordinator(permissions.BasePermission):
     """This is an example that authorizes all authenticated users"""
     def has_permission(self, request, view):
-        resource_id = request.parser_context["kwargs"]['cider_resource_id']
-        resource = CiderInfrastructure.objects.get(pk=resource_id)
+        info_resourceid = request.parser_context["kwargs"]['info_resourceid']
+        resource = CiderInfrastructure.objects.get(pk=info_resourceid)
         info_resourceid = resource.info_resourceid
         cleaned_resourceid = re.sub(r'xsede\.org', 'access-ci.org', info_resourceid)
         cidergroup = CiderGroups.objects.filter(info_resourceids__contains=[cleaned_resourceid]).first()

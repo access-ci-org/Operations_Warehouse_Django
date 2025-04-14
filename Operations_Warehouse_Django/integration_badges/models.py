@@ -70,7 +70,7 @@ class DatabaseFileStorage(Storage):
 
 class Integration_Roadmap(models.Model):
     roadmap_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     graphic = models.ImageField(null=True, storage=DatabaseFileStorage)
     executive_summary = models.TextField(null=True)
     infrastructure_types = models.CharField(max_length=200)
@@ -84,10 +84,9 @@ class Integration_Roadmap(models.Model):
         return "%s (%d)" % (self.name, self.roadmap_id)
 
 
-
 class Integration_Badge(models.Model):
     badge_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     graphic = models.ImageField(null=True, storage=DatabaseFileStorage)
     researcher_summary = models.TextField(null=True)
     resource_provider_summary = models.TextField(null=True)
@@ -107,7 +106,7 @@ class Integration_Badge(models.Model):
 
 class Integration_Task(models.Model):
     task_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     technical_summary = models.TextField(null=True)
     implementor_roles = models.CharField(max_length=200)
     task_experts = models.CharField(max_length=200)
@@ -157,16 +156,18 @@ class Integration_Badge_Task(models.Model):
 
 class Integration_Resource_Roadmap(models.Model):
     id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_roadmaps', on_delete=models.CASCADE)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
     roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('resource_id', 'roadmap_id',)
+        unique_together = ('info_resourceid', 'roadmap_id',)
 
 
 class Integration_Badge_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
+    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE, related_name="badge_workflow_resource_set",
+                                   related_query_name="badge_workflow_resource_ref")
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
 
     status = models.CharField(max_length=20, choices=BadgeWorkflowStatus.choices)
@@ -174,24 +175,27 @@ class Integration_Badge_Workflow(models.Model):
     status_updated_at = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        resource_badge = Integration_Resource_Badge.objects.filter(
-            resource_id=self.resource_id,
-            badge_id=self.badge_id,
-        ).first()
-        if resource_badge is None:
-            resource_badge = Integration_Resource_Badge(
-                resource_id=self.resource_id,
-                badge_id=self.badge_id
-            )
-            resource_badge.save()
-
-        super().save(*args, **kwargs)
+# Disabled by JP for data model conversion
+#    def save(self, *args, **kwargs):
+#        resource_badge = Integration_Resource_Badge.objects.filter(
+#            info_resourceid=self.info_resourceid,
+#            roadmap_id=self.roadmap_id,
+#            badge_id=self.badge_id,
+#        ).first()
+#        if resource_badge is None:
+#            resource_badge = Integration_Resource_Badge(
+#                info_resourceid=self.info_resourceid,
+#                roadmap_id=self.roadmap_id,
+#                badge_id=self.badge_id
+#            )
+#            resource_badge.save()
+#        super().save(*args, **kwargs)
 
 
 class Integration_Badge_Task_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, on_delete=models.CASCADE)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
+    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
     task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
 
@@ -203,13 +207,14 @@ class Integration_Badge_Task_Workflow(models.Model):
 
 class Integration_Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    resource_id = models.ForeignKey(CiderInfrastructure, related_name='resource_badges', on_delete=models.CASCADE)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
+    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
     badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
     badge_access_url = models.URLField(null=True)
     badge_access_url_label = models.CharField(max_length=50, null=True)
 
     class Meta:
-        unique_together = ('resource_id', 'badge_id',)
+        unique_together = ('info_resourceid', 'roadmap_id', 'badge_id',)
 
     @property
     def resource_badge_access_url(self):
@@ -231,7 +236,7 @@ class Integration_Resource_Badge(models.Model):
 
     @property
     def resource(self):
-        return self.resource_id
+        return self.info_resourceid
 
     @property
     def task_status(self):
@@ -239,7 +244,8 @@ class Integration_Resource_Badge(models.Model):
         badge_tasks = Integration_Badge_Task.objects.filter(badge_id=self.badge_id)
         for badge_task in badge_tasks:
             task_workflow = Integration_Badge_Task_Workflow.objects.filter(
-                resource_id=self.resource_id,
+                info_resourceid=self.info_resourceid,
+                roadmap_id=self.roadmap_id,
                 badge_id=self.badge_id,
                 task_id=badge_task.task_id
             ).order_by('-status_updated_at').first()
@@ -263,7 +269,8 @@ class Integration_Resource_Badge(models.Model):
     @property
     def workflow(self):
         return Integration_Badge_Workflow.objects.filter(
-            resource_id=self.resource_id,
+            info_resourceid=self.info_resourceid,
+            roadmap_id=self.roadmap_id,
             badge_id=self.badge_id
         ).order_by('-status_updated_at').first()
 
