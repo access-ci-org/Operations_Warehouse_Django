@@ -107,6 +107,9 @@ class Integration_Resource_v1(GenericAPIView):
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
 
+        roadmaps = Integration_Resource_Roadmap.objects.filter(info_resourceid=info_resourceid)
+        badges = Integration_Resource_Badge.objects.filter(info_resourceid=info_resourceid)
+
         serializer = self.serializer_class(item, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
 
@@ -140,11 +143,11 @@ class Integration_Resource_v1(GenericAPIView):
         Integration_Resource_Badge.objects.filter(info_resourceid=info_resourceid).delete()
 
         for roadmap in roadmaps:
-            Integration_Resource_Roadmap(roadmap_id=roadmap, info_resourceid=info_resourceid).save()
+            Integration_Resource_Roadmap(info_resourceid=info_resourceid, roadmap_id=roadmap).save()
 
         for badge in badges:
             # TODO validate if the badge is a part of enrolled roadmaps
-            Integration_Resource_Badge(badge_id=badge, info_resourceid=info_resourceid).save()
+            Integration_Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap, badge_id=badge).save()
 
         serializer = self.serializer_class(resource, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
