@@ -209,7 +209,7 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = CiderInfrastructure
-        fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
+        fields = ('info_resourceid', 'info_resourceid', 'cider_type', 'resource_description', 'latest_status',
                   'resource_descriptive_name', 'organization_name', 'organization_url',
                   'organization_logo_url', 'user_guide_url', 'roadmaps', 'badge_status')
 
@@ -317,7 +317,7 @@ class Integration_Resource_Badge_Plan_Serializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Resource and badge must be provided.")
 
         resource_badge = Integration_Resource_Badge.objects.create(
-            info_resourceid=resource,
+            info_resourceid=resource.info_resourceid,
             badge_id=badge,
             **validated_data
         )

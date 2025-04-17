@@ -46,27 +46,34 @@ with open(csv_filepath, 'r') as file:
 
     for row in reader:
         try:
-            cider_resource_id = row[0]
-            info_resource_id = row[1]
-            cider_type = row[2]
-            roadmap_name = row[4]
+            cider_resource_id = row[len(header) - 1]
+            info_resource_id = row[len(header) - 2]
+            cider_type = row[len(header) - 3]
+            roadmap_name = row[len(header) - 4]
 
             if cider_type in ["Storage", "Compute"]:
                 resource = CiderInfrastructure.objects.get(pk=cider_resource_id)
 
                 # Create and save model instance
                 Integration_Resource_Roadmap(
-                    resource_id=resource,
+                    info_resourceid=info_resource_id,
                     roadmap_id=roadmap_set[roadmap_name]
                 ).save()
 
-                for col_index in range(5, len(header)):
+                for col_index in range(2, len(header) - 4):
                     badge_name = header[col_index]
                     badge = badge_set[badge_name]
 
                     if row[col_index] == "Yes":
+                        Integration_Resource_Badge(
+                            info_resourceid=info_resource_id,
+                            roadmap_id=roadmap_set[roadmap_name],
+                            badge_id=badge
+                        ).save()
+
                         Integration_Badge_Workflow(
-                            resource_id=resource,
+                            info_resourceid=info_resource_id,
+                            roadmap_id=roadmap_set[roadmap_name],
                             badge_id=badge,
                             status=BadgeWorkflowStatus.VERIFIED
                         ).save()
@@ -76,7 +83,8 @@ with open(csv_filepath, 'r') as file:
                         for badge_task in badge_tasks:
                             task = task_set[badge_task.task_id.name]
                             Integration_Badge_Task_Workflow(
-                                resource_id=resource,
+                                info_resourceid=info_resource_id,
+                                roadmap_id=roadmap_set[roadmap_name],
                                 badge_id=badge,
                                 task_id=task,
                                 status=BadgeTaskWorkflowStatus.COMPLETED
