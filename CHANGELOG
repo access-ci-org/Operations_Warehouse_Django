@@ -1,3 +1,6 @@
+v3.55.0 2025-04-21 JP
+  - New integration_badges application and data model initialization
+
 v3.54.0 2025-04-07 JP
   - Add SupportContact, SupportStatus to glue2/v1/software_fast/
 
