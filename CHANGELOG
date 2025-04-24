@@ -1,3 +1,6 @@
+v3.56.1 2025-04-24 JP
+  - Fix the missing small integration_badges model change in 0001_initial.py
+
 v3.56.0 2025-04-24 JP
   - Improve integration_badges Model names
   - Clean integration_badges migration replaces v3.55.0
