@@ -239,34 +239,6 @@ class Integration_Resource_Badge(models.Model):
         return self.info_resourceid
 
     @property
-    def task_status(self):
-        _tast_status = []
-        badge_tasks = Integration_Badge_Task.objects.filter(badge_id=self.badge_id)
-        for badge_task in badge_tasks:
-            task_workflow = Integration_Badge_Task_Workflow.objects.filter(
-                info_resourceid=self.info_resourceid,
-                roadmap_id=self.roadmap_id,
-                badge_id=self.badge_id,
-                task_id=badge_task.task_id
-            ).order_by('-status_updated_at').first()
-            if task_workflow is not None:
-                _tast_status.append({
-                    "task_id": badge_task.task_id.pk,
-                    "status": task_workflow.status,
-                    "status_updated_by": task_workflow.status_updated_by,
-                    "status_updated_at": task_workflow.status_updated_at
-                })
-            else:
-                _tast_status.append({
-                    "task_id": badge_task.task_id.pk,
-                    "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
-                    "status_updated_by": None,
-                    "status_updated_at": None
-                })
-
-        return _tast_status
-
-    @property
     def workflow(self):
         return Integration_Badge_Workflow.objects.filter(
             info_resourceid=self.info_resourceid,

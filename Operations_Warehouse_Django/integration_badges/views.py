@@ -206,8 +206,7 @@ class Integration_Resource_Roadmap_Badges_v1(GenericAPIView):
                 'status': resource_badge.status,
                 'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
                 'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-                'comment': resource_badge.workflow.comment if resource_badge.workflow else None,
-                'task_status': resource_badge.task_status
+                'comment': resource_badge.workflow.comment if resource_badge.workflow else None
             }
 
             badge_status.append(badge_data)
@@ -262,8 +261,7 @@ class Integration_Resource_Roadmap_Badge_v1(GenericAPIView):
             'status': resource_badge.status,
             'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
             'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-            'comment': resource_badge.workflow.comment if resource_badge.workflow else None,
-            'task_status': resource_badge.task_status
+            'comment': resource_badge.workflow.comment if resource_badge.workflow else None
         }
 
         return MyAPIResponse({'results': badge_data})
