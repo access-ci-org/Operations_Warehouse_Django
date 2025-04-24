@@ -1,3 +1,12 @@
+v3.56.0 2025-04-24 JP
+  - Improve integration_badges Model names
+  - Clean integration_badges migration replaces v3.55.0
+  - Improve/fix Model field names that are foreign keys
+  - Fix Model field blank settings
+  - Add roadmap to workflow APIs and Views
+  - Improve some View names
+  - Major improvement to Admin interface
+  
 v3.55.0 2025-04-21 Dinuka, Eric, JP
   - New integration_badges application and data model initialization
   - New cilogon_tokenauth module as default API authentication class
