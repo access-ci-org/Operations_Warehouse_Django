@@ -27,7 +27,7 @@ class DatabaseFile(models.Model):
     file_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     file_name = models.CharField(max_length=100, null=True)
     file_data = models.BinaryField(null=True, editable=True)
-    content_type = models.CharField(max_length=100, null=True)
+    content_type = models.CharField(max_length=100, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -68,11 +68,11 @@ class DatabaseFileStorage(Storage):
         return "/wh2/integration_badges/v1/files/%s" % file_id
 
 
-class Integration_Roadmap(models.Model):
+class Roadmap(models.Model):
     roadmap_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     graphic = models.ImageField(null=True, storage=DatabaseFileStorage)
-    executive_summary = models.TextField(null=True)
+    executive_summary = models.TextField(null=True, blank=True)
     infrastructure_types = models.CharField(max_length=200)
     integration_coordinators = models.CharField(max_length=200)
     status = models.CharField(max_length=50)
@@ -84,18 +84,16 @@ class Integration_Roadmap(models.Model):
         return "%s (%d)" % (self.name, self.roadmap_id)
 
 
-class Integration_Badge(models.Model):
+class Badge(models.Model):
     badge_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
-    graphic = models.ImageField(null=True, storage=DatabaseFileStorage)
-    researcher_summary = models.TextField(null=True)
-    resource_provider_summary = models.TextField(null=True)
-    verification_summary = models.TextField(null=True)
+    graphic = models.ImageField(null=True, blank=True, storage=DatabaseFileStorage)
+    researcher_summary = models.TextField(null=True, blank=True)
+    resource_provider_summary = models.TextField(null=True, blank=True)
+    verification_summary = models.TextField(null=True, blank=True)
     verification_method = models.CharField(max_length=20)  # {Automated, Manual}
-    default_badge_access_url = models.URLField()
-    default_badge_access_url_label = models.CharField(max_length=50)
-
-    # prerequisite_badges = models.ManyToManyField("Integration_Badge")
+    default_badge_access_url = models.URLField(null=True, blank=True)
+    default_badge_access_url_label = models.CharField(null=True, blank=True, max_length=50)
 
     class Meta:
         ordering = ['name']
@@ -104,10 +102,10 @@ class Integration_Badge(models.Model):
         return "%s (%d)" % (self.name, self.badge_id)
 
 
-class Integration_Task(models.Model):
+class Task(models.Model):
     task_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, unique=True)
-    technical_summary = models.TextField(null=True)
+    technical_summary = models.TextField(null=True, blank=True)
     implementor_roles = models.CharField(max_length=200)
     task_experts = models.CharField(max_length=200)
     detailed_instructions_url = models.URLField()
@@ -119,131 +117,87 @@ class Integration_Task(models.Model):
         return "%s (%d)" % (self.name, self.task_id)
 
 
-class Integration_Badge_Prerequisite_Badge(models.Model):
+class Badge_Prerequisite_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    badge_id = models.ForeignKey(Integration_Badge, related_name='badge_prerequisites', on_delete=models.CASCADE)
-    prerequisite_badge_id = models.ForeignKey(Integration_Badge, related_name='badge_required_by',
-                                              on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, related_name='badge_prerequisites', on_delete=models.CASCADE)
+    prerequisite_badge = models.ForeignKey(Badge, related_name='badge_required_by', on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
 
     class Meta:
-        unique_together = ('badge_id', 'prerequisite_badge_id',)
+        unique_together = ('badge', 'prerequisite_badge',)
 
 
-class Integration_Roadmap_Badge(models.Model):
+class Roadmap_Badge(models.Model):
     id = models.AutoField(primary_key=True)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE, related_name="badge_set",
-                                   related_query_name="badge_ref")
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE, related_name="roadmap_set",
-                                 related_query_name="roadmap")
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name='roadmap_badge_set',
+                                related_query_name='badge_ref')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='roadmap_set',
+                                related_query_name='roadmap')
     sequence_no = models.IntegerField()
-    required = models.BooleanField(default=False)
+    required = models.BooleanField(null=False, default=False)
 
     class Meta:
-        unique_together = ('roadmap_id', 'badge_id',)
+        unique_together = ('roadmap', 'badge',)
 
 
-class Integration_Badge_Task(models.Model):
+class Badge_Task(models.Model):
     id = models.AutoField(primary_key=True)
-    badge_id = models.ForeignKey(Integration_Badge, related_name="badge_tasks", on_delete=models.CASCADE)
-    task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, related_name="badge_tasks", on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
-    required = models.BooleanField(default=False)
+    required = models.BooleanField(null=False, default=False)
 
     class Meta:
-        unique_together = ('badge_id', 'task_id',)
+        unique_together = ('badge', 'task',)
 
 
-class Integration_Resource_Roadmap(models.Model):
+class Resource_Roadmap(models.Model):
     id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('info_resourceid', 'roadmap_id',)
+        unique_together = ('info_resourceid', 'roadmap',)
 
-
-class Integration_Badge_Workflow(models.Model):
-    workflow_id = models.AutoField(primary_key=True)
-    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE, related_name="badge_workflow_resource_set",
-                                   related_query_name="badge_workflow_resource_ref")
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
-
-    status = models.CharField(max_length=20, choices=BadgeWorkflowStatus.choices)
-    status_updated_by = models.CharField(max_length=50)
-    status_updated_at = models.DateTimeField(auto_now_add=True)
-    comment = models.TextField(null=True, blank=True)
-
-# Disabled by JP for data model conversion
-#    def save(self, *args, **kwargs):
-#        resource_badge = Integration_Resource_Badge.objects.filter(
-#            info_resourceid=self.info_resourceid,
-#            roadmap_id=self.roadmap_id,
-#            badge_id=self.badge_id,
-#        ).first()
-#        if resource_badge is None:
-#            resource_badge = Integration_Resource_Badge(
-#                info_resourceid=self.info_resourceid,
-#                roadmap_id=self.roadmap_id,
-#                badge_id=self.badge_id
-#            )
-#            resource_badge.save()
-#        super().save(*args, **kwargs)
-
-
-class Integration_Badge_Task_Workflow(models.Model):
-    workflow_id = models.AutoField(primary_key=True)
-    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
-    task_id = models.ForeignKey(Integration_Task, on_delete=models.CASCADE)
-
-    status = models.CharField(max_length=20, choices=BadgeTaskWorkflowStatus.choices)
-    status_updated_by = models.CharField(max_length=50)
-    status_updated_at = models.DateTimeField(auto_now_add=True)
-    comment = models.TextField(null=True, blank=True)
-
-
-class Integration_Resource_Badge(models.Model):
+class Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
-    roadmap_id = models.ForeignKey(Integration_Roadmap, on_delete=models.CASCADE)
-    badge_id = models.ForeignKey(Integration_Badge, on_delete=models.CASCADE)
-    badge_access_url = models.URLField(null=True)
-    badge_access_url_label = models.CharField(max_length=50, null=True)
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    badge_access_url = models.URLField(null=True, blank=True)
+    badge_access_url_label = models.CharField(null=True, blank=True, max_length=50)
 
     class Meta:
-        unique_together = ('info_resourceid', 'roadmap_id', 'badge_id',)
+        unique_together = ('info_resourceid', 'roadmap', 'badge',)
 
     @property
-    def resource_badge_access_url(self):
+    def badge_access_url_or_default(self):
         if self.badge_access_url is None:
             return self.badge.default_badge_access_url
         else:
             return self.badge_access_url
 
     @property
-    def resource_badge_access_url_label(self):
+    def badge_access_url_label_or_default(self):
         if self.badge_access_url_label is None:
             return self.badge.default_badge_access_url_label
         else:
             return self.badge_access_url_label
 
-    @property
-    def badge(self):
-        return self.badge_id
-
-    @property
-    def resource(self):
-        return self.info_resourceid
+#    @property
+#    def badge(self):
+#        return self.badge
+#
+#    @property
+#    def resource(self):
+#        return self.info_resourceid
 
     @property
     def task_status(self):
         _tast_status = []
-        badge_tasks = Integration_Badge_Task.objects.filter(badge_id=self.badge_id)
+        badge_tasks = Badge_Task.objects.filter(badge_id=self.badge_id)
         for badge_task in badge_tasks:
-            task_workflow = Integration_Badge_Task_Workflow.objects.filter(
+            task_workflow = Resource_Badge_Task_Workflow.objects.filter(
                 info_resourceid=self.info_resourceid,
                 roadmap_id=self.roadmap_id,
                 badge_id=self.badge_id,
@@ -251,14 +205,14 @@ class Integration_Resource_Badge(models.Model):
             ).order_by('-status_updated_at').first()
             if task_workflow is not None:
                 _tast_status.append({
-                    "task_id": badge_task.task_id.pk,
+                    "task_id": badge_task.task_id,
                     "status": task_workflow.status,
                     "status_updated_by": task_workflow.status_updated_by,
                     "status_updated_at": task_workflow.status_updated_at
                 })
             else:
                 _tast_status.append({
-                    "task_id": badge_task.task_id.pk,
+                    "task_id": badge_task.task_id,
                     "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
                     "status_updated_by": None,
                     "status_updated_at": None
@@ -268,7 +222,7 @@ class Integration_Resource_Badge(models.Model):
 
     @property
     def workflow(self):
-        return Integration_Badge_Workflow.objects.filter(
+        return Resource_Badge_Workflow.objects.filter(
             info_resourceid=self.info_resourceid,
             roadmap_id=self.roadmap_id,
             badge_id=self.badge_id
@@ -279,3 +233,41 @@ class Integration_Resource_Badge(models.Model):
         if self.workflow is None:
             return BadgeWorkflowStatus.NOT_PLANNED
         return self.workflow.status
+
+class Resource_Badge_Workflow(models.Model):
+    workflow_id = models.AutoField(primary_key=True)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name="badge_workflow_resource_set",
+                                   related_query_name="badge_workflow_resource_ref")
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+
+    status = models.CharField(null=False, max_length=20, choices=BadgeWorkflowStatus.choices)
+    status_updated_by = models.CharField(null=False, max_length=50)
+    status_updated_at = models.DateTimeField(null=False, auto_now_add=True)
+    comment = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        resource_badge = Resource_Badge.objects.filter(
+            info_resourceid=self.info_resourceid,
+            roadmap=self.roadmap,
+            badge=self.badge )
+        if resource_badge is None:
+            resource_badge = Resource_Badge(
+                info_resourceid=self.info_resourceid,
+                roadmap=self.roadmap,
+                badge=self.badge
+            )
+            resource_badge.save()
+        super().save(*args, **kwargs)
+
+class Resource_Badge_Task_Workflow(models.Model):
+    workflow_id = models.AutoField(primary_key=True)
+    info_resourceid = models.CharField(max_length=40, null=False, blank=False)
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+    status = models.CharField(null=False, max_length=20, choices=BadgeTaskWorkflowStatus.choices)
+    status_updated_by = models.CharField(null=False, max_length=50)
+    status_updated_at = models.DateTimeField(null=False, auto_now_add=True)
+    comment = models.TextField(null=True, blank=True)
