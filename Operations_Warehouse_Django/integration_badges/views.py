@@ -36,7 +36,8 @@ class Integration_Roadmap_v1(GenericAPIView):
             try:
                 item = Integration_Roadmap.objects.get(pk=self.kwargs['integration_roadmap_id'])
             except Integration_Roadmap.DoesNotExist:
-                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified integration_roadmap_id not found')
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                     detail='Specified integration_roadmap_id not found')
         else:
             item = Integration_Roadmap.objects.all()
 
@@ -73,6 +74,7 @@ class Integration_Resource_List_v1(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
+
     # serializer_class = Integration_Resource_List_Serializer
 
     def get(self, request, format=None, **kwargs):
@@ -93,7 +95,7 @@ class Integration_Resource_v1(GenericAPIView):
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
     permission_classes = (AllowAny,)
-    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
     serializer_class = Integration_Resource_Serializer
 
@@ -124,7 +126,6 @@ class Integration_Resource_v1(GenericAPIView):
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
 
-
         request_data = request.data
         roadmap_ids = request_data.get("roadmap_ids")
         badge_ids = request_data.get("badge_ids")
@@ -135,7 +136,7 @@ class Integration_Resource_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified roadmaps not found')
 
         try:
-            badges = Integration_Badge.objects.filter(badge_id__in = badge_ids)
+            badges = Integration_Badge.objects.filter(badge_id__in=badge_ids)
         except Integration_Badge.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badges not found')
 
@@ -152,15 +153,17 @@ class Integration_Resource_v1(GenericAPIView):
         serializer = self.serializer_class(resource, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
 
+
 class Integration_Resource_Roadmap_Badges_v1(GenericAPIView):
     '''
     Retrieve details of a specific resource, including roadmaps and their badges.
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
     permission_classes = (AllowAny,)
-    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
-    #serializer_class = Integration_Resource_Roadmap_Serializer
+
+    # serializer_class = Integration_Resource_Roadmap_Serializer
 
     def get(self, request, format=None, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
@@ -171,23 +174,26 @@ class Integration_Resource_Roadmap_Badges_v1(GenericAPIView):
         try:
             item = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
             roadmap = Integration_Roadmap.objects.get(pk=roadmap_id)
-            resource_roadmap = Integration_Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
-            resource_badges = Integration_Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+            resource_roadmap = Integration_Resource_Roadmap.objects.get(info_resourceid=info_resourceid,
+                                                                        roadmap_id=roadmap_id)
+            resource_badges = Integration_Resource_Badge.objects.filter(info_resourceid=info_resourceid,
+                                                                        roadmap_id=roadmap_id)
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Integration_Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
         except Integration_Resource_Roadmap.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap relationship not found not found')
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified resource-roadmap relationship not found not found')
         except Integration_Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap-badge relationship not found not found')
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified resource-roadmap-badge relationship not found not found')
 
         # roadmaps = Integration_Resource_Roadmap.objects.filter(info_resourceid=info_resourceid)
         # badges = Integration_Resource_Badge.objects.filter(info_resourceid=info_resourceid)
 
         # serializer = self.serializer_class(item, context={'request': request}, many=False)
         # return MyAPIResponse({'results': serializer.data})
-
 
         badge_status = []
         for resource_badge in resource_badges:
@@ -207,6 +213,119 @@ class Integration_Resource_Roadmap_Badges_v1(GenericAPIView):
             badge_status.append(badge_data)
 
         return MyAPIResponse({'results': badge_status})
+
+
+class Integration_Resource_Roadmap_Badge_v1(GenericAPIView):
+    '''
+    Retrieve details of a specific resource, including roadmaps and their badges.
+    It also includes the list of badge statuses of the badges that are at least planned.
+    '''
+    permission_classes = (AllowAny,)
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    renderer_classes = (JSONRenderer,)
+
+    # serializer_class = Integration_Resource_Roadmap_Serializer
+
+    def get(self, request, format=None, **kwargs):
+        info_resourceid = kwargs.get('info_resourceid')
+        roadmap_id = kwargs.get('roadmap_id')
+        badge_id = kwargs.get('integration_badge_id')
+
+        if not info_resourceid or not roadmap_id or not badge_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
+                                 detail='Info_ResourceID, RoadmapID and BadgeID are required')
+
+        try:
+            resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+            roadmap = Integration_Roadmap.objects.get(pk=roadmap_id)
+            resource_roadmap = Integration_Resource_Roadmap.objects.get(info_resourceid=info_resourceid,
+                                                                        roadmap_id=roadmap_id)
+            resource_badge = Integration_Resource_Badge.objects.get(info_resourceid=info_resourceid,
+                                                                       roadmap_id=roadmap_id, badge_id=badge_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
+        except Integration_Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
+        except Integration_Resource_Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified resource-roadmap relationship not found not found')
+        except Integration_Resource_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified resource-roadmap-badge relationship not found not found')
+
+        badge_data = {
+            'info_resourceid': resource_badge.info_resourceid,
+            'roadmap_id': resource_badge.roadmap_id_id,
+            'badge_id': resource_badge.badge_id_id,
+            'badge_access_url': resource_badge.resource_badge_access_url,
+            'badge_access_url_label': resource_badge.resource_badge_access_url_label,
+            'status': resource_badge.status,
+            'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
+            'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
+            'comment': resource_badge.workflow.comment if resource_badge.workflow else None,
+            'task_status': resource_badge.task_status
+        }
+
+        return MyAPIResponse({'results': badge_data})
+
+
+class Integration_Resource_Roadmap_Badge_Tasks_v1(GenericAPIView):
+    '''
+    Retrieve details of a specific resource, including roadmaps and their badges.
+    It also includes the list of badge statuses of the badges that are at least planned.
+    '''
+    permission_classes = (AllowAny,)
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    renderer_classes = (JSONRenderer,)
+
+    # serializer_class = Integration_Resource_Roadmap_Serializer
+
+    def get(self, request, format=None, **kwargs):
+        info_resourceid = kwargs.get('info_resourceid')
+        roadmap_id = kwargs.get('roadmap_id')
+        badge_id = kwargs.get('integration_badge_id')
+        if not info_resourceid or not roadmap_id or not badge_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
+                                 detail='Info_ResourceID, RoadmapID and BadgeID are required')
+
+        try:
+            item = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+            roadmap = Integration_Roadmap.objects.get(pk=roadmap_id)
+            badge = Integration_Badge.objects.get(pk=badge_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
+        except Integration_Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
+        except Integration_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found not found')
+
+        tast_status = []
+        badge_tasks = Integration_Badge_Task.objects.filter(badge_id=badge_id)
+        for badge_task in badge_tasks:
+            task_workflow = Integration_Badge_Task_Workflow.objects.filter(
+                info_resourceid=info_resourceid,
+                roadmap_id=roadmap_id,
+                badge_id=badge_id,
+                task_id=badge_task.task_id
+            ).order_by('-status_updated_at').first()
+            if task_workflow is not None:
+                tast_status.append({
+                    "task_id": badge_task.task_id.pk,
+                    "task_name": badge_task.task_id.name,
+                    "status": task_workflow.status,
+                    "status_updated_by": task_workflow.status_updated_by,
+                    "status_updated_at": task_workflow.status_updated_at
+                })
+            else:
+                tast_status.append({
+                    "task_id": badge_task.task_id.pk,
+                    "task_name": badge_task.task_id.name,
+                    "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                    "status_updated_by": None,
+                    "status_updated_at": None
+                })
+
+        return MyAPIResponse({'results': tast_status})
 
 
 class Integration_Task_v1(GenericAPIView):
@@ -231,13 +350,12 @@ class Integration_Task_v1(GenericAPIView):
             return MyAPIResponse({'results': []})
 
 
-
 class Integration_Resource_Badge_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
     permission_classes = (AllowAny,)
-    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
@@ -259,7 +377,8 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
         badge_id = kwargs.get('integration_badge_id')
 
         if not info_resourceid or not roadmap_id or not badge_id or not badge_workflow_status:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, Roadmap ID, Badge ID and status are required')
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
+                                 detail='Info_ResourceID, Roadmap ID, Badge ID and status are required')
 
         try:
             resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
@@ -293,12 +412,13 @@ class Integration_Resource_Badge_Status_v1(GenericAPIView):
 
         return MyAPIResponse({'message': 'Badge marked as %s' % badge_workflow_status})
 
+
 class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     Mark a badge as task uncompleted.
     '''
     permission_classes = (AllowAny,)
-    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
 
     @extend_schema(
@@ -321,7 +441,8 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
         task_id = kwargs.get('integration_task_id')
 
         if not info_resourceid or not roadmap_id or not badge_id or not task_id or not badge_task_workflow_status:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, Roadmap ID, Badge ID, Task ID and status are required')
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
+                                 detail='Info_ResourceID, Roadmap ID, Badge ID, Task ID and status are required')
 
         try:
             resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
@@ -339,7 +460,8 @@ class Integration_Resource_Badge_Task_Status_v1(GenericAPIView):
         except Integration_Task.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task not found')
         except Integration_Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-badge relationship not found')
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified resource-badge relationship not found')
         except Integration_Badge_Task.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge-task relationship not found')
 
