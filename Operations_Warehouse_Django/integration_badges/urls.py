@@ -33,6 +33,18 @@ urlpatterns = [
           Resource_v1.as_view(),
           name='resource-v1-id'),
 
+     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badges/',
+          Resource_Roadmap_Badges_v1.as_view(),
+          name='resource-roadmap-badges-v1-id'),
+
+     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:integration_badge_id>/',
+          Resource_Roadmap_Badge_v1.as_view(),
+          name='resource-roadmap-badge-v1-id'),
+
+     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:integration_badge_id>/tasks/',
+          Resource_Roadmap_Badge_Tasks_v1.as_view(),
+          name='resource-roadmap-badge-tasks-v1-id'),
+
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:badge_id>/workflow/<str:badge_workflow_status>/',
           Resource_Badge_Status_v1.as_view(),
           name='resource-badge-status-v1-id'),

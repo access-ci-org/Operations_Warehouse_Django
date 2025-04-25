@@ -212,14 +212,15 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
     organization_logo_url = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
     roadmaps = serializers.SerializerMethodField()
-    badge_status = serializers.SerializerMethodField()
+#    badge_status = serializers.SerializerMethodField()
 
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'info_resourceid', 'cider_type', 'resource_description',
                     'latest_status', 'resource_descriptive_name',
                     'organization_name', 'organization_url', 'organization_logo_url',
-                    'user_guide_url', 'roadmaps', 'badge_status')
+                    'user_guide_url', 'roadmaps',)
+#                     'badge_status')
 
     def get_organization_name(self, obj) -> str:
         try:
@@ -252,27 +253,27 @@ class Integration_Resource_Serializer(serializers.ModelSerializer):
         except:
             return None
         return serializer.data
-    def get_badge_status(self, obj) -> Dict[str, Any]:
-        try:
-            my_badges = Resource_Badge.objects.filter(info_resourceid__exact=obj.info_resourceid)
-            badge_status = []
-            for my_badge in my_badges:
-                badge_data = {
-                    'info_resourceid': my_badge.info_resourceid,
-                    'roadmap_id': my_badge.roadmap.roadmap_id,
-                    'badge_id': my_badge.badge.badge_id,
-                    'badge_access_url': my_badge.badge_access_url_or_default,
-                    'badge_access_url_label': my_badge.badge_access_url_label_or_default,
-                    'status': my_badge.status,
-                    'status_updated_by': my_badge.workflow.status_updated_by if my_badge.workflow else None,
-                    'status_updated_at': my_badge.workflow.status_updated_at if my_badge.workflow else None,
-                    'comment': my_badge.workflow.comment if my_badge.workflow else None,
-                    'task_status': my_badge.task_status
-                }
-                badge_status.append(badge_data)
-            return badge_status
-        except Exception as e:
-            return None
+#    def get_badge_status(self, obj) -> Dict[str, Any]:
+#        try:
+#            my_badges = Resource_Badge.objects.filter(info_resourceid__exact=obj.info_resourceid)
+#            badge_status = []
+#            for my_badge in my_badges:
+#                badge_data = {
+#                    'info_resourceid': my_badge.info_resourceid,
+#                    'roadmap_id': my_badge.roadmap.roadmap_id,
+#                    'badge_id': my_badge.badge.badge_id,
+#                    'badge_access_url': my_badge.badge_access_url_or_default,
+#                    'badge_access_url_label': my_badge.badge_access_url_label_or_default,
+#                    'status': my_badge.status,
+#                    'status_updated_by': my_badge.workflow.status_updated_by if my_badge.workflow else None,
+#                    'status_updated_at': my_badge.workflow.status_updated_at if my_badge.workflow else None,
+#                    'comment': my_badge.workflow.comment if my_badge.workflow else None,
+#                    'task_status': my_badge.task_status
+#                }
+#                badge_status.append(badge_data)
+#            return badge_status
+#        except Exception as e:
+#            return None
 
 
 class Task_Serializer(serializers.ModelSerializer):
@@ -329,33 +330,33 @@ class Resource_Badge_Plan_Serializer(serializers.ModelSerializer):
         return resource_badge
 
 
-class Resource_Badge_Status_Serializer(serializers.ModelSerializer):
-    '''
-    Return the statuses of all badges (at least planned) associated with a resource.
-    '''
-
-    badge_status = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Resource_Badge
-        fields = ['badge_status']
-
-    def get_badge_status(self, obj):
-        try:
-            badges = obj.resource_badges.all()
-
-            badge_status = []
-            for badge in badges:
-                badge_data = {
-                    'badge_id': badge.badge_id.badge_id,
-                    'badge_access_url': badge.badge_access_url,
-                    'badge_access_url_label': badge.badge_access_url_label,
-                    'status': badge.workflow.status,
-                    'status_updated_by': badge.workflow.status_updated_by if badge.workflow else None,
-                    'status_updated_at': badge.workflow.status_updated_at if badge.workflow else None
-                }
-                badge_status.append(badge_data)
-
-            return badge_status
-        except:
-            return None
+#class Resource_Badge_Status_Serializer(serializers.ModelSerializer):
+#    '''
+#    Return the statuses of all badges (at least planned) associated with a resource.
+#    '''
+#
+#    badge_status = serializers.SerializerMethodField()
+#
+#    class Meta:
+#        model = Resource_Badge
+#        fields = ['badge_status']
+#
+#    def get_badge_status(self, obj):
+#        try:
+#            badges = obj.resource_badges.all()
+#
+#            badge_status = []
+#            for badge in badges:
+#                badge_data = {
+#                    'badge_id': badge.badge_id.badge_id,
+#                    'badge_access_url': badge.badge_access_url,
+#                    'badge_access_url_label': badge.badge_access_url_label,
+#                    'status': badge.workflow.status,
+#                    'status_updated_by': badge.workflow.status_updated_by if badge.workflow else None,
+#                    'status_updated_at': badge.workflow.status_updated_at if badge.workflow else None
+#                }
+#                badge_status.append(badge_data)
+#
+#            return badge_status
+#        except:
+#            return None
