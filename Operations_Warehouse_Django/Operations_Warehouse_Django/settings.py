@@ -288,6 +288,7 @@ if SETTINGS_MODE == 'SERVER':
         'DESCRIPTION': 'ACCESS Operations (CONECT) Information Sharing Platform - Service Facing API',
         'VERSION': '1.0.0',
         'PREPROCESSING_HOOKS': ['warehouse_tools.hooks.remove_internal_apis'],
+        'DEFAULTMODELEXPANDDEPTH': 4,
     }
     
     ROOT_URLCONF = 'Operations_Warehouse_Django.urls'
@@ -356,6 +357,8 @@ if SETTINGS_MODE == 'SERVER':
     CILOGON_CLIENT_KEY = CONF.get('CILOGON_CLIENT_KEY', None)
     CILOGON_CLIENT_SECRET = CONF.get('CILOGON_CLIENT_SECRET', None)
     TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION = CONF.get('TOKENAUTH_INTROSPECTION_CACHE_EXPIRATION', None)
+    # to let us disable authentication for api routes for debugging
+    DISABLE_PERMISSIONS_FOR_DEBUGGING = CONF.get('DISABLE_PERMISSIONS_FOR_DEBUGGING', False)
     #
 #            'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     REST_FRAMEWORK = {

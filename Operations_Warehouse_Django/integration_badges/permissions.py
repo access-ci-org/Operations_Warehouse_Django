@@ -29,7 +29,7 @@ class IsBadgeRole(permissions.BasePermission):
 
     def has_permission(self, request, view):
         info_resourceid = request.parser_context["kwargs"]['info_resourceid']
-        resource = CiderInfrastructure.objects.get(pk=info_resourceid)
+        resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
         info_resourceid = resource.info_resourceid
         try:
             cidergroup = CiderGroups.objects.filter(info_resourceids__contains=[info_resourceid]).first()

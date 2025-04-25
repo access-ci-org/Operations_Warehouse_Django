@@ -1,0 +1,129 @@
+{% extends "base_detail.html" %}
+{% block title %}Roadmaps for RPs{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+ 
+<h1 align="left">Roadmap Information for Resource Providers</h1>
+
+<p>RPs use the <a href="https://dashboard.operations.access-ci.org/IntegrationBadgesUI/" target="_blank">Integration Badges UI</a> in the <a href="https://dashboard.operations.access-ci.org/dashboard/">Operations Dashboard</a> to follow an interactive resource integration process, where:</p>
+<ul>
+    <li>They can view roadmap and badge information.</li>
+    <li>Leadership can enroll a resource in a roadmaps and plan badges using the summary information below.</li>
+    <li>Implementors can perform the tasks for planned badges by following task instructions links.</li>
+</ul>
+
+<p>Users will view badge availability information in the <a href="https://allocations.access-ci.org/resources" target="_blank">ACCESS Resource Catalog</a>, where:</p>
+<ul>
+    <li>They can access badge functionality using a resource specific <i>Button and Access URL</i>, or</li>
+    <li>The <i>Default badge access</i> button and URL shown below when a resource specific one hasn't been set.</li>
+</ul>
+
+<h3>Available Roadmaps</h3>
+<ul class="nav nav-tabs">
+{% for navitem in results.roadmaps_nav %}
+    <li class="nav-item">
+        {% if results.roadmap.roadmap_id|stringformat:"s" == navitem.roadmap_id|stringformat:"s" %}
+        <a class="nav-link active" aria-current="page" href="#">
+        {% else %}
+        <a class="nav-link" href="{{ navitem.roadmap_detail_url }}">
+        {% endif %}
+        {{ navitem.name }}</a>
+    </li>
+{% endfor %}
+</ul>
+
+{% with record=results.roadmap %}
+<span class="align-top">
+    &nbsp;
+<table class="table-primary align-top" style="margin-left:10px;margin-right:20px" border=0 cellspacing=0 cellpadding=3>
+    <tr><h1 align="left">{{ record.name }}</h1></tr>
+    <tr>
+        <td><img width=160px src="{{ record.graphic }}"></td>
+        <td><table>
+            <tr>
+                <table>
+                <tr><td width="200px"><b>Infrastructure Type(s):</b></td>
+                    <td>{{ record.infrastructure_types }}</td></tr>
+                <tr><td valign="top"><b>Roadmap RP Summary:</b></td>
+                    <td>{{ record.executive_summary }}</td></tr>
+                <tr><td><b>Integration Concierge:</b></td>
+                    <td>{{ record.integration_coordinators }}</td></tr>
+                <tr><td><b>Roadmap Status:</b></td>
+                    {% if record.status == "Production" %}
+                    <td class="badge rounded-pill bg-success">{{ record.status }}</td></tr>
+                    {% else %}
+                    <td class="badge rounded-pill bg-warning text-dark">{{ record.status }}</td></tr>
+                    {% endif %}
+                </table>
+            </tr>
+        </table></td>
+    </tr>
+</table>
+</span>
+
+<div class="container-fluid py-4" style="margin-left:40px">
+    {% for i in '12' %}
+    {% cycle 'Required' 'Optional' as mode silent %}
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
+    {% if mode == 'Required' %}
+    <h3 align="left">Required Badges</h3>
+    {% else %}
+    <h3 align="left">Recommended Badges</h3>
+    {% endif %}
+    <table style="margin-right:20px; margin-bottom:5px" border=0 cellspacing=0 cellpadding=3>
+    {% for badge in record.badges|dictsort:"sequence_no" %}
+    {% if badge.required and mode == 'Required' or not badge.required and mode == 'Optional' %}
+    <th colspan="2"><hr style="border-top: dotted 1px;"></th>
+    <tr>
+        <td valign="top" width="120px"><img width=100px src="{{ badge.badge.graphic }}"></td>
+        <td><table>
+            <tr><h2>{{ badge.badge.name }}</h2></tr>
+            <tr><td>
+                <table valign="top">
+                    <tr><td valign="top" width="200px"><b>RP Activity Summary:</b></td>
+                        <td>{{ badge.badge.resource_provider_summary }}</td></tr>
+                    <tr><td><b>ACCESS Verification:</b></td>
+                        <td><b>{{ badge.badge.verification_method }}</b>: {{ badge.badge.verification_summary }}</td></tr>
+                    {% if badge.badge.prerequisite_list %}
+                    <tr><td><b>Pre-requisite badges:</b></td>
+                        <td>{{ badge.badge.prerequisite_list }}</td></tr>
+                    {% endif %}
+                    <tr><td><b>Default badge access:</b></td>
+                        <td>
+                    <a href="{{ badge.badge.default_badge_access_url }}" class="btn btn-sm btn-secondary" target="_blank">{{ badge.badge.default_badge_access_url_label }}</a></td></tr>
+
+                    <tr><td valign="top"><b>Tasks:</b></td><td>
+                        <table valign="top">
+                            <thead><th width="500px">Information & Instructions Link</th><th>Implementors</th><th>SMEs</th></thead>
+                            {% for task in badge.badge.tasks|dictsort:"sequence_no" %}
+                            <tr>
+                                <td>
+                                    <div title="{{ task.task.technical_summary }}">
+                                    {% if task.required %}
+                                    <span class="badge rounded-pill bg-info text-dark">Required</span>
+                                    {% else %}
+                                    <span class="badge rounded-pill bg-light text-dark">Optional</span>
+                                    {% endif %}
+                                    <a href="{{ task.task.detailed_instructions_url }}" target="_blank">{{ task.task.name }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ task.task.implementor_roles }}</td>
+                                <td>{{ task.task.task_experts }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </td></tr>
+                </table>
+            </td></tr>
+        </table></td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    </table>
+    {% endfor %}
+
+</div>
+{% endwith %}
+</div>
+{% endblock %}
