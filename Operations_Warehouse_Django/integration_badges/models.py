@@ -184,42 +184,6 @@ class Resource_Badge(models.Model):
         else:
             return self.badge_access_url_label
 
-#    @property
-#    def badge(self):
-#        return self.badge
-#
-#    @property
-#    def resource(self):
-#        return self.info_resourceid
-
-    @property
-    def task_status(self):
-        _tast_status = []
-        badge_tasks = Badge_Task.objects.filter(badge_id=self.badge_id)
-        for badge_task in badge_tasks:
-            task_workflow = Resource_Badge_Task_Workflow.objects.filter(
-                info_resourceid=self.info_resourceid,
-                roadmap_id=self.roadmap_id,
-                badge_id=self.badge_id,
-                task_id=badge_task.task_id
-            ).order_by('-status_updated_at').first()
-            if task_workflow is not None:
-                _tast_status.append({
-                    "task_id": badge_task.task_id,
-                    "status": task_workflow.status,
-                    "status_updated_by": task_workflow.status_updated_by,
-                    "status_updated_at": task_workflow.status_updated_at
-                })
-            else:
-                _tast_status.append({
-                    "task_id": badge_task.task_id,
-                    "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
-                    "status_updated_by": None,
-                    "status_updated_at": None
-                })
-
-        return _tast_status
-
     @property
     def workflow(self):
         return Resource_Badge_Workflow.objects.filter(
@@ -245,20 +209,6 @@ class Resource_Badge_Workflow(models.Model):
     status_updated_by = models.CharField(null=False, max_length=50)
     status_updated_at = models.DateTimeField(null=False, auto_now_add=True)
     comment = models.TextField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        resource_badge = Resource_Badge.objects.filter(
-            info_resourceid=self.info_resourceid,
-            roadmap=self.roadmap,
-            badge=self.badge )
-        if resource_badge is None:
-            resource_badge = Resource_Badge(
-                info_resourceid=self.info_resourceid,
-                roadmap=self.roadmap,
-                badge=self.badge
-            )
-            resource_badge.save()
-        super().save(*args, **kwargs)
 
 class Resource_Badge_Task_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)

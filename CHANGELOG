@@ -1,3 +1,6 @@
+v3.57rc1.0 2025-04-25 JP
+  - Latest API changes from Dinuka pull #16 as of 2025-04-25 converted to the production data model
+
 v3.56.1 2025-04-24 JP
   - Fix the missing small integration_badges model change in 0001_initial.py
 
