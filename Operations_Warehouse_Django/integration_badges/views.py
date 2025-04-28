@@ -21,14 +21,21 @@ from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, Read
 
 log = logging.getLogger(__name__)
 
+badging_types = ('Compute', 'Storage') # Expand as more roadmaps with badges are rolled out
+badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
+badging_filter = Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) & Q(project_affiliation__icontains='ACCESS')
 
-class Roadmap_Detail_v1(GenericAPIView):
+# _Detail_ includes all fields from a Model
+# _Full_ includes fields from a model and dependent Models (i.e. roadmap badges, badge tasks, ..)
+# _Min_ serializers include minimum set of fields
+
+class Roadmap_Full_v1(GenericAPIView):
     '''
-        Integration Roadmap and related Badge details View
+    Integration Roadmap(s) and related Badge details View
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_class = Roadmap_Detail_Serializer
+    serializer_class = Roadmap_Full_Serializer
 
     def get(self, request, format=None, **kwargs):
         roadmap_id = self.kwargs.get('roadmap_id')
@@ -46,9 +53,9 @@ class Roadmap_Detail_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
-class Badge_v1(GenericAPIView):
+class Badge_Full_v1(GenericAPIView):
     '''
-    Retrieve an Integration Badge by ID.
+    Integration Badge(s) and pre-requisites
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
@@ -70,13 +77,13 @@ class Badge_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
-class Badge_Task_v1(GenericAPIView):
+class Badge_Task_Full_v1(GenericAPIView):
     '''
     Retrieve an Integration Task by ID
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
-    serializer_class = Badge_Task_Serializer
+    serializer_class = Badge_Task_Full_Serializer
 
     def get(self, request, *args, **kwargs):
         badge_id = kwargs.get('badge_id')
@@ -92,35 +99,37 @@ class Badge_Task_v1(GenericAPIView):
             return MyAPIResponse({'results': []})
 
 
-class Resource_List_v1(GenericAPIView):
+class Resources_Eligible_List_v1(GenericAPIView):
     '''
-    Retrieve all resources, including badges that are at least planned.
+    Integration eligible CiDeR resources, which could be, are, or were integrated, but haven't been retired
+    
+    Based only on CiDeR since they may not have enrolled in a roadmap yet
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
-    # serializer_class = Resource_List_Serializer
 
+    @extend_schema(
+        responses=CiderInfrastructure_Summary_Serializer,
+    )
     def get(self, request, format=None, **kwargs):
         badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
+        # Will expand once more roadmaps with badges are rolled out
         badging_types = ('Compute', 'Storage')
 
-        resources = CiderInfrastructure.objects.filter(
-            Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) &
-            Q(project_affiliation__icontains='ACCESS'))
-
+        resources = CiderInfrastructure.objects.filter( badging_filter )
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 
-class Resource_v1(GenericAPIView):
+class Resource_Full_v1(GenericAPIView):
     '''
-    Retrieve details of a specific resource, including roadmaps, badges, and badge status.
+    Resource full details, including roadmaps, badges, and badge status
     '''
     permission_classes = (AllowAny,)
     #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
-    serializer_class = Integration_Resource_Serializer
+    serializer_class = Resource_Full_Serializer
 
     def get(self, request, format=None, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
@@ -128,55 +137,103 @@ class Resource_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
 
         try:
-            item = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+            resource = CiderInfrastructure.objects.get( Q(info_resourceid=info_resourceid) & badging_filter )
         except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
-
-#        roadmaps = Resource_Roadmap.objects.filter(info_resourceid=info_resourceid)
-#        badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid)
-
-        serializer = self.serializer_class(item, context={'request': request}, many=False)
-        return MyAPIResponse({'results': serializer.data})
-
-    def post(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get('info_resourceid')
-
-        if not info_resourceid:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
-
-        try:
-            resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
-
-
-        request_data = request.data
-        roadmap_ids = request_data.get("roadmap_ids")
-        badge_ids = request_data.get("badge_ids")
-
-        try:
-            roadmaps = Roadmap.objects.filter(roadmap_id__in=roadmap_ids)
-        except Roadmap.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified roadmaps not found')
-
-        try:
-            badges = Badge.objects.filter(badge_id__in = badge_ids)
-        except Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badges not found')
-
-        Resource_Roadmap.objects.filter(info_resourceid=info_resourceid).delete()
-        Resource_Badge.objects.filter(info_resourceid=info_resourceid).delete()
-
-        for roadmap in roadmaps:
-            Resource_Roadmap(info_resourceid=info_resourceid, roadmap=roadmap).save()
-
-        for badge in badges:
-            # TODO validate if the badge is a part of enrolled roadmaps
-            Resource_Badge(info_resourceid=info_resourceid, roadmap=roadmap, badge=badge).save()
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID does not exist or is not eligible')
 
         serializer = self.serializer_class(resource, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
 
+class Resource_Roadmap_Enrollments_v1(GenericAPIView):
+    '''
+    Resource roadmap and roadmap badge enrollments
+    '''
+    permission_classes = (AllowAny,)
+    #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    renderer_classes = (JSONRenderer,)
+    serializer_class = Resource_Enrollments_Serializer
+
+    @extend_schema(
+        responses=Resource_Enrollments_Response_Serializer,
+    )
+    def post(self, request, format=None, **kwargs):
+        info_resourceid = kwargs.get('info_resourceid')
+        if not info_resourceid:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
+        roadmap_id = kwargs.get('roadmap_id')
+        if not roadmap_id:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='RoadmapID is required')
+        try:
+            resource = CiderInfrastructure.objects.get( Q(info_resourceid=info_resourceid) & badging_filter )
+            roadmap = Roadmap.objects.get(pk=roadmap_id)
+        except CiderInfrastructure.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID does not exist or is not eligible')
+        except Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
+
+        message = ''
+        enroll_badges = []
+        unenroll_badges = []
+
+        # Enroll Resource in Roadmap if not already enrolled
+        try:
+            resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap=roadmap)
+        except Resource_Roadmap.DoesNotExist:
+            resource_roadmap = None
+        except Exception as exc:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+        if not resource_roadmap:
+            try:
+                resource_roadmap = Resource_Roadmap(info_resourceid=info_resourceid, roadmap=roadmap).save()
+                message += f'Enrolled roadmap={roadmap.name}'
+            except Exception as exc:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+
+        # Check that badge_ids were specified
+        raw_badge_ids = request.data.get('badge_ids')
+        if not raw_badge_ids or type(raw_badge_ids) is not list:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Missing BadgeIDs or not a list')
+        new_badge_ids = list(str(id) for id in raw_badge_ids)
+
+        # Verify that each badge is available in the roadmap
+        for id in new_badge_ids:
+            try:
+                new_roadmap_badge = Roadmap_Badge.objects.get(roadmap_id=roadmap_id, badge_id=id)
+            except Roadmap_Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Badge.ID ({id}) is not availabe in roadmap ({roadmap_id})')
+
+        # Retrieve current badges
+        try:
+            cur_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+            cur_badge_ids = [str(id) for id in cur_badges.values_list('badge_id', flat=True)]
+        except Exception as exc:
+            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+            
+        # Check and enroll in badges
+        for id in new_badge_ids:
+            if id not in cur_badge_ids:
+                try:
+                    new_resource_badge = Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save()
+                except Exception as exc:
+                    raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+                enroll_badges.append(id)
+
+        # Check and unenroll in badges
+        for cur in cur_badges:
+            if str(cur.badge_id) not in new_badge_ids:
+                try:
+                    cur.delete()
+                except Exception as exc:
+                    raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
+                unenroll_badges.append(str(cur.badge_id))
+
+        if enroll_badges:
+            message += '; ' if message else ''
+            message += f'Enrolled badges=({",".join(enroll_badges)})'
+        if unenroll_badges:
+            message += '; ' if message else ''
+            message += f'Unenrolled badges=({",".join(unenroll_badges)})'
+        return MyAPIResponse({'message': message})
 
 
 class Resource_Badge_Status_v1(GenericAPIView):
@@ -186,25 +243,26 @@ class Resource_Badge_Status_v1(GenericAPIView):
     permission_classes = (AllowAny,)
     #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
+    serializer_class = Resource_Workflow_Post_Serializer
 
     @extend_schema(
         parameters=[
             OpenApiParameter(
                 name='badge_workflow_status',
-                description='Filter by status',
+                description='Workflow status',
                 type=str,
                 required=True,
                 location=OpenApiParameter.PATH,
                 enum=BadgeWorkflowStatus,
                 default=BadgeWorkflowStatus.PLANNED
             )
-        ]
+        ],
+        request=Resource_Workflow_Post_Serializer,
     )
     def post(self, request, badge_workflow_status, *args, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
         roadmap_id = kwargs.get('roadmap_id')
         badge_id = kwargs.get('badge_id')
-
         if not info_resourceid or not roadmap_id or not badge_id or not badge_workflow_status:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, Roadmap ID, Badge ID and status are required')
 
@@ -221,23 +279,29 @@ class Resource_Badge_Status_v1(GenericAPIView):
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge not found')
         except Resource_Badge.DoesNotExist:
             resource_badge = Resource_Badge(
-                info_resourceid=resource,
+                info_resourceid=info_resourceid,
                 roadmap=roadmap,
                 badge=badge
             )
             resource_badge.save()
 
+        updated_by = request.data.get('status_updated_by')
+        if not updated_by:
+            updated_by = get_current_username()
+        updated_at = timezone.now()
         workflow = Resource_Badge_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
             badge=badge,
             status=badge_workflow_status,
-            status_updated_by=get_current_username(),
-            status_updated_at=timezone.now()
+            status_updated_by=updated_by,
+            status_updated_at=updated_at,
+            comment=request.data.get('comment')
         )
         workflow.save()
 
-        return MyAPIResponse({'message': 'Badge marked as %s' % badge_workflow_status})
+        return MyAPIResponse({'message': 'Badge marked as %s' % badge_workflow_status,
+                            'status_updated_at': updated_at})
 
 class Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
@@ -246,6 +310,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
     permission_classes = (AllowAny,)
     #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
+    serializer_class = Resource_Workflow_Post_Serializer
 
     @extend_schema(
         parameters=[
@@ -258,14 +323,14 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
                 enum=BadgeTaskWorkflowStatus,
                 default=BadgeTaskWorkflowStatus.COMPLETED
             )
-        ]
+        ],
+        request=Resource_Workflow_Post_Serializer,
     )
     def post(self, request, badge_task_workflow_status, *args, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
         roadmap_id = kwargs.get('roadmap_id')
         badge_id = kwargs.get('badge_id')
         task_id = kwargs.get('task_id')
-
         if not info_resourceid or not roadmap_id or not badge_id or not task_id or not badge_task_workflow_status:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, Roadmap ID, Badge ID, Task ID and status are required')
 
@@ -289,55 +354,77 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         except Badge_task.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge-task relationship not found')
 
-        # Update the status back to "PLANNED"
+        updated_by = request.data.get('status_updated_by')
+        if not updated_by:
+            updated_by = get_current_username()
+        updated_at = timezone.now()
         workflow = Resource_Badge_Task_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
             badge=badge,
             task=task,
             status=badge_task_workflow_status,
-            status_updated_by=get_current_username(),
-            status_updated_at=timezone.now()
+            status_updated_by=updated_by,
+            status_updated_at=updated_at,
+            comment=request.data.get('comment')
         )
         workflow.save()
 
-        return MyAPIResponse({'message': 'Badge task marked as %s' % badge_task_workflow_status})
+        return MyAPIResponse({'message': 'Badge task marked as %s' % badge_task_workflow_status,
+                            'status_updated_at': updated_at})
 
 
-class Resource_Roadmap_Badges_v1(GenericAPIView):
+class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     '''
-    Retrieve details of a specific resource, including roadmaps and their badges.
-    It also includes the list of badge statuses of the badges that are at least planned.
+    Retrieve all or one resource badge(s) and their status
     '''
     permission_classes = (AllowAny,)
     # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
-
-    # serializer_class = Resource_Roadmap_Serializer
+    serializer_class = Resource_Roadmap_Serializer
 
     def get(self, request, format=None, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
         roadmap_id = kwargs.get('roadmap_id')
+        badge_id = kwargs.get('badge_id')
         if not info_resourceid:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
 
         try:
-            item = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+            resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
             roadmap = Roadmap.objects.get(pk=roadmap_id)
             resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
-            resource_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
         except Resource_Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap relationship not found not found')
-        except Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap-badge relationship not found not found')
 
-        badge_status = []
+        if badge_id:
+            try:
+                resource_badge = Resource_Badge.objects.get(info_resourceid=info_resourceid,roadmap_id=roadmap_id, badge_id=badge_id)
+                badge_status = {
+                    'id': resource_badge.id,
+                    'info_resourceid': resource_badge.info_resourceid,
+                    'roadmap_id': resource_badge.roadmap_id,
+                    'badge_id': resource_badge.badge_id,
+                    'badge_access_url': resource_badge.badge_access_url,
+                    'badge_access_url_label': resource_badge.badge_access_url_label,
+                    'status': resource_badge.status,
+                    'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
+                    'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
+                    'comment': resource_badge.workflow.comment if resource_badge.workflow else None
+                }
+            except Resource_Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap-badge relationship not found')
+            return MyAPIResponse({'results': badge_status})
+
+        resource_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+        badges_status = []
         for resource_badge in resource_badges:
-            badge_data = {
+            badge_status = {
+                'id': resource_badge.id,
                 'info_resourceid': resource_badge.info_resourceid,
                 'roadmap_id': resource_badge.roadmap_id,
                 'badge_id': resource_badge.badge_id,
@@ -348,12 +435,10 @@ class Resource_Roadmap_Badges_v1(GenericAPIView):
                 'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
                 'comment': resource_badge.workflow.comment if resource_badge.workflow else None
             }
-            badge_status.append(badge_data)
+            badges_status.append(badge_status)
+        return MyAPIResponse({'results': badges_status})
 
-        return MyAPIResponse({'results': badge_status})
-
-
-class Resource_Roadmap_Badge_v1(GenericAPIView):
+class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     '''
     Retrieve details of a specific resource, including roadmaps and their badges.
     It also includes the list of badge statuses of the badges that are at least planned.
@@ -361,65 +446,17 @@ class Resource_Roadmap_Badge_v1(GenericAPIView):
     permission_classes = (AllowAny,)
     # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
     renderer_classes = (JSONRenderer,)
-
-    # serializer_class = Resource_Roadmap_Serializer
+    serializer_class = Resource_Roadmap_Serializer
 
     def get(self, request, format=None, **kwargs):
         info_resourceid = kwargs.get('info_resourceid')
         roadmap_id = kwargs.get('roadmap_id')
-        badge_id = kwargs.get('integration_badge_id')
-
+        badge_id = kwargs.get('badge_id')
         if not info_resourceid or not roadmap_id or not badge_id:
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, RoadmapID and BadgeID are required')
 
         try:
             resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
-            roadmap = Roadmap.objects.get(pk=roadmap_id)
-            resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid,roadmap_id=roadmap_id)
-            resource_badge = Resource_Badge.objects.get(info_resourceid=info_resourceid,roadmap_id=roadmap_id, badge_id=badge_id)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
-        except Roadmap.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
-        except Resource_Roadmap.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap relationship not found not found')
-        except Resource_Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap-badge relationship not found not found')
-
-        badge_data = {
-            'info_resourceid': resource_badge.info_resourceid,
-            'roadmap_id': resource_badge.roadmap_id,
-            'badge_id': resource_badge.badge_id,
-            'badge_access_url': resource_badge.badge_access_url,
-            'badge_access_url_label': resource_badge.badge_access_url_label,
-            'status': resource_badge.status,
-            'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
-            'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-            'comment': resource_badge.workflow.comment if resource_badge.workflow else None
-        }
-        return MyAPIResponse({'results': badge_data})
-
-
-class Resource_Roadmap_Badge_Tasks_v1(GenericAPIView):
-    '''
-    Retrieve details of a specific resource, including roadmaps and their badges.
-    It also includes the list of badge statuses of the badges that are at least planned.
-    '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
-    renderer_classes = (JSONRenderer,)
-
-    # serializer_class = Resource_Roadmap_Serializer
-
-    def get(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get('info_resourceid')
-        roadmap_id = kwargs.get('roadmap_id')
-        badge_id = kwargs.get('integration_badge_id')
-        if not info_resourceid or not roadmap_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID, RoadmapID and BadgeID are required')
-
-        try:
-            item = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
             roadmap = Roadmap.objects.get(pk=roadmap_id)
             badge = Badge.objects.get(pk=badge_id)
         except CiderInfrastructure.DoesNotExist:
@@ -429,7 +466,7 @@ class Resource_Roadmap_Badge_Tasks_v1(GenericAPIView):
         except Badge.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found not found')
 
-        tast_status = []
+        task_status = []
         badge_tasks = Badge_Task.objects.filter(badge_id=badge_id)
         for badge_task in badge_tasks:
             task_workflow = Resource_Badge_Task_Workflow.objects.filter(
@@ -439,7 +476,7 @@ class Resource_Roadmap_Badge_Tasks_v1(GenericAPIView):
                 task_id=badge_task.task_id
             ).order_by('-status_updated_at').first()
             if task_workflow is not None:
-                tast_status.append({
+                task_status.append({
                     "task_id": badge_task.task.task_id,
                     "task_name": badge_task.task.name,
                     "status": task_workflow.status,
@@ -447,14 +484,14 @@ class Resource_Roadmap_Badge_Tasks_v1(GenericAPIView):
                     "status_updated_at": task_workflow.status_updated_at
                 })
             else:
-                tast_status.append({
+                task_status.append({
                     "task_id": badge_task.task_id.pk,
                     "task_name": badge_task.task_id.name,
                     "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
                     "status_updated_by": None,
                     "status_updated_at": None
                 })
-        return MyAPIResponse({'results': tast_status})
+        return MyAPIResponse({'results': task_status})
 
 
 class DatabaseFile_v1(GenericAPIView):
