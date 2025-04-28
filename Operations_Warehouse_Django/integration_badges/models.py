@@ -3,18 +3,19 @@ from cider.models import *
 
 from django.core.files.storage import Storage
 from django.core.files.base import ContentFile
+from django.utils import timezone
 
 import uuid
 
 
 def get_current_username():
     # TODO integrate the cilogon credentials
-    return "admin"
+    return 'admin'
 
 class BadgeWorkflowStatus(models.TextChoices):
     NOT_PLANNED = "not-planned", "Not Planned"
     PLANNED = "planned", "Planned"
-    TASK_COMPLETED = "task-completed", "Task Completed"
+    TASKS_COMPLETED = "tasks-completed", "Tasks Completed"
     VERIFICATION_FAILED = "verification-failed", "Verification Failed"
     VERIFIED = "verified", "Verified"
     DEPRECATED = "deprecated", "Depredated"
@@ -31,7 +32,7 @@ class DatabaseFile(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "%s (%d)" % (self.file_name, self.file_id)
+        return f'{self.file_name} ({self.file_id})'
 
 class DatabaseFileStorage(Storage):
     def _save(self, file_id, content):
@@ -61,11 +62,11 @@ class DatabaseFileStorage(Storage):
     def get_available_name(self, file_name, max_length=None):
         # Handle name availability if needed
         file = DatabaseFile.objects.create(file_name=file_name)
-        return "%s" % file.file_id
+        return f'{file.file_id}'
 
     def url(self, file_id):
         # Handle URL generation if needed, return None
-        return "/wh2/integration_badges/v1/files/%s" % file_id
+        return f'/wh2/integration_badges/v1/files/{file_id}'
 
 
 class Roadmap(models.Model):
@@ -81,7 +82,7 @@ class Roadmap(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return "%s (%d)" % (self.name, self.roadmap_id)
+        return f'{self.name} ({self.roadmap_id})'
 
 
 class Badge(models.Model):
@@ -99,7 +100,7 @@ class Badge(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return "%s (%d)" % (self.name, self.badge_id)
+        return f'{self.name} ({self.badge_id})'
 
 
 class Task(models.Model):
@@ -114,7 +115,7 @@ class Task(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return "%s (%d)" % (self.name, self.task_id)
+        return f'{self.name} ({self.task_id})'
 
 
 class Badge_Prerequisite_Badge(models.Model):
@@ -142,7 +143,7 @@ class Roadmap_Badge(models.Model):
 
 class Badge_Task(models.Model):
     id = models.AutoField(primary_key=True)
-    badge = models.ForeignKey(Badge, related_name="badge_tasks", on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, related_name='badge_tasks', on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
     required = models.BooleanField(null=False, default=False)
@@ -159,6 +160,7 @@ class Resource_Roadmap(models.Model):
     class Meta:
         unique_together = ('info_resourceid', 'roadmap',)
 
+# NOTE: resources can unenroll in a roadmap and we'll preserve relaed badge information
 class Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
@@ -201,13 +203,13 @@ class Resource_Badge(models.Model):
 class Resource_Badge_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
-    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name="badge_workflow_resource_set",
-                                   related_query_name="badge_workflow_resource_ref")
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name='badge_workflow_resource_set',
+                                   related_query_name='badge_workflow_resource_ref')
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
 
     status = models.CharField(null=False, max_length=20, choices=BadgeWorkflowStatus.choices)
     status_updated_by = models.CharField(null=False, max_length=50)
-    status_updated_at = models.DateTimeField(null=False, auto_now_add=True)
+    status_updated_at = models.DateTimeField(null=False, default=timezone.now)
     comment = models.TextField(null=True, blank=True)
 
 class Resource_Badge_Task_Workflow(models.Model):
@@ -219,5 +221,5 @@ class Resource_Badge_Task_Workflow(models.Model):
 
     status = models.CharField(null=False, max_length=20, choices=BadgeTaskWorkflowStatus.choices)
     status_updated_by = models.CharField(null=False, max_length=50)
-    status_updated_at = models.DateTimeField(null=False, auto_now_add=True)
+    status_updated_at = models.DateTimeField(null=False, default=timezone.now)
     comment = models.TextField(null=True, blank=True)
