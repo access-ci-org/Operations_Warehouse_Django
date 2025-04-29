@@ -1,3 +1,4 @@
+import traceback
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -394,6 +395,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
             resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
             roadmap = Roadmap.objects.get(pk=roadmap_id)
             resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Roadmap.DoesNotExist:
@@ -420,7 +422,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap-badge relationship not found')
             return MyAPIResponse({'results': badge_status})
 
-        resource_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+        roadmap_badges = Roadmap_Badge.objects.filter(roadmap_id=roadmap_id)
+        roadmap_badge_ids = [roadmap_badge.badge_id for roadmap_badge in roadmap_badges]
+        resource_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id__in=roadmap_badge_ids)
         badges_status = []
         for resource_badge in resource_badges:
             badge_status = {

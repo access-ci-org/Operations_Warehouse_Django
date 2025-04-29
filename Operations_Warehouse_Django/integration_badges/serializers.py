@@ -320,10 +320,10 @@ class Resource_Enrollments_Serializer(serializers.Serializer):
     '''
     Serialize resource roadmap enrollments body
     '''
-    resource_ids = serializers.ListField()
+    badge_ids = serializers.ListField()
 
     class Meta:
-        fields = ('resource_ids')
+        fields = ('badge_ids')
 
 class Resource_Enrollments_Response_Serializer(serializers.Serializer):
     '''
