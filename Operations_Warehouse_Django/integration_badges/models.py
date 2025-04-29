@@ -12,6 +12,7 @@ def get_current_username():
     # TODO integrate the cilogon credentials
     return 'admin'
 
+
 class BadgeWorkflowStatus(models.TextChoices):
     NOT_PLANNED = "not-planned", "Not Planned"
     PLANNED = "planned", "Planned"
@@ -20,9 +21,11 @@ class BadgeWorkflowStatus(models.TextChoices):
     VERIFIED = "verified", "Verified"
     DEPRECATED = "deprecated", "Depredated"
 
+
 class BadgeTaskWorkflowStatus(models.TextChoices):
     COMPLETED = "completed", "Completed"
     NOT_COMPLETED = "not-completed", "Not Completed"
+
 
 class DatabaseFile(models.Model):
     file_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -33,6 +36,7 @@ class DatabaseFile(models.Model):
 
     def __str__(self):
         return f'{self.file_name} ({self.file_id})'
+
 
 class DatabaseFileStorage(Storage):
     def _save(self, file_id, content):
@@ -133,7 +137,7 @@ class Roadmap_Badge(models.Model):
     roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name='roadmap_badge_set',
                                 related_query_name='badge_ref')
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='roadmap_set',
-                                related_query_name='roadmap')
+                              related_query_name='roadmap')
     sequence_no = models.IntegerField()
     required = models.BooleanField(null=False, default=False)
 
@@ -160,6 +164,7 @@ class Resource_Roadmap(models.Model):
     class Meta:
         unique_together = ('info_resourceid', 'roadmap',)
 
+
 # NOTE: resources can unenroll in a roadmap and we'll preserve relaed badge information
 class Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
@@ -171,6 +176,19 @@ class Resource_Badge(models.Model):
 
     class Meta:
         unique_together = ('info_resourceid', 'roadmap', 'badge',)
+
+    def save(self, *args, **kwargs):
+        # super(Resource_Badge, self).__init__(*args, **kwargs)
+        super().save(*args, **kwargs)
+
+        if self.workflow is None:
+            Resource_Badge_Workflow(
+                info_resourceid=self.info_resourceid,
+                roadmap_id=self.roadmap_id,
+                badge_id=self.badge_id,
+                status=BadgeWorkflowStatus.PLANNED,
+                status_updated_by=get_current_username()
+            ).save()
 
     @property
     def badge_access_url_or_default(self):
@@ -200,17 +218,19 @@ class Resource_Badge(models.Model):
             return BadgeWorkflowStatus.NOT_PLANNED
         return self.workflow.status
 
+
 class Resource_Badge_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
     roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE, related_name='badge_workflow_resource_set',
-                                   related_query_name='badge_workflow_resource_ref')
+                                related_query_name='badge_workflow_resource_ref')
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
 
     status = models.CharField(null=False, max_length=20, choices=BadgeWorkflowStatus.choices)
     status_updated_by = models.CharField(null=False, max_length=50)
     status_updated_at = models.DateTimeField(null=False, default=timezone.now)
     comment = models.TextField(null=True, blank=True)
+
 
 class Resource_Badge_Task_Workflow(models.Model):
     workflow_id = models.AutoField(primary_key=True)
