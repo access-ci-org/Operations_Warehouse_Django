@@ -101,6 +101,12 @@ class Badge(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.badge_id})'
+        
+    def researcher_summary_max60(self):
+        return self.researcher_summary if len(self.researcher_summary)<=40 else f'{self.researcher_summary[:38]}..'
+
+    def resource_provider_summary_max60(self):
+        return self.resource_provider_summary if len(self.resource_provider_summary)<=40 else f'{self.resource_provider_summary[:38]}..'
 
 
 class Task(models.Model):
