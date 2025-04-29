@@ -288,6 +288,7 @@ if SETTINGS_MODE == 'SERVER':
         'DESCRIPTION': 'ACCESS Operations (CONECT) Information Sharing Platform - Service Facing API',
         'VERSION': '1.0.0',
         'PREPROCESSING_HOOKS': ['warehouse_tools.hooks.remove_internal_apis'],
+        'DEFAULTMODELEXPANDDEPTH': 4,
     }
     
     ROOT_URLCONF = 'Operations_Warehouse_Django.urls'

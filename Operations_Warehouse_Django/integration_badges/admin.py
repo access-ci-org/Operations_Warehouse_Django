@@ -18,7 +18,7 @@ class Roadmap_Admin(admin.ModelAdmin):
 admin.site.register(Roadmap, Roadmap_Admin)
 
 class Badge_Admin(admin.ModelAdmin):
-    list_display = ('name', 'researcher_summary', 'badge_id')
+    list_display = ('name', 'researcher_summary_max60', 'badge_id')
     list_display_links = ['name']
     ordering = ['name']
     search_fields = ['name', 'researcher_summary']
