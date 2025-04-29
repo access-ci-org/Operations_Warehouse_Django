@@ -214,7 +214,7 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
         for id in new_badge_ids:
             if id not in cur_badge_ids:
                 try:
-                    new_resource_badge = Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save()
+                    Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save()
                 except Exception as exc:
                     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='{}: {}'.format(type(exc).__name__, exc))
                 enroll_badges.append(id)
@@ -289,14 +289,13 @@ class Resource_Badge_Status_v1(GenericAPIView):
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
             updated_by = get_current_username()
-        updated_at = timezone.now()
+
         workflow = Resource_Badge_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
             badge=badge,
             status=badge_workflow_status,
             status_updated_by=updated_by,
-            status_updated_at=updated_at,
             comment=request.data.get('comment')
         )
         workflow.save()
@@ -481,7 +480,7 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
             ).order_by('-status_updated_at').first()
             if task_workflow is not None:
                 task_status.append({
-                    "task_id": badge_task.task.task_id,
+                    "task_id": badge_task.task_id,
                     "task_name": badge_task.task.name,
                     "status": task_workflow.status,
                     "status_updated_by": task_workflow.status_updated_by,
@@ -489,8 +488,8 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
                 })
             else:
                 task_status.append({
-                    "task_id": badge_task.task_id.pk,
-                    "task_name": badge_task.task_id.name,
+                    "task_id": badge_task.task_id,
+                    "task_name": badge_task.task.name,
                     "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
                     "status_updated_by": None,
                     "status_updated_at": None
