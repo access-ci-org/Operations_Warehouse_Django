@@ -19,6 +19,9 @@ v3.57.rc2 2025-04-27 JP
 v3.57.rc1 2025-04-25 JP
   - Latest API changes from Dinuka pull #16 as of 2025-04-25 converted to the production data model
 
+v3.56.2 2025-05-06 JP
+  - Move the two dal* apps to SERVER mode INSTALLED_APP because they aren't needed in routers/non-API applications
+
 v3.56.1 2025-04-24 JP
   - Fix the missing small integration_badges model change in 0001_initial.py
 

@@ -49,8 +49,6 @@ ALLOWED_HOSTS = CONF['ALLOWED_HOSTS']
 # Application definition
 
 INSTALLED_APPS = [
-    'dal',
-    'dal_select2',
     'django_opensearch_dsl',
     'allocations',
     'cider',
@@ -225,6 +223,8 @@ if SETTINGS_MODE == 'SERVER':
         'allauth.socialaccount.providers.cilogon',
         'django_bootstrap5',
         'cilogon_tokenauth',
+        'dal',
+        'dal_select2',
     )
     
     SITE_ID = 1
