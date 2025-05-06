@@ -1,3 +1,6 @@
+v3.56.2 2025-04-06 JP
+  - Move the two dal* apps to SERVER mode INSTALLED_APP because they aren't needed in routers/non-API applications
+
 v3.56.1 2025-04-24 JP
   - Fix the missing small integration_badges model change in 0001_initial.py
 
