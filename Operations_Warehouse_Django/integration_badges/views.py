@@ -80,6 +80,68 @@ class Badge_Full_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
+class Roadmap_Review_v1(GenericAPIView):
+    '''
+    Integration Roadmap Review Details
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
+    serializer_class = Roadmap_Review_Serializer
+
+    def get(self, request, format=None, **kwargs):
+        roadmaps_nav = Roadmap_Review_Nav_Serializer(Roadmap.objects.all(), context={'request': request}, many=True).data
+        roadmap_id = self.kwargs.get('roadmap_id', roadmaps_nav[0]['roadmap_id'])
+        roadmap = Roadmap.objects.get(pk=roadmap_id)
+        serializer = self.serializer_class(roadmap, context={'request': request})
+        results = { 'roadmaps_nav': roadmaps_nav,
+                    'roadmap': serializer.data }
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse({'results': results}, template_name='integration_badges/roadmap_rp_information.html')
+        else:
+            return MyAPIResponse({'results': results})
+
+        
+class Badge_Review_v1(GenericAPIView):
+    '''
+    Badge Review Details
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
+    serializer_class = Badge_Review_Serializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='mode',
+                description='View mode',
+                type=str,
+                required=False,
+                location=OpenApiParameter.PATH,
+                enum=['badges', 'badgeresources'],
+#                , 'resourcebadges'],
+                default='badges'
+            )
+        ]
+    )
+    def get(self, request, format=None, **kwargs):
+        mode = request.query_params.get('mode', 'badges')
+        roadmap_ids = set( i.roadmap_id for i in Roadmap.objects.filter(status='Production') )
+        roadmap_badge_ids = set( i.badge_id for i in Roadmap_Badge.objects.filter(roadmap_id__in=roadmap_ids) )
+        badges = Badge.objects.filter(badge_id__in=roadmap_badge_ids).order_by('name')
+        if mode in ('badgeresources'):
+            serializer = Badge_Review_Extended_Serializer(badges, context={'request': request}, many=True)
+        else:
+            serializer = self.serializer_class(badges, context={'request': request}, many=True)
+        results = { 'mode': mode, 'badges': serializer.data }
+        if mode in ('badgeresources'):
+            results['roadmap_ids'] = roadmap_ids
+
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse({'results': results}, template_name='integration_badges/badge_user_information.html')
+        else:
+            return MyAPIResponse({'results': results})
+
+
 class Badge_Task_Full_v1(GenericAPIView):
     '''
     Retrieve an Integration Task by ID
