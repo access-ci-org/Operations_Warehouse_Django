@@ -193,7 +193,7 @@ class Resource_Full_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
@@ -220,7 +220,7 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
@@ -319,7 +319,7 @@ class Resource_Badge_Status_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
@@ -391,7 +391,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
@@ -467,7 +467,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
@@ -543,7 +543,7 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     '''
     if PERMISSIONS_OFF_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
-    else
+    else:
         permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
