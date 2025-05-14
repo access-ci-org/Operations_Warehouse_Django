@@ -30,7 +30,7 @@ badging_filter = Q(cider_type__in=badging_types) & Q(latest_status__in=badging_s
 
 if hasattr(settings, 'DISABLE_PERMISSIONS_FOR_DEBUGGING'):
     DISABLE_PERMISSIONS_FOR_DEBUGGING = settings.DISABLE_PERMISSIONS_FOR_DEBUGGING
-else
+else:
     DISABLE_PERMISSIONS_FOR_DEBUGGING = False
 
 # _Detail_ includes all fields from a Model
