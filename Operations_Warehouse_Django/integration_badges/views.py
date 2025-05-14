@@ -502,7 +502,7 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
                 task_status.append({
                     "task_id": badge_task.task_id,
                     "task_name": badge_task.task.name,
-                    "status": BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                    "status": None,
                     "status_updated_by": None,
                     "status_updated_at": None
                 })
