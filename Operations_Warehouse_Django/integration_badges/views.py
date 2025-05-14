@@ -357,7 +357,18 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
             updated_by = get_current_username()
-        updated_at = timezone.now()
+
+        if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
+            workflow = Resource_Badge_Workflow(
+                info_resourceid=info_resourceid,
+                roadmap=roadmap,
+                badge=badge,
+                status=BadgeWorkflowStatus.PLANNED,
+                status_updated_by=updated_by,
+                comment=f"Reopened by the task (taskId={task_id}) '{task.name}'"
+            )
+            workflow.save()
+
         workflow = Resource_Badge_Task_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
@@ -365,13 +376,14 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             task=task,
             status=badge_task_workflow_status,
             status_updated_by=updated_by,
-            status_updated_at=updated_at,
             comment=request.data.get('comment')
         )
         workflow.save()
 
-        return MyAPIResponse({'message': 'Badge task marked as %s' % badge_task_workflow_status,
-                            'status_updated_at': updated_at})
+        return MyAPIResponse({
+            'message': 'Badge task marked as %s' % badge_task_workflow_status,
+            'status_updated_at': workflow.status_updated_at
+        })
 
 
 class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
