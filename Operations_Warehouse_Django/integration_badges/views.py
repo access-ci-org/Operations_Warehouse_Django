@@ -36,7 +36,7 @@ if hasattr(settings, 'DISABLE_PERMISSIONS_FOR_DEBUGGING'):
     #DISABLE_PERMISSIONS_FOR_DEBUGGING = settings.DISABLE_PERMISSIONS_FOR_DEBUGGING
 else:
     DISABLE_PERMISSIONS_FOR_DEBUGGING = False
-print(f"settings has this value {settings.DISABLE_PERMISSIONS_FOR_DEBUGGING}")
+
 # _Detail_ includes all fields from a Model
 # _Full_ includes fields from a model and dependent Models (i.e. roadmap badges, badge tasks, ..)
 # _Min_ serializers include minimum set of fields
