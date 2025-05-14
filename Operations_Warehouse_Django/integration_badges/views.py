@@ -301,7 +301,7 @@ class Resource_Badge_Status_v1(GenericAPIView):
         workflow.save()
 
         return MyAPIResponse({'message': 'Badge marked as %s' % badge_workflow_status,
-                            'status_updated_at': updated_at})
+                            'status_updated_at': workflow.status_updated_at})
 
 class Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
