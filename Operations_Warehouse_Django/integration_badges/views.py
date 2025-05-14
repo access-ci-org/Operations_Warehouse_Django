@@ -432,6 +432,18 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
             updated_by = get_current_username()
+
+        if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
+            workflow = Resource_Badge_Workflow(
+                info_resourceid=info_resourceid,
+                roadmap=roadmap,
+                badge=badge,
+                status=BadgeWorkflowStatus.PLANNED,
+                status_updated_by=updated_by,
+                comment=f"Reopened by the task (taskId={task_id}) '{task.name}'"
+            )
+            workflow.save()
+
         workflow = Resource_Badge_Task_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
