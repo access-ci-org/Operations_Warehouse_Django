@@ -15,6 +15,7 @@ class CiderInfrastructure_ACCESSContacts_Serializer( serializers.ModelSerializer
         fields = ( 'protected_attributes', )
 
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
+    short_name = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -25,11 +26,16 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
-            'resource_descriptive_name', 'resource_description',
+            'short_name', 'resource_descriptive_name', 'resource_description',
             'latest_status', 'latest_status_begin', 'latest_status_end', 'fixed_status',
             'organization_name', 'organization_url', 'organization_logo_url',
             'cider_view_url', 'cider_data_url', 'updated_at')
         
+    def get_short_name(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -77,6 +83,7 @@ class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):
         return fixed_status
 
 class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
+    short_name = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -93,13 +100,19 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
-            'resource_descriptive_name', 'resource_description', 'recommended_use', 'access_description',
+            'short_name', 'resource_descriptive_name', 'resource_description',
+            'recommended_use', 'access_description',
             'latest_status', 'latest_status_begin', 'latest_status_end',
             'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
             'features', 'features_list', 'user_guide_url',
             'cider_view_url', 'cider_data_url', 'updated_at',
             'primary_service_url')
         
+    def get_short_name(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -163,6 +176,7 @@ class CiderInfrastructure_Summary_v2_Serializer(serializers.ModelSerializer):
             return None
 
 class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSerializer):
+    short_name = serializers.SerializerMethodField()
     cider_view_url = serializers.SerializerMethodField()
     cider_data_url = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -183,13 +197,19 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
     class Meta:
         model = CiderInfrastructure
         fields = ('cider_resource_id', 'cider_type', 'info_resourceid', 'project_affiliation',
-            'resource_descriptive_name', 'resource_description', 'recommended_use', 'access_description',
+            'short_name', 'resource_descriptive_name', 'resource_description',
+            'recommended_use', 'access_description',
             'latest_status', 'latest_status_begin', 'latest_status_end',
             'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
             'features', 'features_list', 'user_guide_url',
             'cider_view_url', 'cider_data_url', 'updated_at',
             'primary_service_url', 'shortname', 'long_description', 'allocated_grant_number', 'requested_usernames')
         
+    def get_short_name(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
     def get_organization_name(self, object) -> str:
         try:
             return object.other_attributes['organizations'][0]['organization_name']
@@ -251,6 +271,7 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
             return str(object.other_attributes['url_1']) or None
         except:
             return None
+# Retire someday as replaced by get_short_name on 2025-04-29
     def get_shortname(self, object) -> str:
         try:
             return str(object.other_attributes['short_name']) or None

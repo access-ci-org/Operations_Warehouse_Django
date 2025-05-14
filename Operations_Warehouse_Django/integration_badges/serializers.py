@@ -21,6 +21,28 @@ class DatabaseFile_Serializer(serializers.ModelSerializer):
         fields = ('file_id', 'file_name', 'file_data', 'uploaded_at')
 
 
+class Task_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Task object.
+    '''
+
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+
+class Badge_Task_Full_Serializer(serializers.ModelSerializer):
+    '''
+    Return all fields of an Badge_Task object.
+    '''
+
+    task = Task_Serializer()
+
+    class Meta:
+        model = Badge_Task
+        fields = ('badge_id', 'sequence_no', 'task', 'required')
+
+
 class Badge_Min_Serializer(serializers.ModelSerializer):
     '''
     Returns Badge badge_id and name only
@@ -73,18 +95,113 @@ class Badge_Full_Serializer(serializers.ModelSerializer):
 
 class Roadmap_Badge_Serializer(serializers.ModelSerializer):
     '''
-    Returns Roadmap relagted Badge sequence_no and required, plus basic Badge_Min_Serializer about the badge
+    Returns Roadmap related Badge sequence_no and required, plus basic Badge_Min_Serializer about the badge
     '''
+
+    badge = Badge_Min_Serializer(many=False)
 
     class Meta:
         model = Roadmap_Badge
-        fields = ('sequence_no', 'required')
+        fields = ('sequence_no', 'required', 'badge')
+
+
+class Roadmap_Review_Badge_Extended_Serializer(serializers.ModelSerializer):
+    '''
+    Return all Badge fields and pre-requisites
+    '''
+
+    prerequisite_list = serializers.SerializerMethodField()
+    tasks = Badge_Task_Full_Serializer(source='badge_tasks', many=True)
+
+    class Meta:
+        model = Badge
+        fields = '__all__'
+        extra_fields = ['prerequisite_list', 'tasks']
+
+    def get_prerequisite_list(self, obj) -> str:
+        try:
+            pre_reqs = [o.prerequisite_badge for o in Badge_Prerequisite_Badge.objects.filter(badge_id=obj.badge_id)]
+            pre_req_names = ', '.join([o.name for o in pre_reqs])
+            return pre_req_names
+        except:
+            return None
 
     def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        rep['badge'] = Badge_Min_Serializer(instance.badge).data
-        return rep
+        representation = super().to_representation(instance)
+        prerequisites = representation.get('prerequisites', [])
+        # sort the prerequisites by sequence_no
+        sorted_prerequisites = sorted(prerequisites, key=lambda x: x['sequence_no'])
+        representation['prerequisites'] = sorted_prerequisites
+        return representation
 
+
+class Roadmap_Review_Badge_Serializer(serializers.ModelSerializer):
+    '''
+    Returns Roadmap related Badge sequence_no and required, plus basic Badge_Min_Serializer about the badge
+    '''
+
+    badge = Roadmap_Review_Badge_Extended_Serializer(many=False)
+
+    class Meta:
+        model = Roadmap_Badge
+        fields = '__all__'
+
+
+class Roadmap_Review_Serializer(serializers.ModelSerializer):
+    '''
+    Return Roadmap information for content review
+    '''
+    badges = Roadmap_Review_Badge_Serializer(source='roadmap_badge_set', many=True)
+
+    class Meta:
+        model = Roadmap
+        fields = '__all__'
+
+
+class Badge_Review_Resource_Serializer(serializers.ModelSerializer):
+    '''
+    Return Badge resource information for content review
+    '''
+    class Meta:
+        model = Resource_Badge
+        fields = '__all__'
+#        fields = ('info_resourceid', 'badge', 'badge_access_url', 'badge_access_url_label')
+
+class Badge_Review_Serializer(serializers.ModelSerializer):
+    '''
+    Return Badge information for content review
+    '''
+    class Meta:
+        model = Badge
+        fields = '__all__'
+
+class Badge_Review_Extended_Serializer(serializers.ModelSerializer):
+    '''
+    Return Badge information for content review
+    '''
+    resources = Badge_Review_Resource_Serializer(source='badge_resource_set', many=True)
+
+    class Meta:
+        model = Badge
+        fields = '__all__'
+
+
+class Roadmap_Review_Nav_Serializer(serializers.ModelSerializer):
+    '''
+    Return Roadmap information for content review navigation
+    '''
+    roadmap_detail_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Roadmap
+        fields = ('roadmap_id', 'name', 'roadmap_detail_url')
+        
+    def get_roadmap_detail_url(self, object) -> str:
+        http_request = self.context.get('request')
+        if http_request:
+            return http_request.build_absolute_uri(uri_to_iri(reverse('roadmap-id-review-v1', args=[object.roadmap_id])))
+        else:
+            return ''
 
 class Roadmap_Full_Serializer(serializers.ModelSerializer):
     '''
@@ -168,6 +285,7 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
     Integrating resource CiderInfrastructure, Roadmaps, and Badge information
     '''
 
+    short_name = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
@@ -177,9 +295,15 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
     class Meta:
         model = CiderInfrastructure
         fields = ('info_resourceid', 'cider_resource_id', 'cider_type', 'resource_description',
-                    'latest_status', 'resource_descriptive_name',
+                    'latest_status', 'short_name', 'resource_descriptive_name',
                     'organization_name', 'organization_url', 'organization_logo_url',
                     'user_guide_url', 'roadmaps',)
+    
+    def get_short_name(self, object) -> str:
+        try:
+            return str(object.other_attributes['short_name']) or None
+        except:
+            return None
 
     def get_organization_name(self, obj) -> str:
         try:
@@ -212,6 +336,7 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
         except:
             return None
         return serializer.data
+
 #    def get_badge_status(self, obj) -> Dict[str, Any]:
 #        try:
 #            my_badges = Resource_Badge.objects.filter(info_resourceid__exact=obj.info_resourceid)
@@ -233,34 +358,6 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
 #            return badge_status
 #        except Exception as e:
 #            return None
-
-
-class Task_Serializer(serializers.ModelSerializer):
-    '''
-    Return all fields of an Task object.
-    '''
-
-    class Meta:
-        model = Task
-        fields = '__all__'
-
-
-class Badge_Task_Full_Serializer(serializers.ModelSerializer):
-    '''
-    Return all fields of an Badge_Task object.
-    '''
-
-    task = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Badge_Task
-        fields = ('badge_id', 'sequence_no', 'task')
-
-    def get_task(self, obj) -> str:
-        try:
-            return Task_Serializer(obj.task).data
-        except:
-            return None
 
 
 class Resource_Badge_Plan_Serializer(serializers.ModelSerializer):

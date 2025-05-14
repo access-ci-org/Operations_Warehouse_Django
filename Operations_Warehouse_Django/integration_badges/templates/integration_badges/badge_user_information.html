@@ -1,0 +1,106 @@
+{% extends "base_detail.html" %}
+
+{% block title %}Badges for Users{% endblock %}
+
+{% block content %}
+<link href="https://dashboard.operations.access-ci.org/static/integration-badges-ui-react/assets/index-Csp8KVRA.css" rel="stylesheet"/>
+<div class="container-fluid py-2">
+    
+    <h1 align="left">Badge Information for Users (researchers and educators)</h1>
+    <ol>
+        <li>Users will view badge information in the <a href="https://allocations.access-ci.org/resources" target="_blank">ACCESS Resource Catalog</a>.</li>
+        <li>This page helps <b>badge owners</b> review and improve badge information visible to users.</li>
+        <li>Badge access buttons in <a href="#" class="btn btn-sm btn-secondary">Grey</a> indicates a default badge link, while <a href="#" class="btn btn-sm btn-primary">Yellow</a> indicates resource specific link.</li>
+    </ol>
+    
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            {% if results.mode == "badges" %}
+            <a class="nav-link active" aria-current="page" href="#"><h3>Badge Information</h3></a>
+            {% else %}
+            <a class="nav-link" href="?mode=badges"><h3>Badge Information</h3></a>
+            {% endif %}
+        </li>
+        <li class="nav-item">
+            {% if results.mode == "badgeresources" %}
+            <a class="nav-link active" aria-current="page" href="#"><h3>Badge Resources</h3></a>
+            {% else %}
+            <a class="nav-link" href="?mode=badgeresources"><h3>Badge Resources</h3></a>
+            {% endif %}
+        </li>
+<!--        <li class="nav-item">-->
+<!--            {% if results.mode == "resourcebadges" %}-->
+<!--            <a class="nav-link active" aria-current="page" href="#"><h3>Resource Badges</h3></a>-->
+<!--            {% else %}-->
+<!--            <a class="nav-link" href="?mode=resourcebadges"><h3>Resource Badges</h3></a>-->
+<!--            {% endif %}-->
+<!--        </li>-->
+    </ul>
+    
+    <!-- ------------------------------------------------------------------------- -->
+    {% if results.mode == "badges" %}
+    <div class="container">
+        <div class="w-100 pt-2 pb-5 row row-cols-lg-3 row-cols-md-2 row-cols-1 collapse show">
+            {% for badge in results.badges %}
+            <div class="col p-3">
+                <div class="w-100 badge-card p-2 text-center">
+                    <div class="w-100 p-1 badge-card-header">
+                        <div class="w-100 badge-card-header-thumbnail">
+                            <div class="w-100 background-image-center-no-repeat badge-icon-small" style="background-image: url(&quot;{{ badge.graphic }}&quot;);"></div>
+                        </div>
+                        <h3 class="w-100">{{ badge.name }}</h3>
+                    </div>
+                    <div class="w-100 badge-card-body">
+                        <p class="w-100">{{ badge.researcher_summary }}</p>
+                    </div>
+                    <div>
+                        <a class="btn btn-sm btn-secondary" href="{{ badge.default_badge_access_url }}" data-discover="true" target="_blank">{{ badge.default_badge_access_url_label }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ------------------------------------------------------------------------- -->
+    {% if results.mode == "badgeresources" %}
+    <table style="margin-right:20px; margin-bottom:5px" border=0 cellspacing=0 cellpadding=3>
+    {% for badge in results.badges %}
+        <th colspan="2"><hr style="border-top: dotted 1px;"></th>
+        <tr>
+            <td valign="top" width="120px"><img width=100px src="{{ badge.graphic }}"></td>
+            <td><table>
+                <tr><h2>{{ badge.name }}</h2></tr>
+                <tr><p>{{ badge.researcher_summary }}</p></tr>
+                <tr><div class="accordion" id="accordion-{{ badge.badge_id }}"><div class="accordion-item">
+                    <p class="accordion-header" id="heading-{{ badge.badge_id }}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ badge.badge_id }}" aria-expanded="true" aria-controls="collapse-{{ badge.badge_id }}">
+                        <h3 class="w-100 text-left">Available on</h3>
+                        </button
+                    </p>
+                    <div id="collapse-{{ badge.badge_id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ badge.badge_id }}" data-bs-parent="#accordion-{{ badge.badge_id }}">
+                        <div class="accordion-body">
+                            <div class="w-100 pt-0 pb-0 row row-cols-lg-5 row-cols-md-3 row-cols-1 collapse show">
+                            {% for resource in badge.resources|dictsort:"info_resourceid" %}
+                                <div class="col p-0"><div class="card"><div class="card-body">
+                                    <div class="card-title">{{ resource.info_resourceid | truncatechars:22 }}</div>
+                                    {% if resource.badge_access_url %}
+                                    <a href="{{ resource.badge_access_url }}" class="btn btn-primary">{{ resource.badge_access_url_label }}</a>
+                                    {% else %}
+                                    <a href="{{ badge.default_badge_access_url }}" class="btn btn-secondary">{{ badge.default_badge_access_url_label }}</a>
+                                    {% endif %}
+                                </div></div></div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div></div></tr>
+            </table></td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -105,6 +105,12 @@ class Badge(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.badge_id})'
+        
+    def researcher_summary_max60(self):
+        return self.researcher_summary if len(self.researcher_summary)<=40 else f'{self.researcher_summary[:38]}..'
+
+    def resource_provider_summary_max60(self):
+        return self.resource_provider_summary if len(self.resource_provider_summary)<=40 else f'{self.resource_provider_summary[:38]}..'
 
 
 class Task(models.Model):
@@ -170,7 +176,7 @@ class Resource_Badge(models.Model):
     id = models.AutoField(primary_key=True)
     info_resourceid = models.CharField(max_length=40, null=False, blank=False)
     roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
-    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='badge_resource_set')
     badge_access_url = models.URLField(null=True, blank=True)
     badge_access_url_label = models.CharField(null=True, blank=True, max_length=50)
 

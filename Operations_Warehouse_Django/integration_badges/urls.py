@@ -14,6 +14,18 @@ urlpatterns = [
      path(r'v1/badges/',
           Badge_Full_v1.as_view(), name='badges-full-v1'),
 
+     path(r'v1/roadmap_review/',
+          Roadmap_Review_v1.as_view(), name='roadmaps-review-v1'),
+
+     path(r'v1/roadmap_review/<str:roadmap_id>/',
+          Roadmap_Review_v1.as_view(), name='roadmap-id-review-v1'),
+
+     path(r'v1/badge_review/',
+          Badge_Review_v1.as_view(), name='badges-review-v1'),
+
+     path(r'v1/badge_review/<str:badge_id>/',
+          Badge_Review_v1.as_view(), name='badge-id-review-v1'),
+
      path(r'v1/badge/<str:badge_id>/',
           Badge_Full_v1.as_view(), name='badge-id-v1'),
 
