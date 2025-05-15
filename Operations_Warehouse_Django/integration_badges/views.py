@@ -209,7 +209,9 @@ class Resource_Full_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Full_Serializer
@@ -495,7 +497,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
@@ -571,7 +575,9 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
