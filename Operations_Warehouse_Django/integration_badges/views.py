@@ -7,6 +7,7 @@ from rest_framework.generics import GenericAPIView
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
+from django.conf import settings
 from django.db.models import Q
 
 from integration_badges.models import *
@@ -27,6 +28,14 @@ badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', '
 badging_filter = Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) & Q(
     project_affiliation__icontains='ACCESS')
 
+if hasattr(settings, 'DISABLE_PERMISSIONS_FOR_DEBUGGING'):
+    if settings.DISABLE_PERMISSIONS_FOR_DEBUGGING == "True":
+        DISABLE_PERMISSIONS_FOR_DEBUGGING = True
+    else:
+        DISABLE_PERMISSIONS_FOR_DEBUGGING = False
+    #DISABLE_PERMISSIONS_FOR_DEBUGGING = settings.DISABLE_PERMISSIONS_FOR_DEBUGGING
+else:
+    DISABLE_PERMISSIONS_FOR_DEBUGGING = False
 
 # _Detail_ includes all fields from a Model
 # _Full_ includes fields from a model and dependent Models (i.e. roadmap badges, badge tasks, ..)
@@ -191,8 +200,11 @@ class Resource_Full_v1(GenericAPIView):
     '''
     Resource full details, including roadmaps, badges, and badge status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Full_Serializer
 
@@ -215,8 +227,11 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     '''
     Resource roadmap and roadmap badge enrollments
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Enrollments_Serializer
 
@@ -311,8 +326,11 @@ class Resource_Badge_Status_v1(GenericAPIView):
     '''
     Record Badge Status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Workflow_Post_Serializer
 
@@ -380,8 +398,11 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     Record Badge Task Status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Workflow_Post_Serializer
 
@@ -465,8 +486,11 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     '''
     Retrieve all or one resource badge(s) and their status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
@@ -538,8 +562,11 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     Retrieve details of a specific resource, including roadmaps and their badges.
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
