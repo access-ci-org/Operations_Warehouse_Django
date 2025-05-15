@@ -1,5 +1,5 @@
 import traceback
-from rest_framework.permissions import IsAuthenticated, ReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework import permissions, status
