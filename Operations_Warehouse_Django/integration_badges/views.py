@@ -1,5 +1,5 @@
 import traceback
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated, ReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework import permissions, status
@@ -45,7 +45,7 @@ class Roadmap_Full_v1(GenericAPIView):
     '''
     Integration Roadmap(s) and related Badge details View
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = Roadmap_Full_Serializer
 
@@ -69,7 +69,7 @@ class Badge_Full_v1(GenericAPIView):
     '''
     Integration Badge(s) and pre-requisites
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
 
@@ -93,7 +93,7 @@ class Roadmap_Review_v1(GenericAPIView):
     '''
     Integration Roadmap Review Details
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Roadmap_Review_Serializer
 
@@ -114,7 +114,7 @@ class Badge_Review_v1(GenericAPIView):
     '''
     Badge Review Details
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Badge_Review_Serializer
 
@@ -155,7 +155,7 @@ class Badge_Task_Full_v1(GenericAPIView):
     '''
     Retrieve an Integration Task by ID
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Task_Full_Serializer
 
@@ -179,7 +179,7 @@ class Resources_Eligible_List_v1(GenericAPIView):
     
     Based only on CiDeR since they may not have enrolled in a roadmap yet
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
 
@@ -621,7 +621,7 @@ class DatabaseFile_v1(GenericAPIView):
     '''
     Retrieve tasks of a specific badge.
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
     renderer_classes = (JSONRenderer,)
     serializer_class = DatabaseFile_Serializer
 
