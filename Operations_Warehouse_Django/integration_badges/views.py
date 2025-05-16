@@ -385,7 +385,7 @@ class Resource_Badge_Status_v1(GenericAPIView):
 
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
-            updated_by = get_current_username()
+            updated_by = get_current_username(request.user)
 
         workflow = Resource_Badge_Workflow(
             info_resourceid=info_resourceid,
@@ -460,7 +460,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
 
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
-            updated_by = get_current_username()
+            updated_by = get_current_username(request.user)
 
         if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
             workflow = Resource_Badge_Workflow(

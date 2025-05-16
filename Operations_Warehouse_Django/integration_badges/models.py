@@ -8,9 +8,11 @@ from django.utils import timezone
 import uuid
 
 
-def get_current_username():
-    # TODO integrate the cilogon credentials
-    return 'admin'
+def get_current_username(requestuser):
+    if requestuser.username:
+        return requestuser.username
+    else:
+        return 'unknown'
 
 
 class BadgeWorkflowStatus(models.TextChoices):
