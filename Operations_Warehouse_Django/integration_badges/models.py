@@ -187,9 +187,9 @@ class Resource_Badge(models.Model):
 
     def save(self, *args, **kwargs):
         # super(Resource_Badge, self).__init__(*args, **kwargs)
-        super().save(*args, **kwargs)
 
         username = kwargs.pop('username', 'unknown')
+        super().save(*args, **kwargs)
 
         if self.workflow is None:
             Resource_Badge_Workflow(
