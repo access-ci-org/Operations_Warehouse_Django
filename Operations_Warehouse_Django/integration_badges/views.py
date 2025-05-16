@@ -305,7 +305,7 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
         for id in new_badge_ids:
             if id not in cur_badge_ids:
                 try:
-                    Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save()
+                    Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save(username=get_current_username(request.user))
                 except Exception as exc:
                     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
                                          detail='{}: {}'.format(type(exc).__name__, exc))
@@ -381,7 +381,7 @@ class Resource_Badge_Status_v1(GenericAPIView):
                 roadmap=roadmap,
                 badge=badge
             )
-            resource_badge.save()
+            resource_badge.save(username=get_current_username(request.user))
 
         updated_by = request.data.get('status_updated_by')
         if not updated_by:

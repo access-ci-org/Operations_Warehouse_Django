@@ -189,13 +189,15 @@ class Resource_Badge(models.Model):
         # super(Resource_Badge, self).__init__(*args, **kwargs)
         super().save(*args, **kwargs)
 
+        username = kwargs.pop('username', 'unknown')
+
         if self.workflow is None:
             Resource_Badge_Workflow(
                 info_resourceid=self.info_resourceid,
                 roadmap_id=self.roadmap_id,
                 badge_id=self.badge_id,
                 status=BadgeWorkflowStatus.PLANNED,
-                status_updated_by=get_current_username()
+                status_updated_by=username
             ).save()
 
     @property
