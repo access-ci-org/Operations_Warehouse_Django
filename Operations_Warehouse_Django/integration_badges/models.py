@@ -8,9 +8,11 @@ from django.utils import timezone
 import uuid
 
 
-def get_current_username():
-    # TODO integrate the cilogon credentials
-    return 'admin'
+def get_current_username(requestuser):
+    if requestuser.username:
+        return requestuser.username
+    else:
+        return 'unknown'
 
 
 class BadgeWorkflowStatus(models.TextChoices):
@@ -185,6 +187,8 @@ class Resource_Badge(models.Model):
 
     def save(self, *args, **kwargs):
         # super(Resource_Badge, self).__init__(*args, **kwargs)
+
+        username = kwargs.pop('username', 'unknown')
         super().save(*args, **kwargs)
 
         if self.workflow is None:
@@ -193,7 +197,7 @@ class Resource_Badge(models.Model):
                 roadmap_id=self.roadmap_id,
                 badge_id=self.badge_id,
                 status=BadgeWorkflowStatus.PLANNED,
-                status_updated_by=get_current_username()
+                status_updated_by=username
             ).save()
 
     @property

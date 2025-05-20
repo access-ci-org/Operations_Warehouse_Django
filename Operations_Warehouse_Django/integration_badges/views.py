@@ -1,5 +1,5 @@
 import traceback
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework import permissions, status
@@ -7,6 +7,7 @@ from rest_framework.generics import GenericAPIView
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
+from django.conf import settings
 from django.db.models import Q
 
 from integration_badges.models import *
@@ -27,6 +28,14 @@ badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', '
 badging_filter = Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) & Q(
     project_affiliation__icontains='ACCESS')
 
+if hasattr(settings, 'DISABLE_PERMISSIONS_FOR_DEBUGGING'):
+    if settings.DISABLE_PERMISSIONS_FOR_DEBUGGING == "True":
+        DISABLE_PERMISSIONS_FOR_DEBUGGING = True
+    else:
+        DISABLE_PERMISSIONS_FOR_DEBUGGING = False
+    #DISABLE_PERMISSIONS_FOR_DEBUGGING = settings.DISABLE_PERMISSIONS_FOR_DEBUGGING
+else:
+    DISABLE_PERMISSIONS_FOR_DEBUGGING = False
 
 # _Detail_ includes all fields from a Model
 # _Full_ includes fields from a model and dependent Models (i.e. roadmap badges, badge tasks, ..)
@@ -36,7 +45,8 @@ class Roadmap_Full_v1(GenericAPIView):
     '''
     Integration Roadmap(s) and related Badge details View
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer,)
     serializer_class = Roadmap_Full_Serializer
 
@@ -60,7 +70,8 @@ class Badge_Full_v1(GenericAPIView):
     '''
     Integration Badge(s) and pre-requisites
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
 
@@ -84,7 +95,8 @@ class Roadmap_Review_v1(GenericAPIView):
     '''
     Integration Roadmap Review Details
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Roadmap_Review_Serializer
 
@@ -105,7 +117,8 @@ class Badge_Review_v1(GenericAPIView):
     '''
     Badge Review Details
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Badge_Review_Serializer
 
@@ -146,7 +159,8 @@ class Badge_Task_Full_v1(GenericAPIView):
     '''
     Retrieve an Integration Task by ID
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Task_Full_Serializer
 
@@ -170,7 +184,8 @@ class Resources_Eligible_List_v1(GenericAPIView):
     
     Based only on CiDeR since they may not have enrolled in a roadmap yet
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_Summary_Serializer
 
@@ -191,8 +206,13 @@ class Resource_Full_v1(GenericAPIView):
     '''
     Resource full details, including roadmaps, badges, and badge status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Full_Serializer
 
@@ -215,8 +235,11 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     '''
     Resource roadmap and roadmap badge enrollments
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Enrollments_Serializer
 
@@ -282,7 +305,7 @@ class Resource_Roadmap_Enrollments_v1(GenericAPIView):
         for id in new_badge_ids:
             if id not in cur_badge_ids:
                 try:
-                    Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save()
+                    Resource_Badge(info_resourceid=info_resourceid, roadmap_id=roadmap_id, badge_id=id).save(username=get_current_username(request.user))
                 except Exception as exc:
                     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
                                          detail='{}: {}'.format(type(exc).__name__, exc))
@@ -311,8 +334,11 @@ class Resource_Badge_Status_v1(GenericAPIView):
     '''
     Record Badge Status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Workflow_Post_Serializer
 
@@ -355,11 +381,11 @@ class Resource_Badge_Status_v1(GenericAPIView):
                 roadmap=roadmap,
                 badge=badge
             )
-            resource_badge.save()
+            resource_badge.save(username=get_current_username(request.user))
 
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
-            updated_by = get_current_username()
+            updated_by = get_current_username(request.user)
 
         workflow = Resource_Badge_Workflow(
             info_resourceid=info_resourceid,
@@ -380,8 +406,11 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
     '''
     Record Badge Task Status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Workflow_Post_Serializer
 
@@ -431,7 +460,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
 
         updated_by = request.data.get('status_updated_by')
         if not updated_by:
-            updated_by = get_current_username()
+            updated_by = get_current_username(request.user)
 
         if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
             workflow = Resource_Badge_Workflow(
@@ -465,8 +494,13 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     '''
     Retrieve all or one resource badge(s) and their status
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
@@ -538,8 +572,13 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     Retrieve details of a specific resource, including roadmaps and their badges.
     It also includes the list of badge statuses of the badges that are at least planned.
     '''
-    permission_classes = (AllowAny,)
-    # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        #permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
@@ -594,7 +633,8 @@ class DatabaseFile_v1(GenericAPIView):
     '''
     Retrieve tasks of a specific badge.
     '''
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
     renderer_classes = (JSONRenderer,)
     serializer_class = DatabaseFile_Serializer
 

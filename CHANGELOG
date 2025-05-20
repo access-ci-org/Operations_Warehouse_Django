@@ -1,29 +1,13 @@
-v3.57.rc3 2025-04-29 JP, Dinuka
-  - Add short_name to several Cider Summary serializers
-  - Add short_name to integration_badges /resources/, /resource/<info_resourceid>/ APIs
-  - Create Badge model max60 truncated summary derived fields
-  - Expand Spectacular Model depth to support our nested serialization
-  - Use related serializers in Roadmap_Badge_Serializer and Badge_Task_Full_Serializer
-
-v3.57.rc2 2025-04-27 JP
-  - Implement workflow post of optional fields: comment, status_update_by
-  - Separate API to post resource/<info_resourceid>/enrollments/ using Roadmap and Badge id
-  - Define a badging_filter used to ensure that all enrollments are eligible
-  - Use the badging_filter to display eligible resources
-  - Fix workflows to set status_update_at dates using timezone.now
-  - Change BadgeWorkflow choice to 'tasks-completed' (plural)
-  - Apply View and Serializer naming convertions
-  - Add/fix some OpenAPI extend_schema documentation
-  - Fix a couple of bugs
-
-v3.57.rc1 2025-04-25 JP
-  - Latest API changes from Dinuka pull #16 as of 2025-04-25 converted to the production data model
-
-v3.56.2 2025-05-06 JP
-  - Move the two dal* apps to SERVER mode INSTALLED_APP because they aren't needed in routers/non-API applications
-
-v3.56.1 2025-04-24 JP
-  - Fix the missing small integration_badges model change in 0001_initial.py
+v3.57.0 2025-05-15 Dinuka, Eric, JP
+  - Producton Integration Badges models and APIs
+  - Integration Badges post API IAM using CIlogon tokens, and Django users and groups
+  - Integration Badges get APIs without authentication
+  - Add two dal* apps when in SERVER mode for use in Django Admin interface
+  - Mostly complete Integration Badges OpenAPI documentation
+  - Expand Spectacular Model depth to support deeper nested serialization
+  - Add short_name to several Cider Summary serializers for use by Integration Badges
+  - New views to facilitate reviewing Roadmap information for RPs and Badge information for users
+  - New configuration setting DISABLE_PERMISSIONS_FOR_DEBUGGING
 
 v3.56.0 2025-04-24 JP
   - Improve integration_badges Model names
