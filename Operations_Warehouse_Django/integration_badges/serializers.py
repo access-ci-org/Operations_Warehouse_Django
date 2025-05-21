@@ -93,6 +93,16 @@ class Badge_Full_Serializer(serializers.ModelSerializer):
         return representation
 
 
+class Roadmap_Min_Serializer(serializers.ModelSerializer):
+    '''
+    Returns Roadmap roadmap_id and name only
+    '''
+
+    class Meta:
+        model = Roadmap
+        fields = ('roadmap_id', 'name')
+
+
 class Roadmap_Badge_Serializer(serializers.ModelSerializer):
     '''
     Returns Roadmap related Badge sequence_no and required, plus basic Badge_Min_Serializer about the badge
@@ -249,6 +259,19 @@ class Resource_Badge_Serializer(serializers.ModelSerializer):
         except:
             return None
 
+
+class Resource_Badge_Verification_Serializer(serializers.ModelSerializer):
+    '''
+    Resource Badge Verification Review Information
+    '''
+
+    badge = Badge_Min_Serializer()
+    roadmap = Roadmap_Min_Serializer()
+
+    class Meta:
+        model = Resource_Badge
+        fields = ('info_resourceid', 'badge', 'roadmap', 'id')
+        
 
 class Resource_Roadmap_Serializer(serializers.ModelSerializer):
     '''

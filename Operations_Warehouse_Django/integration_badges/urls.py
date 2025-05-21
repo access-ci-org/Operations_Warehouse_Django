@@ -26,6 +26,9 @@ urlpatterns = [
      path(r'v1/badge_review/<str:badge_id>/',
           Badge_Review_v1.as_view(), name='badge-id-review-v1'),
 
+     path(r'v1/badge_verification/',
+          Badge_Verification_v1.as_view(), name='badges-verification-v1'),
+
      path(r'v1/badge/<str:badge_id>/',
           Badge_Full_v1.as_view(), name='badge-id-v1'),
 
