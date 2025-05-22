@@ -1,0 +1,89 @@
+{% extends "base_detail.html" %}
+
+{% block title %}Badges Verification Status{% endblock %}
+
+{% block content %}
+
+<link href="https://dashboard.operations.access-ci.org/static/integration-badges-ui-react/assets/index-Csp8KVRA.css" rel="stylesheet"/>
+<div class="container-fluid py-2">
+    
+    <h1 align="left">Badges Verification Status for Badge Owners and Concierge</h1>
+    <ol>
+        <li>This page lists all the badges that aren't fully available or verified and need someone's attention.</li>
+        <li><span class="text-dark fw-bold fs-6">Pending Verification</span> badges need to be verified by badge owner or concierge staff.</li>
+        <li><span class="text-dark fw-bold fs-6">RP Attention</span> badges have failed verification and need RP attention.</li>
+        <li><span class="text-dark fw-bold fs-6">Unknown</span> badges need Operations attention.</li>
+        <li><span class="text-dark fw-bold fs-6">Planned</span> badges are being worked on by the RP.</li>
+        <li><span class="text-dark fw-bold fs-6">Deprecated</span> badges were deprecated by the RP.</li>
+        <li>Hover over <span class="text-danger">red</span> Status text to view available status comments.</li>
+    </ol>
+    
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            {% if results.mode == "task-completed" %}
+            <a class="nav-link active" aria-current="page" href="#">
+            {% else %}
+            <a class="nav-link" href="?mode=task-completed">
+            {% endif %}
+            <h3>Pending Verification ({{results.status_facet.task_completed|default:"0"}})</h3></a>
+        </li>
+        <li class="nav-item">
+            {% if results.mode == "verification-failed" %}
+            <a class="nav-link active" aria-current="page" href="#">
+            {% else %}
+            <a class="nav-link" href="?mode=verification-failed">
+            {% endif %}
+            <h3>RP Attention ({{results.status_facet.verification_failed|default:"0"}})</h3></a>
+        </li>
+        <li class="nav-item">
+            {% if results.mode == "unknown" %}
+            <a class="nav-link active" aria-current="page" href="#">
+            {% else %}
+            <a class="nav-link" href="?mode=unknown">
+            {% endif %}
+            <h3>Unknown ({{results.status_facet.unknown|default:"0"}})</h3></a>
+        </li>
+        <li class="nav-item">
+            {% if results.mode == "planned" %}
+            <a class="nav-link active" aria-current="page" href="#">
+            {% else %}
+            <a class="nav-link" href="?mode=planned">
+            {% endif %}
+            <h3>Planned ({{results.status_facet.planned|default:"0"}})</h3></a>
+        </li>
+        <li class="nav-item">
+            {% if results.mode == "deprecated" %}
+            <a class="nav-link active" aria-current="page" href="#">
+            {% else %}
+            <a class="nav-link" href="?mode=deprecated">
+            {% endif %}
+            <h3>Deprecated ({{results.status_facet.deprecated|default:"0"}})</h3></a>
+        </li>
+    </ul>
+    
+    <!-- ------------------------------------------------------------------------- -->
+    <span class="align-top">
+        &nbsp;
+    <table class="table tb" valign="top">
+        <thead><th>Resource ID</th><th>Roadmap</th><th>Badge</th><th>Status</th><th>Who and when</thead>
+        {% for badge in results.resourcebadges %}
+        {% if badge.workflow_status.status == results.mode %}
+        <tr title="{{ badge.workflow_status.comment }}">
+            <td>{{ badge.info_resourceid }}</td>
+            <td>{{ badge.roadmap.name }}</td>
+            <td>{{ badge.badge.name }}</td>
+            {% if badge.workflow_status.comment %}
+                <td class="text-danger">{{ badge.workflow_status.status }}</td>
+            {% else %}
+                <td>{{ badge.workflow_status.status }}</td>
+            {% endif %}
+            <td>{{ badge.workflow_status.status_updated_by }} at {{ badge.workflow_status.status_updated_at|date:"c" }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+    </span>
+
+</div>
+
+{% endblock %}

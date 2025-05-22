@@ -1,3 +1,7 @@
+v3.58.0 2025-05-21 JP
+  - New Badge Verification View
+  - Add Integration Roadmap and Badge special views to the API home page
+
 v3.57.0 2025-05-15 Dinuka, Eric, JP
   - Producton Integration Badges models and APIs
   - Integration Badges post API IAM using CIlogon tokens, and Django users and groups

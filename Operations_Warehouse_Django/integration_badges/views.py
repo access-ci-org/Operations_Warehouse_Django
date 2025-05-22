@@ -100,6 +100,7 @@ class Roadmap_Review_v1(GenericAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Roadmap_Review_Serializer
 
+    @extend_schema(operation_id='get_roadmap_review')
     def get(self, request, format=None, **kwargs):
         roadmaps_nav = Roadmap_Review_Nav_Serializer(Roadmap.objects.all(), context={'request': request}, many=True).data
         roadmap_id = self.kwargs.get('roadmap_id', roadmaps_nav[0]['roadmap_id'])
@@ -123,6 +124,7 @@ class Badge_Review_v1(GenericAPIView):
     serializer_class = Badge_Review_Serializer
 
     @extend_schema(
+        operation_id='get_badge_review',
         parameters=[
             OpenApiParameter(
                 name='mode',
@@ -151,6 +153,73 @@ class Badge_Review_v1(GenericAPIView):
 
         if request.accepted_renderer.format == 'html':
             return MyAPIResponse({'results': results}, template_name='integration_badges/badge_user_information.html')
+        else:
+            return MyAPIResponse({'results': results})
+
+
+class Badge_Verification_v1(GenericAPIView):
+    '''
+    Badge Verification Status
+    '''
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
+    serializer_class = Resource_Badge_Verification_Serializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='status',
+                description='Badge status',
+                type=str,
+                required=False,
+                location=OpenApiParameter.PATH,
+                enum=BadgeWorkflowStatus,
+                default='task-completed'
+            )
+        ]
+    )
+    def get(self, request, format=None, **kwargs):
+        mode = request.query_params.get('mode')
+        roadmap_ids = set( i.roadmap_id for i in Roadmap.objects.filter(status='Production') )
+
+        resource_badge_status = Resource_Badge_Workflow.objects.filter(roadmap_id__in=roadmap_ids).order_by('-status_updated_at')
+        workflow_status = {}        # The latest resource badge status in selected roadmaps
+        for item in resource_badge_status:
+            key = f'{item.info_resourceid}:{item.roadmap_id}:{item.badge_id}'
+            if key not in workflow_status:
+                workflow_status[key] = {
+                    'status_updated_by': item.status_updated_by,
+                    'status_updated_at': item.status_updated_at,
+                    'status': item.status,
+                    'comment': item.comment }
+
+        status_facet = {}
+        unverified_badges = [] # All the ones that aren't in available/verified status
+        resource_badges = Resource_Badge.objects.filter(roadmap_id__in=roadmap_ids).order_by('info_resourceid', 'badge__name')
+        for badge in resource_badges:
+            key = f'{badge.info_resourceid}:{badge.roadmap_id}:{badge.badge_id}'
+            status = workflow_status.get(key, {'status': 'unknown'})    # Badge has no workflow entry
+            facet_key = status.get('status').replace('-', '_')
+            status_facet[facet_key] = status_facet[facet_key]+1 if facet_key in status_facet else 1
+            if status.get('status') == 'verified':
+                continue    # We're not returning or displaying this normal status
+            data = self.serializer_class(badge).data
+            data['workflow_status'] = status
+            unverified_badges.append(data)
+ 
+        if not mode:
+            for x in ('task-completed', 'verification-failed', 'unknown', 'planned', 'deprecated'):
+                facet_key = x.replace('-', '_')
+                if status_facet.get(facet_key, 0) > 0:
+                    mode = x
+                    break
+            mode = mode or 'task-completed'
+                
+        results = { 'mode': mode, 'status_facet': status_facet, 'resourcebadges': unverified_badges }
+        
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse({'results': results}, template_name='integration_badges/badge_verification_status.html')
         else:
             return MyAPIResponse({'results': results})
 
