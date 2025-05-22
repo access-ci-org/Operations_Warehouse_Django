@@ -1,4 +1,4 @@
-The contents of this directory, described by this document will configure a 
+The contents of this directory, described by this document will configure a
 development environment for ACCESS-CI Operations Warehouse.
 
 This environment uses docker and docker-compose to configure several containers.
@@ -21,7 +21,7 @@ with it.
 * Setup .env:
   * `cp env_template .env`
   * `vim .env`
-    * Change the password, UID, and GID values.
+    * Change the password, UID, and GID values (these are the numeric IDs, not the names)
 
 * Set a password for info_django and warehouse_user:
   * `./local_scripts/set_warehouse_pw.sh <A_SECURE_RANDOM_PASSWORD>`
@@ -33,7 +33,7 @@ with it.
   * `docker build -t warehouse:latest --progress=plain --no-cache . 2>&1 | tee build_warehouse.log`
 
 * Start the containers
-  * `docker compose up -d`
+  * `docker-compose up -d`
 
 * Decrypt credentials:
   * `./local_scripts/decrypt_credentials.sh`

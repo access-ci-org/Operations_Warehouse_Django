@@ -1,4 +1,4 @@
-version: '2.2'
+# version: '2.2'
 services :
   db:
     image: postgres:14-bookworm
@@ -19,7 +19,7 @@ services :
     image: warehouse:latest
     container_name: warehouse_django
     restart: always
-    depends_on: 
+    depends_on:
       - db
     ports:
       - "8000:8000"
