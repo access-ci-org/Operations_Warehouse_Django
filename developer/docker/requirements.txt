@@ -7,15 +7,19 @@ requests
 django-cors-headers
 django-rest-framework
 amqp
+cilogon_tokenauth
+django-autocomplete-light
 django-allauth == 0.52.*
 django-bootstrap5 == 24.*
 djangorestframework
+requests_oauth2client
 drf-spectacular == 0.24.*
 gunicorn == 22.*
 #gunicorn == 20.1.*
 markdown
 #mod-wsgi
 pip-versions
+pillow
 python-jose
 python3-openid
 pymemcache
