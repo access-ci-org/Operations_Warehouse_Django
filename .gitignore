@@ -65,6 +65,7 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+django_aws_credential_key
 
 # Flask stuff:
 instance/
@@ -114,6 +115,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
 
 # Spyder project settings
 .spyderproject
