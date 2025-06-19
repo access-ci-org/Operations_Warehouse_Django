@@ -408,7 +408,8 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
                     'counter': 0,                           # For counting references
                     'feature_category_id': feature_category.feature_category_id,
                     'feature_category_name': feature_category.feature_category_name,
-                    'feature_category_description': feature_category.feature_category_description
+                    'feature_category_description': feature_category.feature_category_description,
+                    'feature_category_types': feature_category.feature_category_types
                 }
             for feature in feature_category.features:
                 # Key by id which are unique and are what resources reference
@@ -512,7 +513,8 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
         
         active_category_data = [ { 'feature_category_id': f['feature_category_id'],
                                 'feature_category_name': f['feature_category_name'],
-                                'feature_category_description': f['feature_category_description']}
+                                'feature_category_description': f['feature_category_description'],
+                                'feature_category_types': f['feature_category_types'] }
               for f in all_feature_categories.values() if f['counter'] > 0]
               
         active_feature_data = [ {   'feature_id': f['id'],
