@@ -36,6 +36,7 @@ class CiderFeatures(models.Model):
     feature_category_id = models.IntegerField(primary_key=True)
     feature_category_name = models.CharField(max_length=120)
     feature_category_description = models.CharField(max_length=4000, null=True)
+    feature_category_types = models.JSONField(null=True, blank=True)
     features = models.JSONField(null=True, blank=True)
     other_attributes = models.JSONField(null=True, blank=True)
     def __str__(self):
