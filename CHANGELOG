@@ -1,3 +1,6 @@
+v3.58.1 2025-06-20 EBB
+  - Enable PermissionClass for Glue2 queue routes
+
 v3.58.0 2025-05-21 JP
   - New Badge Verification View
   - Add Integration Roadmap and Badge special views to the API home page
