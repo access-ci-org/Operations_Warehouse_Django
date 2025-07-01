@@ -504,51 +504,76 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='roadmap_id',
+                description='Roadmap ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name='badge_id',
+                description='Badge ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            )
+        ]
+    )
     def get(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get('info_resourceid')
-        roadmap_id = kwargs.get('roadmap_id')
-        badge_id = kwargs.get('badge_id')
-        if not info_resourceid:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
+        info_resourceid = self.request.query_params.get('info_resourceid')
+        roadmap_id = self.request.query_params.get('roadmap_id')
+        badge_id = self.request.query_params.get('badge_id')
 
         try:
-            resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
-            roadmap = Roadmap.objects.get(pk=roadmap_id)
-            resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+            if info_resourceid is not None:
+                resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
 
+            if roadmap_id is not None:
+                roadmap = Roadmap.objects.get(pk=roadmap_id)
+
+            if badge_id is not None:
+                badge = Badge.objects.get(pk=badge_id)
+
+            if info_resourceid is not None and roadmap_id is not None:
+                resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
+        except Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found')
         except Resource_Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
                                  detail='Specified resource-roadmap relationship not found not found')
 
-        if badge_id:
-            try:
-                resource_badge = Resource_Badge.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id,
-                                                            badge_id=badge_id)
-                badge_status = {
-                    'id': resource_badge.id,
-                    'info_resourceid': resource_badge.info_resourceid,
-                    'roadmap_id': resource_badge.roadmap_id,
-                    'badge_id': resource_badge.badge_id,
-                    'badge_access_url': resource_badge.badge_access_url,
-                    'badge_access_url_label': resource_badge.badge_access_url_label,
-                    'status': resource_badge.status,
-                    'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
-                    'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-                    'comment': resource_badge.workflow.comment if resource_badge.workflow else None
-                }
-            except Resource_Badge.DoesNotExist:
-                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
-                                     detail='Specified resource-roadmap-badge relationship not found')
-            return MyAPIResponse({'results': badge_status})
+        roadmap_badges = Roadmap_Badge.objects.all()
+        if roadmap_id is not None:
+            roadmap_badges = roadmap_badges.filter(roadmap_id=roadmap_id)
+        if badge_id is not None:
+            roadmap_badges = roadmap_badges.filter(badge_id=badge_id)
 
-        roadmap_badges = Roadmap_Badge.objects.filter(roadmap_id=roadmap_id)
         roadmap_badge_ids = [roadmap_badge.badge_id for roadmap_badge in roadmap_badges]
-        resource_badges = Resource_Badge.objects.filter(info_resourceid=info_resourceid, roadmap_id=roadmap_id,
-                                                        badge_id__in=roadmap_badge_ids)
+
+        if len(roadmap_badge_ids) > 0:
+            resource_badges = Resource_Badge.objects.filter(badge_id__in=roadmap_badge_ids)
+            if info_resourceid is not None:
+                resource_badges = resource_badges.filter(info_resourceid=info_resourceid)
+            if roadmap_id is not None:
+                resource_badges = resource_badges.filter(roadmap_id=roadmap_id)
+        else:
+            resource_badges = []
+
         badges_status = []
         for resource_badge in resource_badges:
             badge_status = {

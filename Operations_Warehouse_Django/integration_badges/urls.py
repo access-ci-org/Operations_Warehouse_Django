@@ -38,13 +38,10 @@ urlpatterns = [
      path(r'v1/resource/<str:info_resourceid>/',
           Resource_Full_v1.as_view(), name='resource-id-full-v1'),
 
-     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badges/',
-          Resource_Roadmap_Badges_Status_v1.as_view(), name='resource-id-roadmap-id-badges-status-v1'),
-
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/enrollments/',
           Resource_Roadmap_Enrollments_v1.as_view(), name='resource-id-roadmap-id-enrollments-v1'),
 
-     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:badge_id>/',
+     path(r'v1/resource_roadmap_badges/',
           Resource_Roadmap_Badges_Status_v1.as_view(), name='resource-id-roadmap-id-badge-id-status-v1'),
 
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:badge_id>/tasks/',
