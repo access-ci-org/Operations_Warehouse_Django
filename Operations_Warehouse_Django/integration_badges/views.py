@@ -112,7 +112,7 @@ class Roadmap_Review_v1(GenericAPIView):
         else:
             return MyAPIResponse({'results': results})
 
-        
+
 class Badge_Review_v1(GenericAPIView):
     '''
     Badge Review Details
@@ -491,6 +491,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
 
 
 class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
+
     '''
     Retrieve all or one resource badge(s) and their status
     '''
@@ -542,53 +543,67 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
             if roadmap_id is not None:
                 roadmap = Roadmap.objects.get(pk=roadmap_id)
 
+            if info_resourceid is not None and roadmap_id is not None:
+                resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+
             if badge_id is not None:
                 badge = Badge.objects.get(pk=badge_id)
 
-            if info_resourceid is not None and roadmap_id is not None:
-                resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+            if roadmap_id is not None and badge_id is not None:
+                roadmap_badge = Roadmap_Badge.objects.get(roadmap_id=roadmap_id, badge_id=badge_id)
+
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
-        except Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found')
         except Resource_Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
                                  detail='Specified resource-roadmap relationship not found not found')
+        except Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found')
+        except Roadmap_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                 detail='Specified roadmap-badge relationship not found not found')
 
-        roadmap_badges = Roadmap_Badge.objects.all()
-        if roadmap_id is not None:
-            roadmap_badges = roadmap_badges.filter(roadmap_id=roadmap_id)
-        if badge_id is not None:
-            roadmap_badges = roadmap_badges.filter(badge_id=badge_id)
-
-        roadmap_badge_ids = [roadmap_badge.badge_id for roadmap_badge in roadmap_badges]
-
-        if len(roadmap_badge_ids) > 0:
-            resource_badges = Resource_Badge.objects.filter(badge_id__in=roadmap_badge_ids)
-            if info_resourceid is not None:
-                resource_badges = resource_badges.filter(info_resourceid=info_resourceid)
-            if roadmap_id is not None:
-                resource_badges = resource_badges.filter(roadmap_id=roadmap_id)
-        else:
-            resource_badges = []
 
         badges_status = []
-        for resource_badge in resource_badges:
-            badge_status = {
-                'id': resource_badge.id,
-                'info_resourceid': resource_badge.info_resourceid,
-                'roadmap_id': resource_badge.roadmap_id,
-                'badge_id': resource_badge.badge_id,
-                'badge_access_url': resource_badge.badge_access_url,
-                'badge_access_url_label': resource_badge.badge_access_url_label,
-                'status': resource_badge.status,
-                'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
-                'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-                'comment': resource_badge.workflow.comment if resource_badge.workflow else None
-            }
-            badges_status.append(badge_status)
+
+        resource_roadmaps = Resource_Roadmap.objects.all()
+        if info_resourceid is not None:
+            resource_roadmaps = resource_roadmaps.filter(info_resourceid=info_resourceid)
+        if roadmap_id is not None:
+            resource_roadmaps = resource_roadmaps.filter(roadmap_id=roadmap_id)
+
+        print("###### resource_roadmaps : ", resource_roadmaps)
+
+        for resource_roadmap in resource_roadmaps:
+            roadmap_badges = Roadmap_Badge.objects.all().filter(roadmap_id=resource_roadmap.roadmap_id)
+            if badge_id is not None:
+                roadmap_badges = roadmap_badges.filter(badge_id=badge_id)
+
+            for roadmap_badge in roadmap_badges:
+                resource_badges = Resource_Badge.objects.all().filter(info_resourceid=resource_roadmap.info_resourceid,
+                                                                      roadmap_id=resource_roadmap.roadmap_id,
+                                                                      badge_id=roadmap_badge.badge_id)
+                if badge_id is not None:
+                    resource_badges = resource_badges.filter(badge_id=roadmap_badge.badge_id)
+
+                print("###### resource_badges : ", len(resource_badges))
+
+                for resource_badge in resource_badges:
+                    badge_status = {
+                        'id': resource_badge.id,
+                        'info_resourceid': resource_badge.info_resourceid,
+                        'roadmap_id': resource_badge.roadmap_id,
+                        'badge_id': resource_badge.badge_id,
+                        'badge_access_url': resource_badge.badge_access_url,
+                        'badge_access_url_label': resource_badge.badge_access_url_label,
+                        'status': resource_badge.status,
+                        'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
+                        'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
+                        'comment': resource_badge.workflow.comment if resource_badge.workflow else None
+                    }
+                    badges_status.append(badge_status)
         return MyAPIResponse({'results': badges_status})
 
 
@@ -607,50 +622,135 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Roadmap_Serializer
 
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='roadmap_id',
+                description='Roadmap ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name='badge_id',
+                description='Badge ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name='task_id',
+                description='Task ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            )
+        ]
+    )
     def get(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get('info_resourceid')
-        roadmap_id = kwargs.get('roadmap_id')
-        badge_id = kwargs.get('badge_id')
-        if not info_resourceid or not roadmap_id or not badge_id:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
-                                 detail='Info_ResourceID, RoadmapID and BadgeID are required')
+        info_resourceid = self.request.query_params.get('info_resourceid')
+        roadmap_id = self.request.query_params.get('roadmap_id')
+        badge_id = self.request.query_params.get('badge_id')
+        task_id = self.request.query_params.get('task_id')
+
+        # if not info_resourceid or not roadmap_id or not badge_id:
+        #     raise MyAPIException(code=status.HTTP_400_BAD_REQUEST,
+        #                          detail='Info_ResourceID, RoadmapID and BadgeID are required')
 
         try:
-            resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
-            roadmap = Roadmap.objects.get(pk=roadmap_id)
-            badge = Badge.objects.get(pk=badge_id)
+            if info_resourceid is not None:
+                resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+
+            if roadmap_id is not None:
+                roadmap = Roadmap.objects.get(pk=roadmap_id)
+
+            if info_resourceid is not None and roadmap_id is not None:
+                resource_roadmap = Resource_Roadmap.objects.get(info_resourceid=info_resourceid, roadmap_id=roadmap_id)
+
+            if badge_id is not None:
+                badge = Badge.objects.get(pk=badge_id)
+
+            if roadmap_id is not None and badge_id is not None:
+                roadmap_badge = Roadmap_Badge.objects.get(roadmap_id=roadmap_id, badge_id=badge_id)
+
+            if task_id is not None:
+                task = Task.objects.get(pk=task_id)
+
+            if badge_id is not None and task_id is not None:
+                badge_task = Badge_Task.objects.get(badge_id=badge_id, task_id=task_id)
+
         except CiderInfrastructure.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified Info_ResourceID not found')
         except Roadmap.DoesNotExist:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified RoadmapID not found')
+        except Resource_Roadmap.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified resource-roadmap relationship not found not found')
         except Badge.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found not found')
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified BadgeID not found')
+        except Roadmap_Badge.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified roadmap-badge relationship not found not found')
+        except Task.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified TaskID not found')
+        except Badge_Task.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge-task relationship not found not found')
 
         task_status = []
-        badge_tasks = Badge_Task.objects.filter(badge_id=badge_id)
-        for badge_task in badge_tasks:
-            task_workflow = Resource_Badge_Task_Workflow.objects.filter(
-                info_resourceid=info_resourceid,
-                roadmap_id=roadmap_id,
-                badge_id=badge_id,
-                task_id=badge_task.task_id
-            ).order_by('-status_updated_at').first()
-            if task_workflow is not None:
-                task_status.append({
-                    "task_id": badge_task.task_id,
-                    "task_name": badge_task.task.name,
-                    "status": task_workflow.status,
-                    "status_updated_by": task_workflow.status_updated_by,
-                    "status_updated_at": task_workflow.status_updated_at
-                })
-            else:
-                task_status.append({
-                    "task_id": badge_task.task_id,
-                    "task_name": badge_task.task.name,
-                    "status": None,
-                    "status_updated_by": None,
-                    "status_updated_at": None
-                })
+
+        resource_roadmaps = Resource_Roadmap.objects.all()
+        if info_resourceid is not None:
+            resource_roadmaps = resource_roadmaps.filter(info_resourceid=info_resourceid)
+        if roadmap_id is not None:
+            resource_roadmaps = resource_roadmaps.filter(roadmap_id=roadmap_id)
+
+        for resource_roadmap in resource_roadmaps:
+            roadmap_badges = Roadmap_Badge.objects.all().filter(roadmap_id=resource_roadmap.roadmap_id)
+            if badge_id is not None:
+                roadmap_badges = roadmap_badges.filter(badge_id=badge_id)
+
+            for roadmap_badge in roadmap_badges:
+                resource_badges = Resource_Badge.objects.all().filter(info_resourceid=resource_roadmap.info_resourceid,
+                                                                      roadmap_id=resource_roadmap.roadmap_id,
+                                                                      badge_id=roadmap_badge.badge_id)
+                if badge_id is not None:
+                    resource_badges = resource_badges.filter(badge_id=roadmap_badge.badge_id)
+
+                for resource_badge in resource_badges:
+                        badge_tasks = Badge_Task.objects.all().filter(badge_id=resource_badge.badge_id)
+                        if task_id is not None:
+                            badge_tasks = badge_tasks.filter(task_id=task_id)
+
+                        for badge_task in badge_tasks:
+                            task_workflow = Resource_Badge_Task_Workflow.objects.filter(
+                                info_resourceid=resource_roadmap.info_resourceid,
+                                roadmap_id=resource_roadmap.roadmap_id,
+                                badge_id=badge_task.badge_id,
+                                task_id=badge_task.task_id
+                            ).order_by('-status_updated_at').first()
+                            if task_workflow is not None:
+                                task_status.append({
+                                    "task_id": badge_task.task_id,
+                                    "task_name": badge_task.task.name,
+                                    "status": task_workflow.status,
+                                    "status_updated_by": task_workflow.status_updated_by,
+                                    "status_updated_at": task_workflow.status_updated_at
+                                })
+                            else:
+                                task_status.append({
+                                    "task_id": badge_task.task_id,
+                                    "task_name": badge_task.task.name,
+                                    "status": None,
+                                    "status_updated_by": None,
+                                    "status_updated_at": None
+                                })
+
         return MyAPIResponse({'results': task_status})
 
 
