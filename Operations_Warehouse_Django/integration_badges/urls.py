@@ -47,7 +47,7 @@ urlpatterns = [
      path(r'v1/resource_roadmap_badges/',
           Resource_Roadmap_Badges_Status_v1.as_view(), name='resource-id-roadmap-id-badge-id-status-v1'),
 
-     path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:badge_id>/tasks/',
+     path(r'v1/resource_roadmap_badge_tasks/',
           Resource_Roadmap_Badge_Tasks_Status_v1.as_view(), name='resource-id-roadmap-id-badge-id-tasks-status-id'),
 
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/badge/<str:badge_id>/workflow/<str:badge_workflow_status>/',
