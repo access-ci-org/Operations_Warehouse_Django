@@ -390,6 +390,9 @@ class Resource_Badge_Status_v1(GenericAPIView):
         if not updated_by:
             updated_by = get_current_username(request.user)
 
+        if badge_workflow_status is None:
+            badge_workflow_status = resource_badge.status
+
         workflow = Resource_Badge_Workflow(
             info_resourceid=info_resourceid,
             roadmap=roadmap,
