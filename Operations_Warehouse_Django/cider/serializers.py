@@ -189,6 +189,7 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
     user_guide_url = serializers.SerializerMethodField()
 # Just Science Gateway
     primary_service_url = serializers.SerializerMethodField()
+    sgx3_url = serializers.SerializerMethodField()
     shortname = serializers.SerializerMethodField()
     long_description = serializers.SerializerMethodField()
     allocated_grant_number = serializers.SerializerMethodField()
@@ -203,7 +204,7 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
             'organization_name', 'organization_url', 'organization_logo_url', 'latitude', 'longitude',
             'features', 'features_list', 'user_guide_url',
             'cider_view_url', 'cider_data_url', 'updated_at',
-            'primary_service_url', 'shortname', 'long_description', 'allocated_grant_number', 'requested_usernames')
+            'primary_service_url', 'sgx3_url', 'shortname', 'long_description', 'allocated_grant_number', 'requested_usernames')
         
     def get_short_name(self, object) -> str:
         try:
@@ -269,6 +270,12 @@ class CiderInfrastructure_Summary_v2_Gateway_Serializer(serializers.ModelSeriali
     def get_primary_service_url(self, object) -> str:
         try:
             return str(object.other_attributes['url_1']) or None
+        except:
+            return None
+
+    def get_sgx3_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['url_2']) or None
         except:
             return None
 # Retire someday as replaced by get_short_name on 2025-04-29
@@ -540,6 +547,7 @@ class CiderInfrastructure_Storage_Detail_Serializer(serializers.ModelSerializer)
 
 class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer):
     primary_service_url = serializers.SerializerMethodField()
+    sgx3_url = serializers.SerializerMethodField()
     shortname = serializers.SerializerMethodField()
     long_description = serializers.SerializerMethodField()
     allocated_grant_number = serializers.SerializerMethodField()
@@ -547,9 +555,14 @@ class CiderInfrastructure_Gateway_Detail_Serializer(serializers.ModelSerializer)
     
     class Meta:
         model = CiderInfrastructure
-        fields = ('primary_service_url', 'shortname', 'user_guide_url', 'allocated_grant_number', 'requested_usernames')
+        fields = ('primary_service_url', 'sgx3_url', 'shortname', 'user_guide_url', 'allocated_grant_number', 'requested_usernames')
 
     def get_primary_service_url(self, object) -> str:
+        try:
+            return str(object.other_attributes['url_1']) or None
+        except:
+            return None
+    def get_sgx3_url(self, object) -> str:
         try:
             return str(object.other_attributes['url_1']) or None
         except:
