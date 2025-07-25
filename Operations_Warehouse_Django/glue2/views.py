@@ -6,6 +6,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import schema
 from rest_framework.generics import UpdateAPIView
 from rest_framework.views import APIView
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -648,6 +649,7 @@ class ComputingQueue_DbList(APIView):
         GLUE2 Computing Queue entity
     '''
     permission_classes = (IsAuthenticated,)
+    authentication_classes = (BasicAuthentication,)
 #    authentication_classes = (GlobusAuthentication,)
     serializer_class = ComputingQueue_Serializer
     def get(self, request, format=None, **kwargs):
@@ -675,6 +677,7 @@ class ComputingQueue_DbDetail(APIView):
         GLUE2 Computing Queue entity
     '''
     permission_classes = (IsAuthenticated,)
+    authentication_classes = (BasicAuthentication,)
 #    authentication_classes = (GlobusAuthentication,)
     serializer_class = ComputingQueue_Serializer
     def get(self, request, pk, format=None):
@@ -1134,6 +1137,7 @@ class Jobqueue_List(APIView):
         GLUE2 Jobs Queue from ComputingQueue
     '''
     permission_classes = (IsAuthenticated,)
+    authentication_classes = (BasicAuthentication,)
 #    authentication_classes = (GlobusAuthentication,)
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = ComputingQueue_Expand_Serializer
