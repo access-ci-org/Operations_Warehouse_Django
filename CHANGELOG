@@ -1,3 +1,6 @@
+v3.59.0 2025-06-19JP
+  - New CiderFeatures feature_category_types Model field and related view, serializer changes
+
 v3.58.1 2025-06-20 EBB
   - Enable PermissionClass for Glue2 queue routes
 
