@@ -225,6 +225,7 @@ if SETTINGS_MODE == 'SERVER':
         'cilogon_tokenauth',
         'dal',
         'dal_select2',
+        'access_django_user_admin.apps.Access_Django_User_AdminConfig',
     )
     
     SITE_ID = 1
