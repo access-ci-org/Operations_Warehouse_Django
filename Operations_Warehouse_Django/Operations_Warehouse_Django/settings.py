@@ -204,6 +204,7 @@ if SETTINGS_MODE == 'SERVER':
     ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/cilogon/login/'
     LOGIN_URL = '/accounts/cilogon/login/'
     LOGIN_REDIRECT_URL = '/'
+    SOCIALACCOUNT_QUERY_EMAIL = True
 
     INSTALLED_APPS += (
         'corsheaders',
