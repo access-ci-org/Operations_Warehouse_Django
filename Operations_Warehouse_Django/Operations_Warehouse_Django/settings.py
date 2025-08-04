@@ -296,7 +296,7 @@ if SETTINGS_MODE == 'SERVER':
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [BASE_DIR / 'templates'],
+            'DIRS': [ os.path.normpath(os.path.join(os.path.dirname(__file__), '../templates'))],
             'APP_DIRS': True,
             'OPTIONS': {
                 'context_processors': [
