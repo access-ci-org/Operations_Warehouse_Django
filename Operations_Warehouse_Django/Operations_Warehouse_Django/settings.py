@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'warehouse_state',
     'warehouse_tools',
     'web',
+    'access_django_user_admin',
 ]
 
 MIDDLEWARE = [
@@ -225,7 +226,6 @@ if SETTINGS_MODE == 'SERVER':
         'cilogon_tokenauth',
         'dal',
         'dal_select2',
-        'access_django_user_admin.apps.Access_Django_User_AdminConfig',
     )
     
     SITE_ID = 1
@@ -297,7 +297,7 @@ if SETTINGS_MODE == 'SERVER':
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [ os.path.normpath(os.path.join(os.path.dirname(__file__), '../templates'))],
+            'DIRS': [BASE_DIR / 'templates'],
             'APP_DIRS': True,
             'OPTIONS': {
                 'context_processors': [
@@ -305,6 +305,7 @@ if SETTINGS_MODE == 'SERVER':
                     'django.template.context_processors.request',
                     'django.contrib.auth.context_processors.auth',
                     'django.contrib.messages.context_processors.messages',
+                    'web.context_processors.app_context_processor',
                 ],
             },
         },
