@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'warehouse_state',
     'warehouse_tools',
     'web',
+    'access_django_user_admin',
 ]
 
 MIDDLEWARE = [
@@ -304,6 +305,7 @@ if SETTINGS_MODE == 'SERVER':
                     'django.template.context_processors.request',
                     'django.contrib.auth.context_processors.auth',
                     'django.contrib.messages.context_processors.messages',
+                    'web.context_processors.app_context_processor',
                 ],
             },
         },

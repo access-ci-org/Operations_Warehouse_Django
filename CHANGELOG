@@ -1,3 +1,6 @@
+v3.60.0 2025-08 jlambertson
+  - Installed Django User Admin module from - https://github.com/access-ci-org/Operations_ACCESS_Django_User_Admin
+
 v3.59.0 2025-06-19JP
   - New CiderFeatures feature_category_types Model field and related view, serializer changes
 
