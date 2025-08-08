@@ -23,7 +23,7 @@ from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, Read
 
 log = logging.getLogger(__name__)
 
-badging_types = ('Compute', 'Storage')  # Expand as more roadmaps with badges are rolled out
+badging_types = ('Compute', 'Storage', 'Network', 'Data')  # Expand as more roadmaps with badges are rolled out
 badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
 badging_filter = Q(cider_type__in=badging_types) & Q(latest_status__in=badging_statuses) & Q(
     project_affiliation__icontains='ACCESS')
