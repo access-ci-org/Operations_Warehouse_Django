@@ -634,3 +634,35 @@ class CiderACCESSActiveGroups_v1_List_Serializer(serializers.ModelSerializer):
             return self.context['groups_extra'][object.info_groupid]['rollup_org_ids']
         except:
             return([])
+
+class CiderACCESSActiveGroups_v2_List_Serializer(serializers.ModelSerializer):
+    rollup_info_resourceids = serializers.SerializerMethodField()
+    rollup_feature_ids = serializers.SerializerMethodField()
+    rollup_organization_ids = serializers.SerializerMethodField()
+    rollup_badge_ids = serializers.SerializerMethodField()
+    class Meta:
+        model = CiderGroups
+        fields = ('group_id', 'info_groupid', 'group_descriptive_name', 'group_description',
+            'group_logo_url', 'group_types', 'other_attributes',
+            'rollup_info_resourceids', 'rollup_feature_ids', 'rollup_organization_ids', 'rollup_badge_ids')
+
+    def get_rollup_info_resourceids(self, object) -> list[str]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_active_info_resourceids']
+        except:
+            return([])
+    def get_rollup_feature_ids(self, object) -> list[int]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_feature_ids']
+        except:
+            return([])
+    def get_rollup_organization_ids(self, object) -> list[str]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_org_ids']
+        except:
+            return([])
+    def get_rollup_badge_ids(self, object) -> list[str]:
+        try:
+            return self.context['groups_extra'][object.info_groupid]['rollup_badge_ids']
+        except:
+            return([])

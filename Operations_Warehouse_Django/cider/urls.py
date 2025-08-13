@@ -29,4 +29,8 @@ urlpatterns = [
     path(r'v1/access-active-groups/info_groupid/<str:info_groupid>/', CiderACCESSActiveGroups_v1_List.as_view(), name='cider-accessactivegroups-byinfoid-v1'),
     path(r'v2/access-active/', CiderInfrastructure_v2_ACCESSActiveList.as_view(), name='cider-accessactivelist-v2'),
     path(r'v2/access-all/', CiderInfrastructure_v2_ACCESSAllList.as_view(), name='cider-accessalllist-v2'),
+    path(r'v2/access-active-groups/', CiderACCESSActiveGroups_v2_List.as_view(), name='cider-accessactivegroups-v2'),
+    path(r'v2/access-active-groups/type/<str:group_type>/', CiderACCESSActiveGroups_v2_List.as_view(), name='cider-accessactivegroups-bytype-v2'),
+    path(r'v2/access-active-groups/group_id/<str:group_id>/', CiderACCESSActiveGroups_v2_List.as_view(), name='cider-accessactivegroups-byid-v2'),
+    path(r'v2/access-active-groups/info_groupid/<str:info_groupid>/', CiderACCESSActiveGroups_v2_List.as_view(), name='cider-accessactivegroups-byinfoid-v2'),
 ]

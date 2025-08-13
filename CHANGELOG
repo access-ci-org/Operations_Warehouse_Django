@@ -1,4 +1,7 @@
-v3.xx.x 2025-08 navarro
+V3.62.0 2025-08-13 JP
+  - New API /cider/v2/access-active-groups and related view CiderACCESSActiveGroups_v2_List adding resource badges information for the resource catalog
+
+v3.61.0 2025-08 navarro
   - Include missing organization_id in CiderInfrastructure_Summary_Serializer
   - Expand badging_types with 'Network' and 'Data' resources
 
