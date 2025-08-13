@@ -10,6 +10,7 @@ from .models import *
 from .filters import *
 from .serializers import *
 from .utils import cider_to_coco, mk_html_table
+from integration_badges.models import *
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
@@ -528,6 +529,195 @@ class CiderACCESSActiveGroups_v1_List(GenericAPIView):
                 'feature_categories': active_category_data,
                 'features': active_feature_data,
                 'organizations': active_org_data
+            }}
+        )
+
+# IMPORTANT: adds badges to v1
+# Design:
+#   1st get all features and badges
+#   2nd get all ACCESS active resources
+#   3rd get all or select groups
+#       counting which resources are referenced in selected groups
+#   4th count referenced orgs, features, feature groups, and badges for referenced resources
+class CiderACCESSActiveGroups_v2_List(GenericAPIView):
+    '''
+    ACCESS Active Compute and Storage Resource Groups
+    
+    Returns: Selected groups with active resources; per group resource id, feature, and org rollup; details about all referenced features, feature groups, and orgs
+    '''
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderACCESSActiveGroups_v1_List_Serializer
+    def get(self, request, format=None, **kwargs):
+#       Default to all groups
+#        if not self.kwargs.get('group_type') and not self.kwargs.get('group_id') and not self.kwargs.get('info_groupid'):
+#            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Missing selection parameter')
+
+        all_feature_categories = {}
+        all_features = {}
+        # The CiderFeatures model contains Feature Categories, and associated features in the features json field
+        for feature_category in CiderFeatures.objects.all():
+            # Key by id which are unique
+            all_feature_categories[feature_category.feature_category_id] = {
+                    'counter': 0,                           # For counting references
+                    'feature_category_id': feature_category.feature_category_id,
+                    'feature_category_name': feature_category.feature_category_name,
+                    'feature_category_description': feature_category.feature_category_description,
+                    'feature_category_types': feature_category.feature_category_types
+                }
+            for feature in feature_category.features:
+                # Key by id which are unique and are what resources reference
+                all_features[feature['id']] = {
+                        'counter': 0,                       # For counting references
+                        'id': feature['id'],
+                        'name': feature['name'],
+                        'description': feature['description'],
+                        'feature_category_id': feature_category.feature_category_id
+                    }
+
+        all_badges = {}
+        for badge in Badge.objects.all():
+            # Key by id which are unique
+            all_badges[badge.badge_id] = {
+                    'counter': 0,                           # For counting references
+                    'badge_id': badge.badge_id,
+                    'name': badge.name,
+                    'graphic': badge.graphic,
+                    'researcher_summary': badge.researcher_summary,
+                    'default_badge_access_url': badge.default_badge_access_url,
+                    'default_badge_access_url_label': badge.default_badge_access_url_label
+                }                 
+
+        active_resources = {}
+        active_orgs = {}
+#       Expanding beyond Allocated Compute and Storage
+#        resources = CiderInfrastructure_ActiveAllocated_Filter(affiliation='ACCESS', result='OBJECTS')
+        resources = CiderInfrastructure_Active_Filter(affiliation='ACCESS', result='OBJECTS')
+        for resource in resources:
+            rid = resource.info_resourceid
+            active_resources[rid] = {
+                    'counter': 0,                             # For counting references in selected groups
+                    'info_resourceid': rid,
+                    'org_ids': [],
+                    'feature_ids': [],
+                    'badge_ids': []
+                }
+            if isinstance(resource.other_attributes.get('organizations'), list):
+                for o in resource.other_attributes['organizations']:
+                    oid = o.get('organization_id')
+                    if not oid:
+                        continue
+                    active_resources[rid]['org_ids'].append(oid)
+                    if oid not in active_orgs:
+                        active_orgs[oid] = o
+                        active_orgs[oid]['counter'] = 0     # For counting references in select group active resources
+            if isinstance(resource.other_attributes.get('features'), list):
+                for f in resource.other_attributes['features']:
+                    fid = f.get('id')
+                    if not fid:
+                        continue
+                    if fid not in all_features:
+                        continue
+                    active_resources[rid]['feature_ids'].append(fid)                          # All resource feature ids
+
+#       Badges for resources
+        for resource_badge in Resource_Badge.objects.all():
+            if resource_badge.info_resourceid not in active_resources:
+                continue
+            active_resources[resource_badge.info_resourceid]['badge_ids'].append(resource_badge.badge_id)
+
+        groups = []
+        groups_extra = {}
+        if self.kwargs.get('group_id'):
+            query = CiderGroups.objects.filter(group_id=self.kwargs['group_id'])
+        elif self.kwargs.get('info_groupid'):
+            query = CiderGroups.objects.filter(info_groupid=self.kwargs['info_groupid'])
+        elif self.kwargs.get('group_type'):
+            query = CiderGroups.objects.filter(group_types__has_key=self.kwargs['group_type'])
+        else:
+            query = CiderGroups.objects.all()
+        for group in query:
+            if type(group.info_resourceids) is not list or group.info_resourceids is None:
+                continue                                # Ignore group with no resources
+            group_active_resources = [grid for grid in group.info_resourceids if grid in active_resources]
+            if not group_active_resources:
+                continue                                # Ignore group with no active resources
+            og = {                                      # Extra group information to pass and use in the serializer
+                'rollup_feature_ids': [],               # Feature id rollup for active resources in a group
+                'rollup_org_ids': [],                   # Organization id rollup for active resources in a group
+                'rollup_badge_ids': [],
+                'rollup_active_info_resourceids': group_active_resources
+            }
+            for grid in group_active_resources:
+                active_resources[grid]['counter'] += 1                                  # A reference resource
+                og['rollup_feature_ids'].extend(active_resources[grid]['feature_ids'])
+                og['rollup_org_ids'].extend(active_resources[grid]['org_ids'])
+                og['rollup_badge_ids'].extend(active_resources[grid]['badge_ids'])
+            og['rollup_feature_ids'] = list(set(chain(og['rollup_feature_ids'])))       # Make unique
+            og['rollup_org_ids'] = list(set(chain(og['rollup_org_ids'])))               # Make unique
+            og['rollup_badge_ids'] = list(set(chain(og['rollup_badge_ids'])))           # Make unique
+            groups_extra[group.info_groupid] = og
+            groups.append(group)
+
+        for ares in active_resources.values():
+            if ares['counter'] == 0:                                                    # Not a referenced resource
+                continue
+            rorgs = ares.get('org_ids')
+            if rorgs:
+                for oid in rorgs:
+                    active_orgs[oid]['counter'] += 1                                    # Increment org referenced
+            rfeatures = ares.get('feature_ids')
+            if rfeatures:
+                for fid in rfeatures:
+                    all_features[fid]['counter'] += 1                                   # Increment feature referenced
+                    fcid = all_features[fid].get('feature_category_id')                 # Lookup the feature category id
+                    if not fcid:
+                        continue
+                    if fcid not in all_feature_categories:
+                        continue
+                    all_feature_categories[fcid]['counter'] += 1                        # Increment feature category used
+            rbadges = ares.get('badge_ids')
+            if rbadges:
+                for bid in rbadges:
+                    all_badges[bid]['counter'] += 1
+        
+        serializer = CiderACCESSActiveGroups_v2_List_Serializer(groups, context={'request': request, 'groups_extra': groups_extra}, many=True)
+
+        active_resource_data = [ {'info_resourceid': resource.info_resourceid,
+                                'cider_type': resource.cider_type,
+                                'resource_descriptive_name': resource.resource_descriptive_name }
+            for resource in resources if active_resources[resource.info_resourceid]['counter'] > 0 ]
+
+        active_oids = [ org['organization_id'] for org in active_orgs.values() if org['counter'] > 0 ]
+        active_org_data = [ org.other_attributes
+            for org in CiderOrganizations.objects.filter(organization_id__in=active_oids) ]
+        
+        active_category_data = [ {'feature_category_id': f['feature_category_id'],
+                                'feature_category_name': f['feature_category_name'],
+                                'feature_category_description': f['feature_category_description'],
+                                'feature_category_types': f['feature_category_types'] }
+            for f in all_feature_categories.values() if f['counter'] > 0]
+              
+        active_feature_data = [ {'feature_id': f['id'],
+                                'feature_name': f['name'],
+                                'feature_category_id': f['feature_category_id']}
+            for f in all_features.values() if f['counter'] > 0]
+        
+        active_badge_data = [ {'badge_id': b['badge_id'],
+                                'name': b['name'],
+                                'graphic_url': request.build_absolute_uri(b['graphic'].url),
+                                'researcher_summary': b['researcher_summary'],
+                                'default_badge_access_url': b['default_badge_access_url'],
+                                'default_badge_access_url_label': b['default_badge_access_url_label']}
+            for b in all_badges.values() if b['counter'] > 0]
+
+        return MyAPIResponse({'results': {
+                'active_groups': serializer.data,
+                'resources': active_resource_data,
+                'feature_categories': active_category_data,
+                'features': active_feature_data,
+                'organizations': active_org_data,
+                'badges': active_badge_data
             }}
         )
 
