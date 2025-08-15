@@ -26,3 +26,5 @@ pymemcache
 pyyaml
 tzdata
 ansible
+access-django-user-admin==1.4.4
+
