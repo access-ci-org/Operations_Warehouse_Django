@@ -709,6 +709,14 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 type=str,
                 required=False,
                 location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name='badge_workflow_status',
+                description='Workflow status',
+                type=str,
+                required=True,
+                location=OpenApiParameter.QUERY,
+                enum=BadgeWorkflowStatus
             )
         ]
     )
@@ -716,6 +724,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         info_resourceid = self.request.query_params.get('info_resourceid')
         roadmap_id = self.request.query_params.get('roadmap_id')
         badge_id = self.request.query_params.get('badge_id')
+        badge_workflow_status = self.request.query_params.get('badge_workflow_status')
 
         try:
             if info_resourceid is not None:
@@ -765,19 +774,20 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                                                                       badge_id=roadmap_badge.badge_id)
 
                 for resource_badge in resource_badges:
-                    badge_status = {
-                        'id': resource_badge.id,
-                        'info_resourceid': resource_badge.info_resourceid,
-                        'roadmap_id': resource_badge.roadmap_id,
-                        'badge_id': resource_badge.badge_id,
-                        'badge_access_url': resource_badge.badge_access_url,
-                        'badge_access_url_label': resource_badge.badge_access_url_label,
-                        'status': resource_badge.status,
-                        'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
-                        'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
-                        'comment': resource_badge.workflow.comment if resource_badge.workflow else None
-                    }
-                    badges_status.append(badge_status)
+                    if badge_workflow_status is None or resource_badge.status == badge_workflow_status:
+                        badge_status = {
+                            'id': resource_badge.id,
+                            'info_resourceid': resource_badge.info_resourceid,
+                            'roadmap_id': resource_badge.roadmap_id,
+                            'badge_id': resource_badge.badge_id,
+                            'badge_access_url': resource_badge.badge_access_url,
+                            'badge_access_url_label': resource_badge.badge_access_url_label,
+                            'status': resource_badge.status,
+                            'status_updated_by': resource_badge.workflow.status_updated_by if resource_badge.workflow else None,
+                            'status_updated_at': resource_badge.workflow.status_updated_at if resource_badge.workflow else None,
+                            'comment': resource_badge.workflow.comment if resource_badge.workflow else None
+                        }
+                        badges_status.append(badge_status)
         return MyAPIResponse({'results': badges_status})
 
 
