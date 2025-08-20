@@ -676,6 +676,97 @@ class Resource_Roadmap_Badge_Log_v1(GenericAPIView):
         return MyAPIResponse({'results': badges_status})
 
 
+class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
+    '''
+    Retrieve all or one resource badge(s) and their status
+    '''
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        # permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = (ReadOnly,)
+        authentication_classes = []
+
+    renderer_classes = (JSONRenderer,)
+    serializer_class = Resource_Roadmap_Serializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='roadmap_id',
+                description='Roadmap ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name='badge_id',
+                description='Badge ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY
+            )
+        ]
+    )
+    def get(self, request, format=None, **kwargs):
+        info_resourceid = self.request.query_params.get('info_resourceid')
+        roadmap_id = self.request.query_params.get('roadmap_id')
+        badge_id = self.request.query_params.get('badge_id')
+
+        resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
+
+        if info_resourceid is not None:
+            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
+                info_resourceid=info_resourceid)
+
+        if roadmap_id is not None:
+            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(roadmap_id=roadmap_id)
+
+        if badge_id is not None:
+            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(badge_id=badge_id)
+
+        result = (
+            resource_badge_workflow_subquery.filter(
+
+                # Making sure the badge is a part of the roadmap
+                Exists(Roadmap_Badge.objects.filter(
+                    roadmap_id=OuterRef('roadmap_id'),
+                    badge_id=OuterRef('badge_id')
+                )),
+
+                # Making sure the resource is enrolled to the roadmap badge
+                Exists(Resource_Badge.objects.filter(
+                    info_resourceid=OuterRef('info_resourceid'),
+                    roadmap_id=OuterRef('roadmap_id'),
+                    badge_id=OuterRef('badge_id')
+                )),
+
+                # Filtering the workflow entries with the latest time stamp
+                status_updated_at=Subquery(
+                    Resource_Badge_Workflow.objects
+                    .filter(
+                        info_resourceid=OuterRef('info_resourceid'),
+                        roadmap_id=OuterRef('roadmap_id'),
+                        badge_id=OuterRef('badge_id')
+                    )
+                    .values('info_resourceid', 'roadmap_id', 'badge_id')
+                    .annotate(max_status_updated_at=Max('status_updated_at'))
+                    .values('max_status_updated_at')),
+            )
+            .values('status')
+            .annotate(count=Count('workflow_id'))
+        )
+
+        return MyAPIResponse({'results': result.values('status', 'count')})
+
+
 class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     '''
     Retrieve all or one resource badge(s) and their status
