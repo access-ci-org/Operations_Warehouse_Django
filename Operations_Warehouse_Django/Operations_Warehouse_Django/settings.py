@@ -378,6 +378,7 @@ if SETTINGS_MODE == 'SERVER':
         'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'cilogon_tokenauth.auth.CITokenAuthentication',
+            'rest_framework.authentication.SessionAuthentication'
         ],
     }
 
