@@ -697,9 +697,10 @@ class CiderACCESSActiveGroups_v2_List(GenericAPIView):
                                 'feature_category_description': f['feature_category_description'],
                                 'feature_category_types': f['feature_category_types'] }
             for f in all_feature_categories.values() if f['counter'] > 0]
-              
+
         active_feature_data = [ {'feature_id': f['id'],
                                 'feature_name': f['name'],
+                                'feature_description': f['description'],
                                 'feature_category_id': f['feature_category_id']}
             for f in all_features.values() if f['counter'] > 0]
         
