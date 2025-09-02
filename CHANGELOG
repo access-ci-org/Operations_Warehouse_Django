@@ -1,3 +1,12 @@
+V3.64.0 2025-09- jlambertson
+  - Adding new view for RP badge status
+
+V3.63.1 2025-08-22 EBB
+  - Revert erroneous permissions changes
+
+V3.63.0 2025-08-21 JP
+  - Permit session authentication
+
 V3.62.0 2025-08-13 JP
   - New API /cider/v2/access-active-groups and related view CiderACCESSActiveGroups_v2_List adding resource badges information for the resource catalog
 
