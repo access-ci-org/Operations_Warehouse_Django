@@ -1,3 +1,6 @@
+V3.64.0 2025-08-21 JP
+  - Add missing feature description to /wh2/cider/v2/access-active-groups/
+
 V3.63.1 2025-08-22 EBB
   - Revert erroneous permissions changes
 
