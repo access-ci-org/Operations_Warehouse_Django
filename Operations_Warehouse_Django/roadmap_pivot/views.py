@@ -9,7 +9,6 @@ class RoadmapResourceBadgesView(TemplateView):
 
     @property
     def API_BASE(self):
-        # Lazy load API URL - check cache first
         if hasattr(self, '_api_base'):
             return self._api_base
 
@@ -25,13 +24,17 @@ class RoadmapResourceBadgesView(TemplateView):
 
     @property
     def FALLBACK_API_BASE(self):
-        # Production fallback for dev only
+        if hasattr(self, '_fallback_api_base'):
+            return self._fallback_api_base
+
         from Operations_Warehouse_Django.settings import CONF
-        return ("https://operations-api.access-ci.org/wh2/integration_badges/v1" 
-                if CONF.get('DEBUG', False) else None)
+        self._fallback_api_base = ("https://operations-api.access-ci.org/wh2/integration_badges/v1" 
+                                if CONF.get('DEBUG', False) else None)
+        return self._fallback_api_base
+
 
     def fetch_api_data(self, endpoint):
-        # Try local first, fallback to prod if empty/failed
+        # Try local first, fallback to prod if fail
         def try_endpoint(base_url):
             response = requests.get(f"{base_url}/{endpoint}/", timeout=30)
             response.raise_for_status()
@@ -39,7 +42,7 @@ class RoadmapResourceBadgesView(TemplateView):
 
         try:
             data = try_endpoint(self.API_BASE)
-            # If empty and fallback exists, try prod
+            # If issue, try prod
             if not data and self.FALLBACK_API_BASE:
                 data = try_endpoint(self.FALLBACK_API_BASE)
             return data
@@ -53,7 +56,7 @@ class RoadmapResourceBadgesView(TemplateView):
             return []
 
     def build_lookups(self, badges_data, resources_data):
-        # Quick lookups for badges and resources
+        # lookups for badges and resources
         badge_lookup = {
             str(badge.get('id') or badge.get('badge_id')): badge.get('name', 'Unknown Badge')
             for badge in badges_data if badge.get('id') or badge.get('badge_id')
@@ -150,13 +153,13 @@ class RoadmapResourceBadgesView(TemplateView):
         #     'fallback_available': bool(self.FALLBACK_API_BASE),
         # }
 
-        # Fetch all data in parallel
+        # Fetch all data
         endpoints = ['roadmaps', 'badges', 'resources', 'resource_roadmap_badges']
         roadmaps_data, badges_data, resources_data, resource_roadmap_badges_data = [
             self.fetch_api_data(endpoint) for endpoint in endpoints
         ]
 
-        # Build roadmaps dropdown
+        # Build roadmaps tabs
         roadmaps = [{
             'roadmap_id': rm.get('roadmap_id') or rm.get('id'),
             'name': rm.get('name', 'Unknown Roadmap')
@@ -180,7 +183,7 @@ class RoadmapResourceBadgesView(TemplateView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        # Redirect to default roadmap if none selected
+        # Default roadmap
         if not request.GET.get('roadmap'):
             return redirect(f'{request.path}?roadmap={self.DEFAULT_ROADMAP}')
         return super().dispatch(request, *args, **kwargs)
