@@ -74,9 +74,9 @@ If there are Resources with no badges, those counts are listed below resources t
         <table class="table table-bordered table-hover table-sm">
             <thead class="table-dark">
                 <tr>
-                    <th rowspan="2" class="text-nowrap" style="min-width: 180px;">Resource ID</th>
-                    <th rowspan="2" style="min-width: 180px;">Resource Name</th>
-                    <th colspan="{{ status_columns|length }}" class="text-center">Badge Status</th>
+                    <th rowspan="2" class="text-center" style="width: 25%;">Resource ID</th>
+                    <th rowspan="2" class="text-center" style="width: 25%;">Resource Name</th>
+                    <th colspan="{{ status_columns|length }}" class="text-center" style="width: 50%;">Badge Status</th>
                 </tr>
                 <tr>
                     {% for status in status_columns %}
@@ -87,8 +87,8 @@ If there are Resources with no badges, those counts are listed below resources t
             <tbody>
                 {% for resource_id, resource_data in pivot_data.items %}
                 <tr>
-                    <td class="text-nowrap fs-5"><strong>{{ resource_data.resource_info.info_resourceid|default:resource_id }}</strong></td>
-                    <td class="fs-5">{{ resource_data.resource_info.resource_descriptive_name|default:"Unknown Resource" }}</td>
+                    <td class="text-center fs-5">{{ resource_data.resource_info.info_resourceid|default:resource_id }}</td>
+                    <td class="text-center fs-5"><strong>{{ resource_data.resource_info.resource_descriptive_name|default:"Unknown Resource" }}</strong></td>
 
                     {% for status in status_columns %}
                     <td class="text-center">
@@ -140,17 +140,17 @@ If there are Resources with no badges, those counts are listed below resources t
             <table class="table table-bordered table-sm">
                 <thead class="table-warning">
                     <tr>
-                        <th class="text-nowrap">Resource ID</th>
-                        <th>Resource Name</th>
+                        <th class="text-center"></th>Resource ID</th>
+                        <th class="text-center">Resource Name</th>
                         <th class="text-center">Badge Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for resource in resources_without_badges.list %}
                     <tr>
-                        <td class="text-nowrap fs-5"><strong>{{ resource.info_resourceid }}</strong></td>
-                        <td class="fs-5">{{ resource.resource_descriptive_name|default:"Unknown Resource" }}</td>
-                        <td class="text-center text-muted">No badges assigned</td>
+                        <td class="text-center">{{ resource.info_resourceid }}</td>
+                        <td class="text-center fs-5"><strong>{{ resource.resource_descriptive_name|default:"Unknown Resource" }}</strong></td>
+                        <td class="text-center">No Badges</td>
                     </tr>
                     {% endfor %}
                 </tbody>
