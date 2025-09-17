@@ -206,6 +206,7 @@ if SETTINGS_MODE == 'SERVER':
     ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/cilogon/login/'
     LOGIN_URL = '/accounts/cilogon/login/'
     LOGIN_REDIRECT_URL = '/'
+    SOCIALACCOUNT_QUERY_EMAIL = True
 
     INSTALLED_APPS += (
         'corsheaders',
@@ -379,6 +380,7 @@ if SETTINGS_MODE == 'SERVER':
         'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'cilogon_tokenauth.auth.CITokenAuthentication',
+            'rest_framework.authentication.SessionAuthentication'
         ],
     }
 
