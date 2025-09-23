@@ -32,12 +32,6 @@
         </li>
 
         <li class="nav-item">
-        {% if page == 'roadmap-pivot' %}<a class="nav-link active" aria-current="page" href="#">
-        {% else %}<a class="nav-link" href="{% url 'roadmap-pivot' %}" target="_blank">
-        {% endif %}Resource Badge Status by Roadmap</a>
-        </li>
-
-        <li class="nav-item">
         {% if page == 'redoc' %}<a class="nav-link active" aria-current="page" href="#">
         {% else %}<a class="nav-link" href="{% url 'redoc' %}" target="_blank">
         {% endif %}API Redoc</a>

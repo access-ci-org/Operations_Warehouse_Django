@@ -4,35 +4,15 @@
 {% block title %}Resource Badge Status by Roadmap{% endblock %}
 
 {% block content %}
-<style>
-.badge-row-alt1 { background-color: #fff4c6; }
-.badge-row-alt2 { background-color: #ffffff; }
-.badge-detail { font-size: 14px; } 
-</style>
 
 <div class="container-fluid px-5">
 
 <div class="text-center mb-4">
     <h2>Resource Badge Status by Roadmap</h2>
-    <p class="mb-0"><strong>This view shows badge verification status for all resources organized by roadmap</strong></p>
+    <p class="mb-0"><strong>Badge verification status for all resources organized by roadmap</strong> <br />
+    Required Badge: <span class="text-danger">*</span></p>
 </div>
 
-
-<!--
-{% if debug_info %}
-<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
-    <h4>Debug Info:</h4>
-    <ul>
-        <li><strong>Database:</strong> {{ debug_info.database_name }} @ {{ debug_info.database_host }}:{{ debug_info.database_port }}</li>
-        <li><strong>API Base:</strong> {{ debug_info.api_base_used }}</li>
-        <li><strong>Fallback Available:</strong> {{ debug_info.fallback_available }}</li>
-    </ul>
-</div>
-{% endif %}
--->
-
-<h4 class="text-center mb-3">Any text in <span class="text-danger">red</span> denote comments or relevant notes. <br />
-If there are Resources with no badges, those counts are listed below resources that do have badges.</h4>
 <ul class="nav nav-tabs justify-content-center mb-4">
 {% for roadmap in roadmaps %}
     <li class="nav-item">
@@ -46,122 +26,149 @@ If there are Resources with no badges, those counts are listed below resources t
 {% endfor %}
 </ul>
 
-{% if selected_roadmap %}
-    <!-- Status Summary Cards -->
-    <div class="row mb-4 justify-content-center">
-        {% for status in status_columns %}
-        <div class="col-auto">
-            <div class="card text-center {% if status == 'verified' %}border-success{% elif status == 'planned' %}border-info{% endif %}">
-                <div class="card-body py-2 px-3">
-                    <h6 class="card-title mb-1">{{ status|title }}</h6>
-                    <p class="card-text h4 mb-0 {% if status == 'verified' %}text-success{% elif status == 'planned' %}text-info{% endif %}">{{ status_counts|get_item:status|default:0 }}</p>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-        <div class="col-auto">
-            <div class="card text-center border-warning">
-                <div class="card-body py-2 px-3">
-                    <h6 class="card-title mb-1">No Badges</h6>
-                    <p class="card-text h4 mb-0 text-warning">{{ resources_without_badges.count }}</p>
-                </div>
-            </div>
-        </div>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover table-sm">
+    <thead>
+        <tr>
+        <th class="text-center">Badge Not Planned</th>
+        <th class="text-center">Badge is Planned <br />Not yet functional</th>
+        <th class="text-center">Badge is Verified</th>
+        <th class="text-center">Issue with Badge <br />Not yet functional</th>
+        <th class="text-center">Badge is Retired <br />Not functional</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+        <td class="text-center">-</td>
+        <td class="text-center fs-5" style="color: gray;">&#x2714;</td>
+        <td class="text-center text-success fs-4">&#x2714;</td>
+        <td class="text-center fs-5" style="color: gray;">&#x2714;</td>
+        <td class="text-center">-</td>
+        </tr>
+    </tbody>
+    </table>
+</div>
+
+{% if is_preproduction_tab %}
+    <div class="alert alert-info">
+        <h4><i class="fas fa-info-circle"></i> Pre-Production Resources</h4>
+        <p class="mb-0">These resources are not yet in production status (pre-production, coming soon, etc.).</p>
     </div>
 
-    <!-- Resource Badge Status Pivot Table -->
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th rowspan="2" class="text-center" style="width: 25%;">Resource ID</th>
-                    <th rowspan="2" class="text-center" style="width: 25%;">Resource Name</th>
-                    <th colspan="{{ status_columns|length }}" class="text-center" style="width: 50%;">Badge Status</th>
-                </tr>
-                <tr>
-                    {% for status in status_columns %}
-                    <th class="text-center" style="min-width: 100px;">{{ status|title }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for resource_id, resource_data in pivot_data.items %}
-                <tr>
-                    <td class="text-center fs-5">{{ resource_data.resource_info.info_resourceid|default:resource_id }}</td>
-                    <td class="text-center fs-5"><strong>{{ resource_data.resource_info.resource_descriptive_name|default:"Unknown Resource" }}</strong></td>
-
-                    {% for status in status_columns %}
-                    <td class="text-center">
-                        {% with badges=resource_data.status_data|get_item:status %}
-                        {% if badges %}
-                            <span class="badge {% if status == 'verified' %}bg-success{% elif status == 'planned' %}bg-info{% else %}bg-primary{% endif %} position-relative" 
-                                  title="{% for badge in badges %}{{ badge.badge.name }}{% if badge.comment %} ({{ badge.comment }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}">
-                                {{ badges|length }}
-                                {% if badges.0.comment %}
-                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                                    <span class="visually-hidden">Has comments</span>
-                                </span>
-                                {% endif %}
-                            </span>
-                            <div class="badge-detail mt-1">
-                                {% for badge in badges %}
-                                <div class="{% if badge.comment %}text-danger{% else %}text-dark{% endif %} px-2 py-1 mb-1 rounded {% cycle 'badge-row-alt1' 'badge-row-alt2' %}" 
-                                     title="{% if badge.comment %}{{ badge.comment }}{% endif %}">
-                                    {{ badge.badge.name }}
-                                    {% if badge.status_updated_by %}
-                                    <br><small>by {{ badge.status_updated_by }}</small>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
-                        {% endwith %}
-                    </td>
-                    {% endfor %}
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="{{ status_columns|length|add:2 }}" class="text-center text-muted py-4">
-                        No resources with badges found for this roadmap
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Resources with No Badges -->
-    {% if resources_without_badges.list %}
-    <div class="mt-5">
-        <h4 class="text-center mb-3">Resources with No Badges in This Roadmap</h4>
+    {% if preproduction_resources %}
         <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-                <thead class="table-warning">
+            <table class="table table-bordered table-hover table-sm">
+                <thead class="table-primary">
                     <tr>
-                        <th class="text-center"></th>Resource ID</th>
-                        <th class="text-center">Resource Name</th>
-                        <th class="text-center">Badge Status</th>
+                        <th class="text-center" style="width: 50%;">Resource</th>
+                        <th class="text-center" style="width: 25%;">Status</th>
+                        <th class="text-center" style="width: 25%;">Status Begin</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for resource in resources_without_badges.list %}
-                    <tr>
-                        <td class="text-center">{{ resource.info_resourceid }}</td>
-                        <td class="text-center fs-5"><strong>{{ resource.resource_descriptive_name|default:"Unknown Resource" }}</strong></td>
-                        <td class="text-center">No Badges</td>
+                    {% for resource in preproduction_resources %}
+                    <tr class="{% if resource.fixed_status == 'pre-production' %}table-info{% elif resource.fixed_status == 'coming soon' %}table-warning{% endif %}">
+                        <td class="text-center fs-5">
+                            <strong>{{ resource.resource_info.resource_descriptive_name }}</strong>
+                            <br/>
+                            <small>{{ resource.resource_info.info_resourceid }}</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {% if resource.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
+                                {{ resource.fixed_status|title }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{ resource.latest_status_begin|date:"M d, Y"|default:"—" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    {% else %}
+        <div class="alert alert-success">
+            <h4><i class="fas fa-check-circle"></i> No Pre-Production Resources</h4>
+            <p class="mb-0">All resources are either in production status or have moved beyond pre-production.</p>
+        </div>
+    {% endif %}
+
+{% elif selected_roadmap %}
+
+    {% if required_percentage > 0 %}
+    <div class="text-center mb-4">
+        <div class="card d-inline-block">
+            <div class="card-body py-2 px-4">
+                <h2 class="mb-0">
+                    <span class="text-primary-emphasis">{{ required_percentage }}</span><strong>%</strong> of required badges verified
+                </h2>
+            </div>
+        </div>
     </div>
     {% endif %}
 
+    {% if pivot_data %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm">
+                <thead class="table-warning">
+                    <tr>
+                        <th class="text-center" style="width: 15%;">Resource</th>
+                        <th class="text-center" style="width: 8%;">Fixed Status</th>
+                        <th class="text-center" style="width: 10%;">Status Begin</th>
+
+                        <!-- ALL badges -->
+                        {% for badge in badges_list %}
+                        <th class="text-center" style="min-width: 80px; max-width: 130px;">
+                            <div style="word-break: normal; overflow-wrap: break-word; hyphens: auto;">
+                                {{ badge.badge.name }}
+                                {% if badge.required %}<span class="text-danger">*</span>{% endif %}
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for resource_id, resource_data in pivot_data.items %}
+                    <tr>
+                        <td class="text-center fs-5">
+                            <strong>{{ resource_data.resource_info.resource_descriptive_name }}</strong><br/>
+                            <small>{{ resource_data.resource_info.info_resourceid }}</small>
+                        </td>
+
+                        <td class="text-center">{{ resource_data.fixed_status|default:"—" }}</td>
+                        <td class="text-center">{{ resource_data.latest_status_begin|date:"M d, Y"|default:"—" }}</td>
+
+                        <!-- ALL badge columns -->
+                        {% for badge in badges_list %}
+                        {% with badge_status=resource_data.badge_statuses|get_item:badge.id %}
+                        <td class="text-center{% if badge_status == 'verified' %} text-success fs-4{% elif badge_status == 'planned' or badge_status == 'verification_failed' %} fs-5{% elif badge_status %} table-warning{% endif %}"
+                           {% if badge_status == 'planned' or badge_status == 'verification_failed' %}style="color: gray;"{% endif %}>
+
+
+                            {% if badge_status == 'verified' %}&#x2714;
+                            {% elif badge_status == 'planned' %}&#x2714;
+                            {% elif badge_status == 'verification_failed' %}&#x2714;
+                            {% elif badge_status == 'retired' %}-
+                            {% elif badge_status %}<!-- Other issues -->
+                            {% else %}<span class="text-muted">-</span>
+                            {% endif %}
+
+                        </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> No Resources Found</h4>
+            <p class="mb-0">No resources are associated with this roadmap or no resources have badge statuses assigned.</p>
+        </div>
+    {% endif %}
 {% else %}
     <div class="alert alert-info">
-        <h4>No Roadmap Selected</h4>
+        <h4><i class="fas fa-info-circle"></i> No Roadmap Selected</h4>
         <p class="mb-0">Please select a roadmap from the tabs above to view the resource badge status.</p>
     </div>
 {% endif %}
