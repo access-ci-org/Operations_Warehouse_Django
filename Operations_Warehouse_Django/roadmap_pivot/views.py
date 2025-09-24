@@ -337,7 +337,7 @@ class RoadmapResourceBadgesView(TemplateView):
             # Convert to list
             badges_list = list(seen_badges.values())
 
-            # DEBUG: Check what we're getting
+            # DEBUG: 
             # print("=== DEBUG: Badges List ===")
             # for badge in badges_list[:5]:  # Show first 5
             #     print(f"Badge: {badge['badge']['name']}, Required: {badge.get('required', False)}")
