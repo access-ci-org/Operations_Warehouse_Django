@@ -44,6 +44,9 @@ urlpatterns = [
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/enrollments/',
           Resource_Roadmap_Enrollments_v1.as_view(), name='resource-id-roadmap-id-enrollments-v1'),
 
+     path(r'v1/resource_roadmap_badge_summary/',
+          Resource_Roadmap_Badges_Status_Summary_v1.as_view(), name='resource-id-roadmap-id-badge-id-status-summary-v1'),
+
      path(r'v1/resource_roadmap_badges/',
           Resource_Roadmap_Badges_Status_v1.as_view(), name='resource-id-roadmap-id-badge-id-status-v1'),
 
