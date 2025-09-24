@@ -309,6 +309,7 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
     '''
 
     short_name = serializers.SerializerMethodField()
+    organization_id = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
@@ -319,12 +320,18 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
         model = CiderInfrastructure
         fields = ('info_resourceid', 'cider_resource_id', 'cider_type', 'resource_description',
                     'latest_status', 'short_name', 'resource_descriptive_name',
-                    'organization_name', 'organization_url', 'organization_logo_url',
+                    'organization_id', 'organization_name', 'organization_url', 'organization_logo_url',
                     'user_guide_url', 'roadmaps',)
     
     def get_short_name(self, object) -> str:
         try:
             return str(object.other_attributes['short_name']) or None
+        except:
+            return None
+
+    def get_organization_id(self, obj) -> str:
+        try:
+            return obj.other_attributes['organizations'][0]['organization_id']
         except:
             return None
 
