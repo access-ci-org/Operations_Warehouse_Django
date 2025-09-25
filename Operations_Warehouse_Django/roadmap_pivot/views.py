@@ -114,14 +114,6 @@ class RoadmapResourceBadgesView(TemplateView):
         pivot_data = dict(sorted(pivot_data.items(), 
                                key=lambda x: x[1]['resource_info'].get('resource_descriptive_name', '').lower()))
 
-        # Count badges per status (only for valid resources)
-        valid_roadmap_badges = [item for item in roadmap_badges 
-                               if str(item.get('info_resourceid')) in valid_resource_ids]
-
-        status_columns = sorted({item.get('status') for item in valid_roadmap_badges if item.get('status')})
-        status_counts = {status: len([item for item in valid_roadmap_badges if item.get('status') == status])
-                        for status in status_columns}
-
         # Find resources without any badges (only from valid resources)
         all_valid_resource_ids = {str(res.get('info_resourceid') or res.get('resource_id'))
                                  for res in resources_data 
@@ -133,7 +125,7 @@ class RoadmapResourceBadgesView(TemplateView):
             if resource_id in resource_lookup
         ]
 
-        return pivot_data, status_counts, resources_without_badges, status_columns
+        return pivot_data, resources_without_badges
 
     def get_preproduction_resources(self, resources_data, resource_roadmap_badges_data):
         """Get all pre-production resources (pre-production, coming soon, etc.) - excludes post-production"""
@@ -231,24 +223,11 @@ class RoadmapResourceBadgesView(TemplateView):
         context = super().get_context_data(**kwargs)
         selected_roadmap = self.request.GET.get('roadmap')
 
-        # Fetch with filtering - only 4 APIs instead of 5
+        # Always fetch roadmaps & resources (needed by both tabs)
         roadmaps_data = self.fetch_api_data('roadmaps')
-        badges_data = self.fetch_api_data('badges')
-
-        # Filter resources to only active/current (exclude retired)
         resources_data = self.fetch_api_data('resources')
 
-        # Filter resource_roadmap_badges to selected roadmap if possible
-        if selected_roadmap and selected_roadmap != 'preproduction':
-            try:
-                roadmap_int = int(selected_roadmap)
-                resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges', {'roadmap_id': roadmap_int})
-            except (ValueError, TypeError):
-                resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
-        else:
-            resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
-
-        # Build roadmaps tabs + Pre-Production tab
+        # Build roadmaps tabs & Pre-Production tab
         roadmaps = [{
             'roadmap_id': rm.get('roadmap_id') or rm.get('id'),
             'name': rm.get('name', 'Unknown Roadmap')
@@ -260,12 +239,10 @@ class RoadmapResourceBadgesView(TemplateView):
             'name': 'Pre-Production Resources'
         })
 
-        # Process everything
-        badge_lookup, resource_lookup = self.build_lookups(badges_data, resources_data)
-
-        # Handle Pre-Production tab
+        # CONDITIONAL API LOADING - This is the key optimization
         if selected_roadmap == 'preproduction':
-            preproduction_resources = self.get_preproduction_resources(resources_data, resource_roadmap_badges_data)
+            # Pre-production: Only needs resources_data (already fetched)
+            preproduction_resources = self.get_preproduction_resources(resources_data, [])
             context.update({
                 'roadmaps': roadmaps,
                 'selected_roadmap': selected_roadmap,
@@ -275,9 +252,26 @@ class RoadmapResourceBadgesView(TemplateView):
                 'badges_list': [],
             })
         else:
-            pivot_data = self.process_roadmap_data(
+            # Regular roadmaps: Fetch badges and badge data only when needed
+            badges_data = self.fetch_api_data('badges')
+
+            # Filter resource_roadmap_badges to selected roadmap if possible
+            if selected_roadmap:
+                try:
+                    roadmap_int = int(selected_roadmap)
+                    resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges', {'roadmap_id': roadmap_int})
+                except (ValueError, TypeError):
+                    resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
+            else:
+                resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
+
+            # Process everything (only for regular roadmaps)
+            badge_lookup, resource_lookup = self.build_lookups(badges_data, resources_data)
+
+            pivot_data, resources_without_badges = self.process_roadmap_data(
                 selected_roadmap, resource_roadmap_badges_data, badge_lookup, resource_lookup, resources_data
-            )[0]
+            )
+
 
             # badges_list from badges_data
             try:
@@ -340,6 +334,7 @@ class RoadmapResourceBadgesView(TemplateView):
             })
 
         return context
+
 
     def dispatch(self, request, *args, **kwargs):
         # Default roadmap

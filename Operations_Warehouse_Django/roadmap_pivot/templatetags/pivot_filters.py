@@ -10,11 +10,6 @@ def get_item(dictionary, key):
 
 
 @register.filter
-def badge_count_for_status(resource_data, status):
-    """Get count of badges for given status"""
-    return len(resource_data.get(status, []))
-
-@register.filter
 def badge_status_symbol(status):
     """Convert badge status to legend symbol"""
     if status == 'verified':

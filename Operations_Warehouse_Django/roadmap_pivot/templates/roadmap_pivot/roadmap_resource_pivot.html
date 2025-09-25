@@ -127,7 +127,7 @@
                         {% for badge in badges_list %}
                         <th class="text-center" style="min-width: 80px; max-width: 130px;">
                             <div style="word-break: normal; overflow-wrap: break-word; hyphens: auto;">
-                                {% if badge.required %}<span class="text-danger">*</span>{% endif %}
+                                {% if badge.required %}<span class="text-danger">*</span>{% endif %} <br />
                                 {{ badge.badge.name|trim_access_prefix }}
                             </div>
                         </th>
