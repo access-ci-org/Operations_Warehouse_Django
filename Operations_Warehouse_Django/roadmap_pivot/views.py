@@ -3,7 +3,10 @@ from django.views.generic import TemplateView
 from django.shortcuts import redirect
 import requests
 from datetime import datetime
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
+@method_decorator(cache_page(60 * 5), name='get')  # Caching
 class RoadmapResourceBadgesView(TemplateView):
     template_name = 'roadmap_pivot/roadmap_resource_pivot.html'
     DEFAULT_ROADMAP = 67
@@ -272,9 +275,9 @@ class RoadmapResourceBadgesView(TemplateView):
                 'badges_list': [],
             })
         else:
-            pivot_data, _, _, _ = self.process_roadmap_data(
+            pivot_data = self.process_roadmap_data(
                 selected_roadmap, resource_roadmap_badges_data, badge_lookup, resource_lookup, resources_data
-            )
+            )[0]
 
             # badges_list from badges_data
             try:
