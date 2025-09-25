@@ -23,22 +23,20 @@ class RoadmapResourceBadgesView(TemplateView):
                             else f"http://localhost:8000{base}/integration_badges/v1")
         return self._api_base
 
-    def fetch_api_data(self, endpoint):
-        # Try production first for complete data, then local as fallback
+    def fetch_api_data(self, endpoint, params=None):
+        """Fetch API data with optional query parameters for filtering"""
         def try_endpoint(base_url):
-            response = requests.get(f"{base_url}/{endpoint}/", timeout=30)
+            url = f"{base_url}/{endpoint}/"
+            response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             return response.json().get('results', [])
 
-        # production API first for complete dataset - can comment out this production try block to only use local dev
         production_api = "https://operations-api.access-ci.org/wh2/integration_badges/v1"
 
-        # Skip production for local testing - commment out this try block out test local
         try:
             data = try_endpoint(production_api)
             return data
         except Exception:
-            # Fallback to local if production fails
             try:
                 data = try_endpoint(self.API_BASE)
                 return data
@@ -68,24 +66,24 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Filter to selected roadmap only
         roadmap_badges = [item for item in resource_roadmap_badges_data 
-                        if item.get('roadmap_id') == selected_roadmap_int]
+                         if item.get('roadmap_id') == selected_roadmap_int]
 
         # Get resource IDs that exist in BOTH badge data AND resources API
         resource_ids_with_badges = {str(item.get('info_resourceid')) for item in roadmap_badges 
-                                if item.get('info_resourceid')}
+                                  if item.get('info_resourceid')}
 
         # FILTER: Only keep resources that exist in the resources API
         valid_resource_ids = {resource_id for resource_id in resource_ids_with_badges 
-                            if resource_id in resource_lookup}
+                             if resource_id in resource_lookup}
 
         # Build pivot table - only for valid resources
         pivot_data = {}
-        for resource_id in valid_resource_ids:  # Remove sorted() here
+        for resource_id in valid_resource_ids:
             resource_info = resource_lookup[resource_id]
 
             # Group badges by status for this resource
             resource_badges = [item for item in roadmap_badges 
-                            if str(item.get('info_resourceid')) == resource_id]
+                             if str(item.get('info_resourceid')) == resource_id]
 
             badge_statuses = {}
             for rb in resource_badges:
@@ -111,11 +109,11 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Sort pivot_data by resource_descriptive_name
         pivot_data = dict(sorted(pivot_data.items(), 
-                            key=lambda x: x[1]['resource_info'].get('resource_descriptive_name', '').lower()))
+                               key=lambda x: x[1]['resource_info'].get('resource_descriptive_name', '').lower()))
 
         # Count badges per status (only for valid resources)
         valid_roadmap_badges = [item for item in roadmap_badges 
-                            if str(item.get('info_resourceid')) in valid_resource_ids]
+                               if str(item.get('info_resourceid')) in valid_resource_ids]
 
         status_columns = sorted({item.get('status') for item in valid_roadmap_badges if item.get('status')})
         status_counts = {status: len([item for item in valid_roadmap_badges if item.get('status') == status])
@@ -123,8 +121,8 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Find resources without any badges (only from valid resources)
         all_valid_resource_ids = {str(res.get('info_resourceid') or res.get('resource_id'))
-                                for res in resources_data 
-                                if res.get('info_resourceid') or res.get('resource_id')}
+                                 for res in resources_data 
+                                 if res.get('info_resourceid') or res.get('resource_id')}
 
         resources_without_badges = [
             resource_lookup[resource_id]
@@ -133,7 +131,6 @@ class RoadmapResourceBadgesView(TemplateView):
         ]
 
         return pivot_data, status_counts, resources_without_badges, status_columns
-
 
     def get_preproduction_resources(self, resources_data, resource_roadmap_badges_data):
         """Get all pre-production resources (pre-production, coming soon, etc.) - excludes post-production"""
@@ -231,11 +228,22 @@ class RoadmapResourceBadgesView(TemplateView):
         context = super().get_context_data(**kwargs)
         selected_roadmap = self.request.GET.get('roadmap')
 
-        # Fetch everything
-        endpoints = ['roadmaps', 'badges', 'resources', 'resource_roadmap_badges']
-        roadmaps_data, badges_data, resources_data, resource_roadmap_badges_data = [
-            self.fetch_api_data(endpoint) for endpoint in endpoints
-        ]
+        # Fetch with filtering - only 4 APIs instead of 5
+        roadmaps_data = self.fetch_api_data('roadmaps')
+        badges_data = self.fetch_api_data('badges')
+
+        # Filter resources to only active/current (exclude retired)
+        resources_data = self.fetch_api_data('resources')
+
+        # Filter resource_roadmap_badges to selected roadmap if possible
+        if selected_roadmap and selected_roadmap != 'preproduction':
+            try:
+                roadmap_int = int(selected_roadmap)
+                resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges', {'roadmap_id': roadmap_int})
+            except (ValueError, TypeError):
+                resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
+        else:
+            resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
 
         # Build roadmaps tabs + Pre-Production tab
         roadmaps = [{
