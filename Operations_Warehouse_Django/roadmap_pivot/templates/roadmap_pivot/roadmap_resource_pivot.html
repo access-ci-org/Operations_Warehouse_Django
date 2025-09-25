@@ -1,7 +1,7 @@
 {% extends "base_detail.html" %}
 {% load pivot_filters %}
 
-{% block title %}Resource Badge Status by Roadmap{% endblock %}
+{% block title %}ACCESS Resource Badge Status by Roadmap{% endblock %}
 
 {% block content %}
 
@@ -9,8 +9,7 @@
 
 <div class="text-center mb-4">
     <h2>Resource Badge Status by Roadmap</h2>
-    <p class="mb-0"><strong>Badge verification status for all resources organized by roadmap</strong> <br />
-    Required Badge: <span class="text-danger">*</span></p>
+    <p class="mb-0"><strong>Badge verification status for all resources organized by roadmap</strong></p>
 </div>
 
 <ul class="nav nav-tabs justify-content-center mb-4">
@@ -26,28 +25,36 @@
 {% endfor %}
 </ul>
 
-<div class="table-responsive">
-    <table class="table table-bordered table-hover table-sm">
-    <thead>
-        <tr>
-        <th class="text-center">Badge Not Planned</th>
-        <th class="text-center">Badge is Planned <br />Not yet functional</th>
-        <th class="text-center">Badge is Verified</th>
-        <th class="text-center">Issue with Badge <br />Not yet functional</th>
-        <th class="text-center">Badge is Retired <br />Not functional</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-        <td class="text-center">-</td>
-        <td class="text-center fs-5" style="color: gray;">&#x2714;</td>
-        <td class="text-center text-success fs-4">&#x2714;</td>
-        <td class="text-center fs-5" style="color: gray;">&#x2714;</td>
-        <td class="text-center">-</td>
-        </tr>
-    </tbody>
+
+<div class="table-responsive d-flex justify-content-center">
+    <table class="table table-bordered table-sm" style="width: auto; max-width: 600px;">
+        <thead class="table-warning">
+            <tr>
+                <th class="text-center fs-5">Legend</th>
+                <th class="text-center fs-5">Symbol</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="text-center fs-5">Verified and functional</td>  
+                <td class="text-center text-success fs-5">&#x2714;</td> 
+            </tr>
+            <tr>
+                <td class="text-center fs-5">Planned but not yet functional</td>
+                <td class="text-center fs-6" style="color: gray;">&#x2714;</td>
+            </tr>
+            <tr>
+                <td class="text-center fs-5">Not Planned</td>
+                <td class="text-center">-</td>
+            </tr>
+            <tr>
+                <td class="text-center fs-5">Required</td>
+                <td class="text-center"><span class="text-danger">*</span></td>
+            </tr>
+        </tbody>
     </table>
 </div>
+
 
 {% if is_preproduction_tab %}
     <div class="alert alert-info">
@@ -58,17 +65,18 @@
     {% if preproduction_resources %}
         <div class="table-responsive">
             <table class="table table-bordered table-hover table-sm">
-                <thead class="table-primary">
+                <thead class="table-warning"">
                     <tr>
                         <th class="text-center" style="width: 50%;">Resource</th>
                         <th class="text-center" style="width: 25%;">Status</th>
                         <th class="text-center" style="width: 25%;">Status Begin</th>
                     </tr>
                 </thead>
+                
                 <tbody>
                     {% for resource in preproduction_resources %}
-                    <tr class="{% if resource.fixed_status == 'pre-production' %}table-info{% elif resource.fixed_status == 'coming soon' %}table-warning{% endif %}">
-                        <td class="text-center fs-5">
+                    <tr>
+                        <td class="text-center">
                             <strong>{{ resource.resource_info.resource_descriptive_name }}</strong>
                             <br/>
                             <small>{{ resource.resource_info.info_resourceid }}</small>
@@ -82,6 +90,7 @@
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
         </div>
     {% else %}
@@ -108,18 +117,18 @@
     {% if pivot_data %}
         <div class="table-responsive">
             <table class="table table-bordered table-hover table-sm">
+
                 <thead class="table-warning">
                     <tr>
-                        <th class="text-center" style="width: 15%;">Resource</th>
-                        <th class="text-center" style="width: 8%;">Fixed Status</th>
-                        <th class="text-center" style="width: 10%;">Status Begin</th>
+                        <th class="text-center" style="width: 250px;">ACCESS Resource</th>
+                        <th class="text-center" style="width: 120px;">Status</th>
 
-                        <!-- ALL badges -->
+                        <!-- ALL badges with ACCESS prefix trimmed -->
                         {% for badge in badges_list %}
                         <th class="text-center" style="min-width: 80px; max-width: 130px;">
                             <div style="word-break: normal; overflow-wrap: break-word; hyphens: auto;">
-                                {{ badge.badge.name }}
                                 {% if badge.required %}<span class="text-danger">*</span>{% endif %}
+                                {{ badge.badge.name|trim_access_prefix }}
                             </div>
                         </th>
                         {% endfor %}
@@ -129,35 +138,29 @@
                 <tbody>
                     {% for resource_id, resource_data in pivot_data.items %}
                     <tr>
-                        <td class="text-center fs-5">
+                        <td class="text-center" style="width: 250px;">
                             <strong>{{ resource_data.resource_info.resource_descriptive_name }}</strong><br/>
                             <small>{{ resource_data.resource_info.info_resourceid }}</small>
                         </td>
 
-                        <td class="text-center">{{ resource_data.fixed_status|default:"—" }}</td>
-                        <td class="text-center">{{ resource_data.latest_status_begin|date:"M d, Y"|default:"—" }}</td>
+                        <td class="text-center" style="width: 120px;">{{ resource_data.fixed_status|default:"—" }}
+                            <br /> --- <br />
+                            {{ resource_data.latest_status_begin|date:"M d, Y"|default:"—" }}
+                        </td>
 
                         <!-- ALL badge columns -->
                         {% for badge in badges_list %}
                         {% with badge_status=resource_data.badge_statuses|get_item:badge.id %}
-                        <td class="text-center{% if badge_status == 'verified' %} text-success fs-4{% elif badge_status == 'planned' or badge_status == 'verification_failed' %} fs-5{% elif badge_status %} table-warning{% endif %}"
-                           {% if badge_status == 'planned' or badge_status == 'verification_failed' %}style="color: gray;"{% endif %}>
-
-
-                            {% if badge_status == 'verified' %}&#x2714;
-                            {% elif badge_status == 'planned' %}&#x2714;
-                            {% elif badge_status == 'verification_failed' %}&#x2714;
-                            {% elif badge_status == 'retired' %}-
-                            {% elif badge_status %}<!-- Other issues -->
-                            {% else %}<span class="text-muted">-</span>
-                            {% endif %}
-
+                        <td class="text-center">
+                            {{ badge_status|badge_status_symbol|safe }}
                         </td>
                         {% endwith %}
                         {% endfor %}
                     </tr>
                     {% endfor %}
                 </tbody>
+
+
             </table>
         </div>
     {% else %}

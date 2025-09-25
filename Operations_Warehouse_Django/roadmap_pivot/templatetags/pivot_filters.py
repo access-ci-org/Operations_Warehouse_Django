@@ -13,3 +13,21 @@ def get_item(dictionary, key):
 def badge_count_for_status(resource_data, status):
     """Get count of badges for given status"""
     return len(resource_data.get(status, []))
+
+@register.filter
+def badge_status_symbol(status):
+    """Convert badge status to legend symbol"""
+    if status == 'verified':
+        return '<span class="text-success fs-4">&#x2714;</span>'  # Green check - Functional
+    elif status == 'planned':
+        return '<span class="fs-5" style="color: gray;">&#x2714;</span>'  # Gray check - Planned
+    else:
+        return '-'  # Dash - Not Planned (None, retired, verification_failed, etc.) - Not functional
+
+# trimming out 'ACCESS ' from the bage name if present
+@register.filter
+def trim_access_prefix(badge_name):
+    """Remove 'ACCESS ' prefix from badge name if present"""
+    if badge_name and badge_name.startswith('ACCESS '):
+        return badge_name[7:] 
+    return badge_name
