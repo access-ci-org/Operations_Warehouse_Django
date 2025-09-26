@@ -1,3 +1,9 @@
+V3.66.0 2025-09-26 jlambertson
+  - Adding new view for RP badge status
+
+v3.65.0 2025-09-22 JP
+  - Include missing organization_id in integration_badges/Resource_Full_Serializer
+  
 v3.65.0 2025-09-22 JP
   - Include missing organization_id in integration_badges/Resource_Full_Serializer
 
