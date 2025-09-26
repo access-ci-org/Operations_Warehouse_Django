@@ -1,3 +1,6 @@
+v3.xx.0 2025-09-26 JP
+  - Add organization_id query to /wh2/integration_badges/v1/resources/
+
 v3.66.0 2025-09-26 jlambertson
   - Adding new view for RP badge status
 

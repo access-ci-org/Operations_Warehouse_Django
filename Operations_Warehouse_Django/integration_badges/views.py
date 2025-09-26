@@ -264,14 +264,27 @@ class Resources_Eligible_List_v1(GenericAPIView):
     serializer_class = CiderInfrastructure_Summary_Serializer
 
     @extend_schema(
-        responses=CiderInfrastructure_Summary_Serializer,
+        parameters=[
+            OpenApiParameter(
+                name='organization_id',
+                description='Organization ID',
+                type=int,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            )
+        ],
+        responses=CiderInfrastructure_Summary_Serializer
     )
     def get(self, request, format=None, **kwargs):
-        badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
-        # Will expand once more roadmaps with badges are rolled out
-        badging_types = ('Compute', 'Storage')
-
         resources = CiderInfrastructure.objects.filter(badging_filter)
+        organization_id = self.request.query_params.get('organization_id')
+        if organization_id:
+            try:
+                # resources = resources.filter(Q(other_attributes__organizations__0__organization_id=int(organization_id)))
+                resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+            except ValueError:
+                raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='organization_id is not numeric')
+            
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
