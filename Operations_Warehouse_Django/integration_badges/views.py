@@ -286,17 +286,14 @@ class Organizations_Eligible_List_v1(GenericAPIView):
     permission_classes = (ReadOnly,)
     authentication_classes = []
     renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
 
     def get(self, request, format=None, **kwargs):
-        # So the below would be fine if the ciderinfrastructure objects were filetered.
-        # organizations = CiderOrganizations.objects.filter(ciderinfrastructure__other_attributes__organizations__0__organization_id=F(organization_id)).distinct()
-        # other_attributes['organizations'][0]['organization_id']
 
         resources = CiderInfrastructure.objects.filter(badging_filter)
-        org_ids = resources.values_list('organizations__0__organization_id', flat=True).distinct()
-        orgs = CiderOrganizations.objects.filter(organization_id__in="org_ids")
+        org_ids = resources.values_list('other_attributes__organizations__0__organization_id', flat=True).distinct()
+        orgs = CiderOrganizations.objects.filter(organization_id__in=[ int(org_id) for org_id in org_ids])
 
-        # org_ids = resources..annotate(org_id = KeyTextTransform('organizations__0__organization_id', 'other_attributes', output_field=CharField())).values_list('organizations__0__organization_id', flat=True)
         serializer = self.serializer_class(orgs, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
