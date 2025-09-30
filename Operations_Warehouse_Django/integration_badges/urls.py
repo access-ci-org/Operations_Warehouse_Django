@@ -38,6 +38,9 @@ urlpatterns = [
      path(r'v1/resources/',
           Resources_Eligible_List_v1.as_view(), name='resources-eligible-list-v1'),
 
+     path(r'v1/organizations/',
+          Organizations_Eligible_List_v1.as_view(), name='organizations-eligible-list-v1'),
+
      path(r'v1/resource/<str:info_resourceid>/',
           Resource_Full_v1.as_view(), name='resource-id-full-v1'),
 
