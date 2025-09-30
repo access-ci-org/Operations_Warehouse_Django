@@ -275,6 +275,32 @@ class Resources_Eligible_List_v1(GenericAPIView):
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
+class Organizations_Eligible_List_v1(GenericAPIView):
+    '''
+    List of distinct organizations that have Integration eligible CiDeR
+    resources, which could be, are, or were integrated, but haven't been
+    retired
+
+    Based only on CiDeR since they may not have enrolled in a roadmap yet
+    '''
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
+    renderer_classes = (JSONRenderer,)
+
+    def get(self, request, format=None, **kwargs):
+        # So the below would be fine if the ciderinfrastructure objects were filetered.
+        # organizations = CiderOrganizations.objects.filter(ciderinfrastructure__other_attributes__organizations__0__organization_id=F(organization_id)).distinct()
+        # other_attributes['organizations'][0]['organization_id']
+
+        resources = CiderInfrastructure.objects.filter(badging_filter)
+        org_ids = resources.values_list('organizations__0__organization_id', flat=True).distinct()
+        orgs = CiderOrganizations.objects.filter(organization_id__in="org_ids")
+
+        # org_ids = resources..annotate(org_id = KeyTextTransform('organizations__0__organization_id', 'other_attributes', output_field=CharField())).values_list('organizations__0__organization_id', flat=True)
+        serializer = self.serializer_class(orgs, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
+
 
 class Resource_Full_v1(GenericAPIView):
     '''
