@@ -43,23 +43,20 @@ RESTORE_DIR="${APP_BASE}/dbrestore"
 
 # Process arguments
 if [ "$1" = "-l" ]; then
-	MODE='list'
-	FILTER=$2
+        MODE='list'
+        FILTER=$2
 else
-	MODE='retrieve'
-	FILTER=$1
+        MODE='retrieve'
+        FILTER=$1
 fi
 arrFILTER=(${FILTER//:/ })
 if [[ "$FILTER" == *":"* ]]; then
-	HOSTNAME=${arrFILTER[0]}
-	PATTERN=${arrFILTER[1]}
+        HOSTNAME=${arrFILTER[0]}
+        PATTERN=${arrFILTER[1]}
 else
-	HOSTNAME=$MY_HOSTNAME
-	PATTERN=${arrFILTER[0]}
+        HOSTNAME=$MY_HOSTNAME
+        PATTERN=${arrFILTER[0]}
 fi
-#echo "mode=$MODE"
-#echo "HOSTNAME=$HOSTNAME"
-#echo "PATTERN=$PATTERN"
 
 S3_BUCKET="s3://backup.operations.access-ci.org/operations-api.access-ci.org/rds.backup/"
 
@@ -77,55 +74,59 @@ IFS=$'\n' read -r -d '' -a my_array < <( aws s3 ls ${S3_BUCKET} --profile newbac
 
 length=${#my_array[@]}
 echo $length
-echo "last idex is " ${my_array[$length-1]}
+echo "last index is " ${my_array[$length-1]}
 match_array=()
 for filename in "${my_array[@]}"
 do
     # Ignore anything that doesn't match the pattern
     if [[ ! -z "$PATTERN" && "${filename}" != *"$PATTERN"* ]]; then
-		continue
+                continue
     else
         # Everything here matches the pattern
         if [[ ! -z "$PATTERN" ]]; then
-          #match_array=(${match_array[@]} ${filename})
           match_array+=(${filename})
         fi
    fi
 done
-        echo "matcharray is ${match_array[*]}" >&2
+echo "matcharray is ${match_array[*]}" >&2
 
 match_length=${#match_array[@]}
 for filename in "${match_array[@]}"
 do
     if [[ ! -z "$PATTERN" && "${filename}" != *"$PATTERN"* ]]; then
-		continue
-	fi
+                continue
+        fi
     if [ "$MODE" = "list" ]; then
         echo "Found -> ${S3_BUCKET}${filename}" >&2
-#    else
-#        if [[ ! -z "$PATTERN" ]]; then
-#          echo "Retrieved -> ${RESTORE_DIR}/${filename}" >&2
-#          aws s3 cp ${S3_BUCKET}${filename} ${RESTORE_DIR}/${filename} --profile newbackup
-#          cd ${RESTORE_DIR}
-#          gzip -d --stdout ${filename} >>django.dump.latest
-#        fi
     fi
 done
+
+# Function to decompress and handle errors
+decompress_backup() {
+    local filename=$1
+    echo "Decompressing ${filename}..." >&2
+    cd ${RESTORE_DIR}
+    if gzip -d --stdout ${filename} > django.dump.latest; then
+        echo "Successfully decompressed to django.dump.latest" >&2
+        ls -la django.dump.latest >&2
+    else
+        echo "ERROR: Failed to decompress ${filename}" >&2
+        return 1
+    fi
+}
 
 #Download only the most recent matching pattern
 if [[ ! -z "$PATTERN" && "$MODE" != "list" ]]; then
    echo "Retrieved -> ${RESTORE_DIR}/${match_array[$match_length-1]}" >&2
    aws s3 cp ${S3_BUCKET}${match_array[$match_length-1]} ${RESTORE_DIR}/${match_array[$match_length-1]} --profile newbackup
-   cd ${RESTORE_DIR}
-   gzip -d --stdout ${match_array[$match_length-1]} >>django.dump.latest
+   decompress_backup ${match_array[$match_length-1]}
 fi
 
 #If no pattern was given, only download the most recent
 if [[ -z "$PATTERN" && "$MODE" != "list" ]]; then
-   echo "Retrieved -> ${RESTORE_DIR}/${my_array[$length-1]}}" >&2
+   echo "Retrieved -> ${RESTORE_DIR}/${my_array[$length-1]}" >&2
    aws s3 cp ${S3_BUCKET}${my_array[$length-1]} ${RESTORE_DIR}/${my_array[$length-1]} --profile newbackup
-   cd ${RESTORE_DIR}
-   gzip -d --stdout ${my_array[$length-1]} >>django.dump.latest
+   decompress_backup ${my_array[$length-1]}
 fi
 
 echo ${ME} Done at `date +'%F_%T'`
