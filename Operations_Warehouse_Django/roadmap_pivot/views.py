@@ -1,3 +1,4 @@
+# used Claude 4 Code to assist in this code and verified against docs and other examples from the web. No inappropriate data was shared in the process
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
