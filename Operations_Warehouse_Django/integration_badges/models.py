@@ -27,6 +27,7 @@ class BadgeWorkflowStatus(models.TextChoices):
 class BadgeTaskWorkflowStatus(models.TextChoices):
     COMPLETED = "completed", "Completed"
     NOT_COMPLETED = "not-completed", "Not Completed"
+    ACTION_NEEDED = "action-needed", "Action Needed"
 
 
 class DatabaseFile(models.Model):

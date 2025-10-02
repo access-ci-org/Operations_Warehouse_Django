@@ -605,7 +605,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         if not updated_by:
             updated_by = get_current_username(request.user)
 
-        if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
+        if resource_badge.status in [BadgeWorkflowStatus.VERIFIED, BadgeWorkflowStatus.TASKS_COMPLETED] and badge_task_workflow_status != BadgeTaskWorkflowStatus.ACTION_NEEDED:
             workflow = Resource_Badge_Workflow(
                 info_resourceid=info_resourceid,
                 roadmap=roadmap,
