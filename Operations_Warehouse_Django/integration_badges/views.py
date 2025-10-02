@@ -265,15 +265,60 @@ class Resources_Eligible_List_v1(GenericAPIView):
 
     @extend_schema(
         responses=CiderInfrastructure_Summary_Serializer,
+        parameters=[
+            OpenApiParameter(
+                name='organization_id',
+                description='Organization ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            )
+        ]
     )
     def get(self, request, format=None, **kwargs):
-        badging_statuses = ('coming soon', 'friendly', 'pre-production', 'production', 'post-production')
-        # Will expand once more roadmaps with badges are rolled out
-        badging_types = ('Compute', 'Storage')
+        organization_id = self.request.query_params.get('organization_id')
+        info_resourceid = self.request.query_params.get('info_resourceid')
 
         resources = CiderInfrastructure.objects.filter(badging_filter)
+
+        if organization_id is not None:
+            resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+
+        if info_resourceid is not None:
+            resources = resources.filter(info_resourceid=info_resourceid)
+
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
+
+class Organizations_Eligible_List_v1(GenericAPIView):
+    '''
+    List of distinct organizations that have Integration eligible CiDeR
+    resources, which could be, are, or were integrated, but haven't been
+    retired
+
+    Based only on CiDeR since they may not have enrolled in a roadmap yet
+    '''
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderOrganizations_Serializer
+
+    def get(self, request, format=None, **kwargs):
+
+        resources = CiderInfrastructure.objects.filter(badging_filter)
+        org_ids = resources.values_list('other_attributes__organizations__0__organization_id', flat=True).distinct()
+        orgs = CiderOrganizations.objects.filter(organization_id__in=[ int(org_id) for org_id in org_ids])
+
+        serializer = self.serializer_class(orgs, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
+
 
 
 class Resource_Full_v1(GenericAPIView):
@@ -290,18 +335,37 @@ class Resource_Full_v1(GenericAPIView):
     renderer_classes = (JSONRenderer,)
     serializer_class = Resource_Full_Serializer
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='organization_id',
+                description='Organization ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            )
+        ]
+    )
     def get(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get('info_resourceid')
-        if not info_resourceid:
-            raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Info_ResourceID is required')
+        organization_id = self.request.query_params.get('organization_id')
+        info_resourceid = self.request.query_params.get('info_resourceid')
 
-        try:
-            resource = CiderInfrastructure.objects.get(Q(info_resourceid=info_resourceid) & badging_filter)
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
-                                 detail='Specified Info_ResourceID does not exist or is not eligible')
+        resources = CiderInfrastructure.objects.filter(badging_filter)
 
-        serializer = self.serializer_class(resource, context={'request': request}, many=False)
+        if organization_id is not None:
+            resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+
+        if info_resourceid is not None:
+            resources = resources.filter(info_resourceid=info_resourceid)
+
+        serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
 
 
@@ -541,7 +605,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         if not updated_by:
             updated_by = get_current_username(request.user)
 
-        if resource_badge.status == BadgeWorkflowStatus.VERIFIED or resource_badge.status == BadgeWorkflowStatus.TASKS_COMPLETED:
+        if resource_badge.status in [BadgeWorkflowStatus.VERIFIED, BadgeWorkflowStatus.TASKS_COMPLETED] and badge_task_workflow_status != BadgeTaskWorkflowStatus.ACTION_NEEDED:
             workflow = Resource_Badge_Workflow(
                 info_resourceid=info_resourceid,
                 roadmap=roadmap,
@@ -693,6 +757,13 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
+                name='organization_id',
+                description='Organization ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
                 name='info_resourceid',
                 description='Info ResourceID',
                 type=str,
@@ -716,15 +787,19 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
         ]
     )
     def get(self, request, format=None, **kwargs):
+        organization_id = self.request.query_params.get('organization_id')
         info_resourceid = self.request.query_params.get('info_resourceid')
         roadmap_id = self.request.query_params.get('roadmap_id')
         badge_id = self.request.query_params.get('badge_id')
 
+        resource_subquery  = CiderInfrastructure.objects#.filter(badging_filter)
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
 
+        if organization_id is not None:
+            resource_subquery = resource_subquery.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+
         if info_resourceid is not None:
-            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-                info_resourceid=info_resourceid)
+            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(info_resourceid=info_resourceid)
 
         if roadmap_id is not None:
             resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(roadmap_id=roadmap_id)
@@ -734,6 +809,11 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
 
         result = (
             resource_badge_workflow_subquery.filter(
+
+                # Making sure the resource if a part of the organization
+                Exists(resource_subquery.filter(
+                    info_resourceid=OuterRef('info_resourceid')
+                )),
 
                 # Making sure the badge is a part of the roadmap
                 Exists(Roadmap_Badge.objects.filter(
