@@ -61,7 +61,6 @@ table.table th.rotated-th {
 
 <div class="text-center mb-4">
     <h2>Resource Badge Status by Roadmap</h2>
-    <p class="mb-0"><strong>Badge verification status for all resources organized by roadmap</strong></p>
 </div>
 
 <ul class="nav nav-tabs justify-content-center mb-4">
@@ -77,51 +76,81 @@ table.table th.rotated-th {
 {% endfor %}
 </ul>
 
-
-<div class="table-responsive d-flex justify-content-center">
-    <table class="table table-bordered table-sm" style="width: auto; max-width: 600px;">
-        <thead class="table-success">
-            <tr>
-                <th class="text-center fs-5">Legend</th>
-                <th class="text-center fs-5">Symbol</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-center fs-5">In Production</td>  
-                <td class="text-center text-success fs-5">&#x2714;</td> 
-            </tr>
-            <tr>
-                <td class="text-center fs-5">In-Progress</td>
-                <td class="text-center fs-5" style="color: gray;">&#x26A0;</td>
-            </tr>
-            <tr>
-                <td class="text-center fs-5">Not Planned</td>
-                <td class="text-center">-</td>
-            </tr>
-            <tr>
-                <td class="text-center fs-5">Required Badge</td>
-                <td class="text-center"><span class="text-danger">*</span></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
 {% if selected_roadmap %}
 
     {% if required_percentage > 0 %}
-    <div class="text-center mb-4">
-        <div class="card d-inline-block">
-            <div class="card-body py-2 px-4">
-                <h3 class="mb-0">
-                    <span class="text-primary-emphasis">{{ required_percentage }}</span><strong>%</strong> of required badges verified
-                </h3>
-                <h4 class="mb-0 text-muted">
-                    <strong>{{ verified_required_count }}</strong> of {{ total_required_count }} <span class="text-danger">required</span> badges completed
-                </h4>
+    
+    <div class="container">
+        <div class="row">
+            <!-- 1st column: Legend -->
+            <div class="col">
+
+                <div class="table-responsive d-flex justify-content-center">
+                    <table class="table table-bordered table-sm" style="width: auto; max-width: 600px;">
+                        <thead class="table-success">
+                            <tr>
+                                <th class="text-center fs-5">Legend</th>
+                                <th class="text-center fs-5">Symbol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center fs-5">Available</td>  
+                                <td class="text-center text-success fs-5">&#x2714;</td> 
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">In-Progress</td>
+                                <td class="text-center fs-5" style="color: gray;">&#x26A0;</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">Not Planned</td>
+                                <td class="text-center">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">Required Badge</td>
+                                <td class="text-center"><span class="text-danger">*</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            
+            <!-- 2nd column: Required badges percentage -->
+            <div class="col">
+
+                <div class="text-center mb-4">
+                    <div class="card d-inline-block">
+                        <div class="card-body py-2 px-4">
+                            <h3 class="mb-0">
+                                <strong>{{ verified_required_count }}</strong> of {{ total_required_count }} <span class="text-danger">required</span> badges <span class="text-success">available</span> ({{ required_percentage }}%)
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3rd column: Overall badge counts -->
+            <div class="col">
+
+                <div class="text-center mb-4">
+                    <div class="card d-inline-block">
+                        <div class="card-body py-2 px-4">
+                            <h4 class="mb-2">
+                                <strong>{{ completed_badges }}</strong> badges <span class="text-success">available</span>
+                            </h4>
+                            <h4 class="mb-0">
+                                <strong>{{ in_progress_badges }}</strong> badges In-Progress
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
+
     {% endif %}
 
 
@@ -152,9 +181,14 @@ table.table th.rotated-th {
                             <small>{{ resource_data.resource_info.info_resourceid }}</small>
                         </td>
 
+
                         <td class="text-center" style="width: 120px;">
                             <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
-                                {{ resource_data.fixed_status|title|default:"—" }}
+                                {{ resource_data.fixed_status|title|default:"—" }} 
+                                {% if resource_data.is_preproduction and resource_data.latest_status_begin %}
+                                    <br />
+                                    <small>{{ resource_data.latest_status_begin|date:"M d, Y" }}</small>
+                                {% endif %}
                             </span>
                         </td>
 

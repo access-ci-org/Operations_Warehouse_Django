@@ -9,7 +9,7 @@ from django.views.decorators.cache import cache_page
 
 @method_decorator(cache_page(60 * 5), name='get')  # Caching
 class RoadmapResourceBadgesView(TemplateView):
-    template_name = 'roadmap_pivot/roadmap_resource_pivot.html'
+    template_name = 'resource_pivot/resource_pivot.html'
     DEFAULT_ROADMAP = 67
 
     @property
@@ -228,6 +228,36 @@ class RoadmapResourceBadgesView(TemplateView):
         except (ValueError, TypeError):
             return []
 
+    # counts of badges
+    def calculate_badge_status_counts(self, selected_roadmap, resource_roadmap_badges_data):
+        """Count completed and in-progress badges for all resources (production + pre-production)"""
+        try:
+            selected_roadmap_int = int(selected_roadmap)
+        except (ValueError, TypeError):
+            return 0, 0
+
+        completed_count = 0
+        in_progress_count = 0
+
+         # Statuses that indicate completion
+        completed_statuses = {'verified', 'tasks-completed', 'tasls-completed', 'complete', 'completed'}
+
+        # Statuses to exclude entirely
+        excluded_statuses = {'not planned', 'not-planned', ''}
+
+        for badge_record in resource_roadmap_badges_data:
+            if badge_record.get('roadmap_id') == selected_roadmap_int:
+                status = badge_record.get('status', '').lower().strip()
+
+                if status in completed_statuses:
+                    completed_count += 1
+                elif status and status not in excluded_statuses:
+                    # Count anything else with a status as in-progress
+                    in_progress_count += 1
+
+        return completed_count, in_progress_count
+    
+    # percentages of badges
     def calculate_required_badge_percentage(self, selected_roadmap, roadmap_badges_data, resource_roadmap_badges_data):
         """Calculate percentage of required badges that are verified and return counts"""
         try:
@@ -284,7 +314,9 @@ class RoadmapResourceBadgesView(TemplateView):
         roadmaps = [{
             'roadmap_id': rm.get('roadmap_id') or rm.get('id'),
             'name': rm.get('name', 'Unknown Roadmap')
-        } for rm in roadmaps_data]
+        } for rm in roadmaps_data
+            if rm.get('status', '').lower() != 'draft'
+            ]
 
         # Fetch badges and process
         badges_data = self.fetch_api_data('badges')
@@ -323,6 +355,12 @@ class RoadmapResourceBadgesView(TemplateView):
             resource_roadmap_badges_data
         )
 
+        # overall badge status counts
+        completed_badges, in_progress_badges = self.calculate_badge_status_counts(
+            selected_roadmap,
+            resource_roadmap_badges_data
+    )
+
         for badge_record in roadmap_badges_data:
             badge_info = badge_record.get('badge', {})
             badge_id = str(badge_info.get('badge_id'))
@@ -353,6 +391,23 @@ class RoadmapResourceBadgesView(TemplateView):
 
         badges_list = sorted(list(seen_badges.values()), 
                 key=lambda x: (not x['required'], x['badge']['name']))
+        
+        # DEBUG: Find badges in data but not in badges_list
+        badges_in_list = {b['id'] for b in badges_list}
+        badges_in_data = {str(br.get('badge_id')) for br in resource_roadmap_badges_data 
+                        if br.get('roadmap_id') == selected_roadmap_int}
+
+        missing_badges = badges_in_data - badges_in_list
+        if missing_badges:
+            print(f"\n=== Missing badges for roadmap {selected_roadmap} ===")
+            for badge_id in missing_badges:
+                badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
+                print(f"  Badge ID {badge_id}: {badge_name}")
+                # Count how many resources have this badge
+                count = sum(1 for br in resource_roadmap_badges_data 
+                        if str(br.get('badge_id')) == badge_id and br.get('roadmap_id') == selected_roadmap_int)
+                print(f"    Used by {count} resources")
+        # END of debug block
 
         context.update({
             'roadmaps': roadmaps,
@@ -362,6 +417,8 @@ class RoadmapResourceBadgesView(TemplateView):
             'required_percentage': required_percentage,
             'verified_required_count': verified_count,
             'total_required_count': total_count,
+            'completed_badges': completed_badges,
+            'in_progress_badges': in_progress_badges,
             'preproduction_by_roadmap': preproduction_by_roadmap,
         })
 

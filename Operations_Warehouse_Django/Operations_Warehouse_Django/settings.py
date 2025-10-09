@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'warehouse_state',
     'warehouse_tools',
     'web',
-    'roadmap_pivot',
+    'integration_views.resource_pivot',
     'access_django_user_admin',
 ]
 
