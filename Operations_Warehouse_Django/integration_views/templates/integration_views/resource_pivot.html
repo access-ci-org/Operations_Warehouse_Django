@@ -1,0 +1,222 @@
+{% extends "base_detail.html" %}
+{% load pivot_filters %}
+
+{% block title %}ACCESS Resource Badge Status by Roadmap{% endblock %}
+
+{% block content %}
+
+<style>
+.table-responsive {
+    overflow: visible !important;
+}
+
+.container-fluid {
+    overflow: visible !important;
+}
+
+table.table {
+    overflow: visible !important;
+}
+
+table.table thead {
+    overflow: visible !important;
+}
+
+table.table thead tr {
+    overflow: visible !important;
+}
+
+table.badge-table thead th {
+    border: none !important;
+}
+
+table.table th.rotated-th {
+    height: 220px !important;
+    position: relative !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    padding: 0 !important;
+    vertical-align: bottom !important;
+    overflow: visible !important;
+    border: none !important;
+    background-color: transparent !important;
+}
+
+.rotated-th__label {
+    bottom: 5px;
+    left: 50%;
+    position: absolute;
+    transform: rotate(-60deg);
+    transform-origin: center left;
+    white-space: nowrap;
+    font-size: 12px;
+    z-index: 10;
+    color: #000;
+}
+</style>
+
+
+<div class="container-fluid px-5">
+
+<div class="text-center mb-4">
+    <h2>Resource Badge Status by Roadmap</h2>
+</div>
+
+<ul class="nav nav-tabs justify-content-center mb-4">
+{% for roadmap in roadmaps %}
+    <li class="nav-item">
+        {% if selected_roadmap == roadmap.roadmap_id %}
+        <a class="nav-link active" aria-current="page" href="#">
+        {% else %}
+        <a class="nav-link" href="?roadmap={{ roadmap.roadmap_id }}">
+        {% endif %}
+        {{ roadmap.name }}</a>
+    </li>
+{% endfor %}
+</ul>
+
+{% if selected_roadmap %}
+
+    {% if required_percentage > 0 %}
+    
+    <div class="container">
+        <div class="row">
+            <!-- 1st column: Legend -->
+            <div class="col">
+
+                <div class="table-responsive d-flex justify-content-center">
+                    <table class="table table-bordered table-sm" style="width: auto; max-width: 600px;">
+                        <thead class="table-success">
+                            <tr>
+                                <th class="text-center fs-5">Legend</th>
+                                <th class="text-center fs-5">Symbol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center fs-5">Available</td>  
+                                <td class="text-center text-success fs-5">&#x2714;</td> 
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">In-Progress</td>
+                                <td class="text-center fs-5" style="color: gray;">&#x26A0;</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">Not Planned</td>
+                                <td class="text-center">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center fs-5">Required Badge</td>
+                                <td class="text-center"><span class="text-danger">*</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            
+            <!-- 2nd column: Required badges percentage -->
+            <div class="col">
+
+                <div class="text-center mb-4">
+                    <div class="card d-inline-block">
+                        <div class="card-body py-2 px-4">
+                            <h3 class="mb-0">
+                                <strong>{{ verified_required_count }}</strong> of {{ total_required_count }} <span class="text-danger">required</span> badges <span class="text-success">available</span> ({{ required_percentage }}%)
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3rd column: Overall badge counts -->
+            <div class="col">
+
+                <div class="text-center mb-4">
+                    <div class="card d-inline-block">
+                        <div class="card-body py-2 px-4">
+                            <h4 class="mb-2">
+                                <strong>{{ completed_badges }}</strong> badges <span class="text-success">available</span>
+                            </h4>
+                            <h4 class="mb-0">
+                                <strong>{{ in_progress_badges }}</strong> badges In-Progress
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+
+    {% if pivot_data %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm badge-table">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 250px;">ACCESS Resource</th>
+                        <th class="text-center" style="width: 120px;">Status</th>
+
+                        {% for badge in badges_list %}
+                        <th class="rotated-th">
+                            <div class="rotated-th__label">
+                                {% if badge.required %}<span class="text-danger">*</span><br />{% endif %}
+                                {{ badge.badge.name|trim_access_prefix }}
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for resource_id, resource_data in pivot_data.items %}
+                    <tr {% if resource_data.is_preproduction %}class="table-warning"{% endif %}>
+                        <td class="text-center" style="width: 250px;">
+                            <strong>{{ resource_data.resource_info.resource_descriptive_name }}</strong><br/>
+                            <small>{{ resource_data.resource_info.info_resourceid }}</small>
+                        </td>
+
+
+                        <td class="text-center" style="width: 120px;">
+                            <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
+                                {{ resource_data.fixed_status|title|default:"—" }} 
+                                {% if resource_data.is_preproduction and resource_data.latest_status_begin %}
+                                    <br />
+                                    <small>{{ resource_data.latest_status_begin|date:"M d, Y" }}</small>
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        {% for badge in badges_list %}
+                        {% with badge_status=resource_data.badge_statuses|get_item:badge.id %}
+                        <td class="text-center">
+                            {{ badge_status|badge_status_symbol|safe }}
+                        </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> No Resources Found</h4>
+            <p class="mb-0">No resources are associated with this roadmap or no resources have badge statuses assigned.</p>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        <h4><i class="fas fa-info-circle"></i> No Roadmap Selected</h4>
+        <p class="mb-0">Please select a roadmap from the tabs above to view the resource badge status.</p>
+    </div>
+{% endif %}
+
+</div>
+{% endblock %}

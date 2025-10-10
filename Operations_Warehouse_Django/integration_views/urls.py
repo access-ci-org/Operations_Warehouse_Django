@@ -3,5 +3,5 @@ from django.urls import path
 from .views import RoadmapResourceBadgesView
 
 urlpatterns = [
-    path('', RoadmapResourceBadgesView.as_view(), name='roadmap-pivot'),
+    path(r'v1/resource_pivot', RoadmapResourceBadgesView.as_view(), name='resource-pivot'),
 ]
