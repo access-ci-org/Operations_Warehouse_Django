@@ -9,7 +9,7 @@ from django.views.decorators.cache import cache_page
 
 @method_decorator(cache_page(60 * 5), name='get')  # Caching
 class RoadmapResourceBadgesView(TemplateView):
-    template_name = 'resource_pivot/resource_pivot.html'
+    template_name = 'integration_views/resource_pivot.html'
     DEFAULT_ROADMAP = 67
 
     @property

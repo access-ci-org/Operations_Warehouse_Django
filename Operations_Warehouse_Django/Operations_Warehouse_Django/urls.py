@@ -37,7 +37,7 @@ urlpatterns = [
 
 # Optional UI:
     path('wh2/api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('wh2/integration_views/v1/', include('resource_pivot.urls')),
+    path('wh2/integration_views/', include('integration_views.urls')),
     path('wh2/api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('wh2/api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('access_django_user_admin/', include('access_django_user_admin.urls')),
