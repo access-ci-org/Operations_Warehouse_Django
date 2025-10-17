@@ -239,7 +239,7 @@ class Badge_Verification_v1(GenericAPIView):
                 required=False,
                 location=OpenApiParameter.PATH,
                 enum=BadgeWorkflowStatus,
-                default='task-completed'
+                default='tasks-completed'
             )
         ]
     )
@@ -255,7 +255,7 @@ class Badge_Verification_v1(GenericAPIView):
                 workflow_status[key] = {
                     'status_updated_by': item.status_updated_by,
                     'status_updated_at': item.status_updated_at,
-                    'status': item.status,
+                    'status': item.status.replace('-', '_'),
                     'comment': item.comment }
 
         status_facet = {}
@@ -273,15 +273,15 @@ class Badge_Verification_v1(GenericAPIView):
             unverified_badges.append(data)
  
         if not mode:
-            for x in ('task-completed', 'verification-failed', 'unknown', 'planned', 'deprecated'):
+            for x in ('tasks-completed', 'verification-failed', 'unknown', 'planned', 'deprecated'):
                 facet_key = x.replace('-', '_')
                 if status_facet.get(facet_key, 0) > 0:
                     mode = x
                     break
-            mode = mode or 'task-completed'
+            mode = mode or 'tasks-completed'
                 
         results = { 'mode': mode, 'status_facet': status_facet, 'resourcebadges': unverified_badges }
-        
+
         if request.accepted_renderer.format == 'html':
             return MyAPIResponse({'results': results}, template_name='integration_badges/badge_verification_status.html')
         else:
