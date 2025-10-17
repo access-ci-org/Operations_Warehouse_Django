@@ -108,11 +108,11 @@ class Roadmap_Badge_Serializer(serializers.ModelSerializer):
     Returns Roadmap related Badge sequence_no and required, plus basic Badge_Min_Serializer about the badge
     '''
 
-    badge = Badge_Min_Serializer(many=False)
+    badge_id = serializers.IntegerField()
 
     class Meta:
         model = Roadmap_Badge
-        fields = ('sequence_no', 'required', 'badge')
+        fields = ('sequence_no', 'required', 'badge_id')
 
 
 class Roadmap_Review_Badge_Extended_Serializer(serializers.ModelSerializer):
