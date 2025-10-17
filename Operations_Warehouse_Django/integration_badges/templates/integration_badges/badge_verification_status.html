@@ -20,18 +20,18 @@
     
     <ul class="nav nav-tabs">
         <li class="nav-item">
-            {% if results.mode == "task-completed" %}
+            {% if results.mode == "tasks_completed" %}
             <a class="nav-link active" aria-current="page" href="#">
             {% else %}
-            <a class="nav-link" href="?mode=task-completed">
+            <a class="nav-link" href="?mode=tasks_completed">
             {% endif %}
-            <h3>Pending Verification ({{results.status_facet.task_completed|default:"0"}})</h3></a>
+            <h3>Pending Verification ({{results.status_facet.tasks_completed|default:"0"}})</h3></a>
         </li>
         <li class="nav-item">
-            {% if results.mode == "verification-failed" %}
+            {% if results.mode == "verification_failed" %}
             <a class="nav-link active" aria-current="page" href="#">
             {% else %}
-            <a class="nav-link" href="?mode=verification-failed">
+            <a class="nav-link" href="?mode=verification_failed">
             {% endif %}
             <h3>RP Attention ({{results.status_facet.verification_failed|default:"0"}})</h3></a>
         </li>
