@@ -77,7 +77,7 @@ def get_groupid(info_resourceid):
 class Roadmap_Full_v1(GenericAPIView):
     """
     Integration Roadmap(s) and related Badge details View
-    '''
+    """
 
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
