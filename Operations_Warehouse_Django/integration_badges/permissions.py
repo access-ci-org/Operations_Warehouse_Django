@@ -59,7 +59,7 @@ class IsBadgeRole(permissions.BasePermission):
 
 class IsImplementer(IsBadgeRole):
     """This is an example that authorizes all authenticated users"""
-    def __init__(self, rolename):
+    def __init__(self, rolename='implementer'):
         super().__init__(rolename)
         self.rolename = 'implementer'
 
@@ -89,7 +89,7 @@ class IsStaffRole(permissions.BasePermission):
 class IsConcierge(IsStaffRole):
     """This authorizes authenticated users who belong to the group:"""
     """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
-    def __init__(self, rolename='cocierge'):
+    def __init__(self, rolename='concierge'):
         super().__init__(rolename)
         self.rolename = 'concierge'
 
