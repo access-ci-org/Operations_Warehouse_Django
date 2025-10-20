@@ -22,7 +22,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from .models import Resource_Badge_Workflow
-from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, ReadOnly
+from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
 
 log = logging.getLogger(__name__)
 
