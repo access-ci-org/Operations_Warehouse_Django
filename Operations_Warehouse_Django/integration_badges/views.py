@@ -82,7 +82,7 @@ class Roadmap_Full_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+        permission_classes = [IsConcierge | (IsAuthenticated & ReadOnly)]
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Roadmap_Full_Serializer
