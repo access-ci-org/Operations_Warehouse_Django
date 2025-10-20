@@ -55,7 +55,7 @@ else:
     DISABLE_PERMISSIONS_FOR_DEBUGGING = False
 
 
-def get_groupid(info_resourceid):
+def get_group_id(info_resourceid):
     try:
         cidergroup = CiderGroups.objects.filter(
             info_resourceids__contains=[info_resourceid]
@@ -503,26 +503,19 @@ class Resource_Full_v1(GenericAPIView):
         ]
     )
     def get(self, request, format=None, **kwargs):
-        info_resourceid = kwargs.get("info_resourceid")
-        if not info_resourceid:
-            raise MyAPIException(
-                code=status.HTTP_400_BAD_REQUEST, detail="Info_ResourceID is required"
-            )
+        organization_id = self.request.query_params.get('organization_id')
+        info_resourceid = self.request.query_params.get('info_resourceid')
 
-        try:
-            resource = CiderInfrastructure.objects.get(
-                Q(info_resourceid=info_resourceid) & badging_filter
-            )
-        except CiderInfrastructure.DoesNotExist:
-            raise MyAPIException(
-                code=status.HTTP_404_NOT_FOUND,
-                detail="Specified Info_ResourceID does not exist or is not eligible",
-            )
+        resources = CiderInfrastructure.objects.filter(badging_filter)
 
-        serializer = self.serializer_class(
-            resource, context={"request": request}, many=False
-        )
-        return MyAPIResponse({"results": serializer.data})
+        if organization_id is not None:
+            resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+
+        if info_resourceid is not None:
+            resources = resources.filter(info_resourceid=info_resourceid)
+
+        serializer = self.serializer_class(resources, context={'request': request}, many=True)
+        return MyAPIResponse({'results': serializer.data})
 
 
 class Resource_Roadmap_Enrollments_v1(GenericAPIView):
