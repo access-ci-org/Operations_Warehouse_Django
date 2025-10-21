@@ -6,8 +6,10 @@ import requests
 from datetime import datetime
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from collections import defaultdict
 
-@method_decorator(cache_page(60 * 5), name='get')  # Caching
+
+@method_decorator(cache_page(60 * 5), name='get')
 class RoadmapResourceBadgesView(TemplateView):
     template_name = 'integration_views/resource_pivot.html'
     DEFAULT_ROADMAP = 67
@@ -19,7 +21,6 @@ class RoadmapResourceBadgesView(TemplateView):
 
         from Operations_Warehouse_Django.settings import CONF
 
-        # Try specific integration API first, then build from base
         self._api_base = CONF.get('INTEGRATION_BADGES_API_BASE')
         if not self._api_base:
             base = CONF.get('API_BASE', '/wh2')
@@ -48,7 +49,6 @@ class RoadmapResourceBadgesView(TemplateView):
                 return []
 
     def build_lookups(self, badges_data, resources_data):
-        # lookups for badges and resources
         badge_lookup = {
             str(badge.get('id') or badge.get('badge_id')): badge.get('name', 'Unknown Badge')
             for badge in badges_data if badge.get('id') or badge.get('badge_id')
@@ -68,7 +68,6 @@ class RoadmapResourceBadgesView(TemplateView):
         except (ValueError, TypeError):
             return {}, {}
 
-        # Get pre-production resource IDs for this roadmap
         preproduction_resource_ids = set()
         if selected_roadmap_int in preproduction_by_roadmap:
             preproduction_resource_ids = {
@@ -76,20 +75,17 @@ class RoadmapResourceBadgesView(TemplateView):
                 for res in preproduction_by_roadmap[selected_roadmap_int]
             }
 
-        # Filter to selected roadmap only
         roadmap_badges = [item for item in resource_roadmap_badges_data 
                         if item.get('roadmap_id') == selected_roadmap_int]
 
         resource_ids_with_badges = {str(item.get('info_resourceid')) for item in roadmap_badges 
                                 if item.get('info_resourceid')}
 
-        # Combine: resources with badges + pre-production resources
         all_resource_ids = resource_ids_with_badges | preproduction_resource_ids
 
         valid_resource_ids = {resource_id for resource_id in all_resource_ids 
                             if resource_id in resource_lookup}
 
-        # Build pivot table
         pivot_data = {}
         for resource_id in valid_resource_ids:
             resource_info = resource_lookup[resource_id]
@@ -135,88 +131,81 @@ class RoadmapResourceBadgesView(TemplateView):
         return pivot_data, resources_without_badges
 
     def get_preproduction_resources(self, resources_data, resource_roadmap_badges_data, roadmaps_data):
-            """Get all pre-production resources grouped by roadmap"""
-            preproduction_statuses = ['pre-production', 'coming soon']
+        """Get all pre-production resources grouped by roadmap"""
+        preproduction_statuses = ['pre-production', 'coming soon']
 
-            # Build cider_type -> roadmap_id mapping
-            type_to_roadmap = {}
-            for roadmap in roadmaps_data:
-                roadmap_name = roadmap.get('name', '').lower()
-                roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
+        type_to_roadmap = {}
+        for roadmap in roadmaps_data:
+            roadmap_name = roadmap.get('name', '').lower()
+            roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
 
-                if 'compute' in roadmap_name:
-                    type_to_roadmap['compute'] = roadmap_id
-                elif 'storage' in roadmap_name:
-                    type_to_roadmap['storage'] = roadmap_id
-                elif 'cloud' in roadmap_name:
-                    type_to_roadmap['cloud'] = roadmap_id
+            if 'compute' in roadmap_name:
+                type_to_roadmap['compute'] = roadmap_id
+            elif 'storage' in roadmap_name:
+                type_to_roadmap['storage'] = roadmap_id
+            elif 'cloud' in roadmap_name:
+                type_to_roadmap['cloud'] = roadmap_id
 
-            # Build resource_id -> roadmap_id from badge data (for resources WITH badges)
-            resource_to_roadmap = {}
-            for badge_record in resource_roadmap_badges_data:
-                resource_id = str(badge_record.get('info_resourceid'))
-                roadmap_id = badge_record.get('roadmap_id')
-                if resource_id and roadmap_id:
-                    resource_to_roadmap[resource_id] = roadmap_id
+        resource_to_roadmap = {}
+        for badge_record in resource_roadmap_badges_data:
+            resource_id = str(badge_record.get('info_resourceid'))
+            roadmap_id = badge_record.get('roadmap_id')
+            if resource_id and roadmap_id:
+                resource_to_roadmap[resource_id] = roadmap_id
 
-            # Group pre-production resources by roadmap
-            preproduction_by_roadmap = {}
+        preproduction_by_roadmap = {}
 
-            for res in resources_data:
-                resource_id = str(res.get('info_resourceid') or res.get('resource_id'))
-                fixed_status = res.get('fixed_status', '').lower().strip()
-                latest_status = res.get('latest_status', '').lower().strip()
+        for res in resources_data:
+            resource_id = str(res.get('info_resourceid') or res.get('resource_id'))
+            fixed_status = res.get('fixed_status', '').lower().strip()
+            latest_status = res.get('latest_status', '').lower().strip()
 
-                # Check if pre-production
-                if (fixed_status in preproduction_statuses or 
-                    latest_status in preproduction_statuses or
-                    'pre-production' in fixed_status or
-                    'coming soon' in fixed_status or
-                    'pre-production' in latest_status or
-                    'coming soon' in latest_status):
+            if (fixed_status in preproduction_statuses or 
+                latest_status in preproduction_statuses or
+                'pre-production' in fixed_status or
+                'coming soon' in fixed_status or
+                'pre-production' in latest_status or
+                'coming soon' in latest_status):
 
-                    # Get roadmap_id: first try badge data, then fall back to cider_type
-                    roadmap_id = resource_to_roadmap.get(resource_id)
+                roadmap_id = resource_to_roadmap.get(resource_id)
 
-                    if not roadmap_id:
-                        cider_type = res.get('cider_type', '').lower()
-                        roadmap_id = type_to_roadmap.get(cider_type)
+                if not roadmap_id:
+                    cider_type = res.get('cider_type', '').lower()
+                    roadmap_id = type_to_roadmap.get(cider_type)
 
-                    if roadmap_id:
-                        latest_status_begin_str = res.get('latest_status_begin')
-                        latest_status_begin_date = None
+                if roadmap_id:
+                    latest_status_begin_str = res.get('latest_status_begin')
+                    latest_status_begin_date = None
 
-                        if latest_status_begin_str:
-                            try:
-                                latest_status_begin_date = datetime.strptime(latest_status_begin_str, '%Y-%m-%d').date()
-                            except (ValueError, TypeError):
-                                latest_status_begin_date = None
+                    if latest_status_begin_str:
+                        try:
+                            latest_status_begin_date = datetime.strptime(latest_status_begin_str, '%Y-%m-%d').date()
+                        except (ValueError, TypeError):
+                            latest_status_begin_date = None
 
-                        resource_data = {
-                            'resource_info': res,
-                            'fixed_status': res.get('fixed_status'),
-                            'latest_status_begin': latest_status_begin_date
-                        }
+                    resource_data = {
+                        'resource_info': res,
+                        'fixed_status': res.get('fixed_status'),
+                        'latest_status_begin': latest_status_begin_date
+                    }
 
-                        if roadmap_id not in preproduction_by_roadmap:
-                            preproduction_by_roadmap[roadmap_id] = []
-                        preproduction_by_roadmap[roadmap_id].append(resource_data)
+                    if roadmap_id not in preproduction_by_roadmap:
+                        preproduction_by_roadmap[roadmap_id] = []
+                    preproduction_by_roadmap[roadmap_id].append(resource_data)
 
-            # Sort each roadmap's resources
-            for roadmap_id in preproduction_by_roadmap:
-                preproduction_by_roadmap[roadmap_id] = sorted(
-                    preproduction_by_roadmap[roadmap_id],
-                    key=lambda x: (x['fixed_status'], x['resource_info'].get('resource_descriptive_name', ''))
-                )
+        for roadmap_id in preproduction_by_roadmap:
+            preproduction_by_roadmap[roadmap_id] = sorted(
+                preproduction_by_roadmap[roadmap_id],
+                key=lambda x: (x['fixed_status'], x['resource_info'].get('resource_descriptive_name', ''))
+            )
 
-            return preproduction_by_roadmap
+        return preproduction_by_roadmap
 
     def fetch_roadmap_badges_data(self, selected_roadmap):
         """Fetch roadmap-specific badge data with required field"""
         try:
             selected_roadmap_int = int(selected_roadmap)
 
-            # Check if roadmaps list already has badge info
             roadmaps_list = self.fetch_api_data('roadmaps')
             for roadmap in roadmaps_list:
                 if roadmap.get('roadmap_id') == selected_roadmap_int:
@@ -228,9 +217,8 @@ class RoadmapResourceBadgesView(TemplateView):
         except (ValueError, TypeError):
             return []
 
-    # counts of badges
     def calculate_badge_status_counts(self, selected_roadmap, resource_roadmap_badges_data):
-        """Count completed and in-progress badges for all resources (production + pre-production)"""
+        """Count completed and in-progress badges for all resources"""
         try:
             selected_roadmap_int = int(selected_roadmap)
         except (ValueError, TypeError):
@@ -239,10 +227,7 @@ class RoadmapResourceBadgesView(TemplateView):
         completed_count = 0
         in_progress_count = 0
 
-         # Statuses that indicate completion
         completed_statuses = {'verified', 'tasks-completed', 'tasls-completed', 'complete', 'completed'}
-
-        # Statuses to exclude entirely
         excluded_statuses = {'not planned', 'not-planned', ''}
 
         for badge_record in resource_roadmap_badges_data:
@@ -252,20 +237,17 @@ class RoadmapResourceBadgesView(TemplateView):
                 if status in completed_statuses:
                     completed_count += 1
                 elif status and status not in excluded_statuses:
-                    # Count anything else with a status as in-progress
                     in_progress_count += 1
 
         return completed_count, in_progress_count
-    
-    # percentages of badges
+
     def calculate_required_badge_percentage(self, selected_roadmap, roadmap_badges_data, resource_roadmap_badges_data):
-        """Calculate percentage of required badges that are verified and return counts"""
+        """Calculate percentage of required badges that are verified"""
         try:
             selected_roadmap_int = int(selected_roadmap)
         except (ValueError, TypeError):
-            return 0, 0, 0  # percentage, verified_count, total_count
+            return 0, 0, 0
 
-        # Get required badge IDs from roadmap definition
         required_badge_ids = set()
         for badge_record in roadmap_badges_data:
             if badge_record.get('required', False):
@@ -274,9 +256,8 @@ class RoadmapResourceBadgesView(TemplateView):
                 required_badge_ids.add(badge_id)
 
         if not required_badge_ids:
-            return 100, 0, 0  # All complete if no required badges
+            return 100, 0, 0
 
-        # Count verified required badges from resource data
         verified_required_count = 0
         total_required_instances = 0
 
@@ -293,24 +274,20 @@ class RoadmapResourceBadgesView(TemplateView):
         percentage = round((verified_required_count / total_required_instances) * 100, 1)
         return percentage, verified_required_count, total_required_instances
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         selected_roadmap = self.request.GET.get('roadmap')
 
-        # Always fetch roadmaps & resources
         roadmaps_data = self.fetch_api_data('roadmaps')
         resources_data = self.fetch_api_data('resources')
         resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
 
-        # Get pre-production resources grouped by roadmap
         preproduction_by_roadmap = self.get_preproduction_resources(
             resources_data, 
             resource_roadmap_badges_data,
             roadmaps_data
         )
 
-        # Build roadmaps tabs
         roadmaps = [{
             'roadmap_id': rm.get('roadmap_id') or rm.get('id'),
             'name': rm.get('name', 'Unknown Roadmap')
@@ -318,7 +295,6 @@ class RoadmapResourceBadgesView(TemplateView):
             if rm.get('status', '').lower() != 'draft'
             ]
 
-        # Fetch badges and process
         badges_data = self.fetch_api_data('badges')
 
         if selected_roadmap:
@@ -355,11 +331,10 @@ class RoadmapResourceBadgesView(TemplateView):
             resource_roadmap_badges_data
         )
 
-        # overall badge status counts
         completed_badges, in_progress_badges = self.calculate_badge_status_counts(
             selected_roadmap,
             resource_roadmap_badges_data
-    )
+        )
 
         for badge_record in roadmap_badges_data:
             badge_info = badge_record.get('badge', {})
@@ -391,23 +366,6 @@ class RoadmapResourceBadgesView(TemplateView):
 
         badges_list = sorted(list(seen_badges.values()), 
                 key=lambda x: (not x['required'], x['badge']['name']))
-        
-        # DEBUG: Find badges in data but not in badges_list
-        badges_in_list = {b['id'] for b in badges_list}
-        badges_in_data = {str(br.get('badge_id')) for br in resource_roadmap_badges_data 
-                        if br.get('roadmap_id') == selected_roadmap_int}
-
-        missing_badges = badges_in_data - badges_in_list
-        if missing_badges:
-            print(f"\n=== Missing badges for roadmap {selected_roadmap} ===")
-            for badge_id in missing_badges:
-                badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
-                print(f"  Badge ID {badge_id}: {badge_name}")
-                # Count how many resources have this badge
-                count = sum(1 for br in resource_roadmap_badges_data 
-                        if str(br.get('badge_id')) == badge_id and br.get('roadmap_id') == selected_roadmap_int)
-                print(f"    Used by {count} resources")
-        # END of debug block
 
         context.update({
             'roadmaps': roadmaps,
@@ -424,9 +382,215 @@ class RoadmapResourceBadgesView(TemplateView):
 
         return context
 
-
     def dispatch(self, request, *args, **kwargs):
-        # Default roadmap
+        # Default roadmap redirect - ONLY for RoadmapResourceBadgesView
         if not request.GET.get('roadmap'):
             return redirect(f'{request.path}?roadmap={self.DEFAULT_ROADMAP}')
         return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(cache_page(60 * 5), name='get')
+class GroupBadgeStatusView(TemplateView):
+    """Group-level badge aggregation view - NO roadmaps"""
+    template_name = 'integration_views/group_pivot.html'
+
+    def fetch_api_data(self, endpoint, params=None):
+        """Fetch data from API endpoints"""
+        base_url = 'https://operations-api.access-ci.org/wh2'
+        endpoints = {
+            'groups': f'{base_url}/cider/v1/access-active-groups/',
+            'resource_roadmap_badges': f'{base_url}/integration_badges/v1/resource_roadmap_badges/',
+            'roadmap_badges': f'{base_url}/integration_badges/v1/roadmap_badges_by_roadmap/',  # ← Fixed endpoint
+        }
+
+        url = endpoints.get(endpoint, endpoint)
+
+        print(f"Fetching: {url}")
+
+        try:
+            response = requests.get(url, params={'format': 'json', **(params or {})}, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+
+            # Handle different API response formats
+            if isinstance(data, list):
+                result = data
+            elif isinstance(data, dict):
+                # For groups endpoint, extract the groups list
+                if endpoint == 'groups' and 'active_groups' in data:
+                    result = data['active_groups']
+                else:
+                    result = data.get('results', data.get('data', []))
+            else:
+                result = []
+
+            # DEBUG
+            # print(f"Got {len(result)} items from {endpoint}")
+            # if result and isinstance(result, list):
+            #     print(f"First item type: {type(result[0])}")
+
+            return result
+        except requests.RequestException as e:
+            print(f"Error: {e}")
+            return []
+
+    def calculate_group_badge_counts(self, group_resources, resource_badges, all_required_badge_ids, roadmap_badges_by_roadmap, resource_to_roadmap):
+        """Calculate badge counts for a group, respecting roadmap associations"""
+        available = 0
+        in_progress = 0
+        not_planned = 0
+        required_available = 0
+        total_required = len(all_required_badge_ids) * len(group_resources) if all_required_badge_ids else 0
+
+        completed_statuses = {'verified', 'available', 'approved', 'complete', 'completed'}
+        in_progress_statuses = {'planned', 'failed', 'testing', 'tasks-completed', 'tasls-completed', 'in-progress'}
+        explicit_not_planned_statuses = {'not planned', 'not-planned'}
+
+        for resource_id in group_resources:
+            resource_badge_data = resource_badges.get(resource_id, {})
+            resource_badge_ids = set(resource_badge_data.keys())
+
+            # Get the roadmap(s) this resource belongs to
+            resource_roadmap_id = resource_to_roadmap.get(resource_id)
+
+            # Get badges only from this resource's roadmap
+            if resource_roadmap_id and resource_roadmap_id in roadmap_badges_by_roadmap:
+                relevant_badge_ids = roadmap_badges_by_roadmap[resource_roadmap_id]
+            else:
+                relevant_badge_ids = set()  # No roadmap = no expected badges
+
+            # Count badges with explicit statuses
+            for badge_id, status in resource_badge_data.items():
+                status_lower = status.lower().strip()
+
+                if status_lower in completed_statuses:
+                    available += 1
+                    if badge_id in all_required_badge_ids:
+                        required_available += 1
+                elif status_lower in in_progress_statuses:
+                    in_progress += 1
+                elif status_lower in explicit_not_planned_statuses or status_lower == '':
+                    not_planned += 1
+
+            # Count badges missing from this resource's SPECIFIC roadmap
+            missing_badges = relevant_badge_ids - resource_badge_ids
+            not_planned += len(missing_badges)
+
+        required_percentage = round((required_available / total_required * 100), 1) if total_required > 0 else 0
+
+        return {
+            'available': available,
+            'in_progress': in_progress,
+            'not_planned': not_planned,
+            'required_available': required_available,
+            'total_required': total_required,
+            'required_percentage': required_percentage
+        }
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        groups_data = self.fetch_api_data('groups')
+
+        if isinstance(groups_data, dict):
+            if 'active_groups' in groups_data:
+                groups_data = groups_data['active_groups']
+            else:
+                print(f"ERROR: groups_data is dict but no 'active_groups' key. Keys: {groups_data.keys()}")
+                groups_data = []
+
+        resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
+
+        # Build resource-to-roadmap mapping
+        resource_to_roadmap = {}
+        for badge_record in resource_roadmap_badges_data:
+            resource_id = str(badge_record.get('info_resourceid'))
+            roadmap_id = badge_record.get('roadmap_id')
+            if resource_id and roadmap_id:
+                resource_to_roadmap[resource_id] = roadmap_id
+
+        # Fetch roadmap badges, keeping them separated by roadmap
+        roadmap_badges_by_roadmap = defaultdict(set)
+        all_required_badge_ids = set()
+
+        try:
+            roadmaps_response = requests.get(
+                'https://operations-api.access-ci.org/wh2/integration_badges/v1/roadmaps/',
+                params={'format': 'json'},
+                timeout=30
+            )
+            roadmaps_response.raise_for_status()
+            roadmaps = roadmaps_response.json().get('results', [])
+
+            for roadmap in roadmaps:
+                roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
+                if 'badges' in roadmap:
+                    for badge_record in roadmap['badges']:
+                        badge = badge_record.get('badge')
+                        if isinstance(badge, dict):
+                            badge_id = str(badge.get('badge_id'))
+                        elif badge:
+                            badge_id = str(badge)
+                        else:
+                            continue
+
+                        if badge_id:
+                            roadmap_badges_by_roadmap[roadmap_id].add(badge_id)
+
+                            if badge_record.get('required', False):
+                                all_required_badge_ids.add(badge_id)
+        except Exception as e:
+            print(f"ERROR fetching roadmap badges: {e}")
+
+        resource_badges = defaultdict(dict)
+        for badge_record in resource_roadmap_badges_data:
+            resource_id = badge_record.get('info_resourceid')
+            badge_id = str(badge_record.get('badge_id'))
+            status = badge_record.get('status', '')
+            if resource_id and badge_id:
+                resource_badges[str(resource_id)][badge_id] = status
+
+        group_stats = []
+        preproduction_keywords = ['coming soon', 'pre-production', 'preproduction']
+
+        for group in groups_data:
+            if not isinstance(group, dict):
+                print(f"WARNING: Skipping non-dict group: {type(group)} = {group}")
+                continue
+
+            group_resources = group.get('rollup_info_resourceids', [])
+
+            if not group_resources:
+                continue
+
+            counts = self.calculate_group_badge_counts(
+                group_resources,
+                resource_badges,
+                all_required_badge_ids,
+                roadmap_badges_by_roadmap,  # ← NEW: Badges grouped by roadmap
+                resource_to_roadmap  # ← NEW: Resource-to-roadmap mapping
+            )
+
+            group_name = group.get('group_descriptive_name', '').lower()
+            has_preproduction = any(keyword in group_name for keyword in preproduction_keywords)
+
+            group_stats.append({
+                'group_id': group.get('group_id'),
+                'info_groupid': group.get('info_groupid'),
+                'name': group.get('group_descriptive_name', 'Unknown Group'),
+                'resource_count': len(group_resources),
+                'has_preproduction': has_preproduction,
+                **counts
+            })
+
+        group_stats.sort(key=lambda x: x['name'])
+
+        context['group_stats'] = group_stats
+
+        return context
+
+
+
+
+
