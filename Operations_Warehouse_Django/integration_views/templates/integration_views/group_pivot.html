@@ -1,0 +1,102 @@
+{% extends "base_detail.html" %}
+{% load pivot_filters %}
+
+{% block title %}ACCESS Badge Status by Resource Group{% endblock %}
+
+{% block content %}
+
+<style>
+.table-responsive {
+    overflow: visible !important;
+}
+
+.container-fluid {
+    overflow: visible !important;
+}
+
+table.table {
+    overflow: visible !important;
+}
+
+table.table thead {
+    overflow: visible !important;
+}
+
+table.table thead tr {
+    overflow: visible !important;
+}
+
+table.badge-table thead th {
+    border: none !important;
+}
+
+table.table th.rotated-th {
+    height: 220px !important;
+    position: relative !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    padding: 0 !important;
+    vertical-align: bottom !important;
+    overflow: visible !important;
+    border: none !important;
+    background-color: transparent !important;
+}
+
+.rotated-th__label {
+    bottom: 5px;
+    left: 50%;
+    position: absolute;
+    transform: rotate(-60deg);
+    transform-origin: center left;
+    white-space: nowrap;
+    font-size: 12px;
+    z-index: 10;
+    color: #000;
+}
+</style>
+
+
+<div class="container-fluid px-5">
+
+<div class="text-center mb-4">
+    <h2>Resource Group Badge Status</h2>
+</div>
+
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th class="rotated-th"><div class="rotated-th__label fs-5">Resource Group</div></th>
+            <th class="rotated-th"><div class="rotated-th__label fs-5">Resources</div></th>
+            <th class="rotated-th"><div class="rotated-th__label text-success fs-5">Available</div></th>
+            <th class="rotated-th"><div class="rotated-th__label fs-5" style="color: gray;">In-Progress</div></th>
+            <th class="rotated-th"><div class="rotated-th__label fs-5">Not Planned</div></th>
+            <th class="rotated-th"><div class="rotated-th__label text-danger fs-5">Required Badges</div></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group in group_stats %}
+        <tr {% if group.has_preproduction %}class="table-warning"{% endif %}>
+            <td class="text-center fs-6">
+                <strong>{{ group.name }}</strong>
+                {% if group.has_preproduction %}
+                    <br><small class="badge bg-info text-dark">Pre-Production</small>
+                {% endif %}
+                <br><small>{{ group.info_groupid }}</small>
+            </td>
+            <td class="text-center fs-6">{{ group.resource_count }}</td>
+            <td class="text-center text-success fs-6">{{ group.available }}</td>
+            <td class="text-center fs-6">{{ group.in_progress }}</td>
+            <td class="text-center fs-6">{{ group.not_planned }}</td>
+            <td class="text-center fs-6">
+                {{ group.required_available }} of {{ group.total_required }} ({{ group.required_percentage }}%)
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+</div>
+{% endblock %}
