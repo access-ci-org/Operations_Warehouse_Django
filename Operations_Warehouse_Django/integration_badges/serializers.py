@@ -68,9 +68,11 @@ class Badge_Prerequisite_Detail_Serializer(serializers.ModelSerializer):
     Returns Badge prerequisite badge selected fields
     '''
 
+    badge_id = serializers.IntegerField(source='prerequisite_badge_id')
+
     class Meta:
         model = Badge_Prerequisite_Badge
-        fields = '__all__'
+        fields = ('sequence_no', 'badge_id')
 
 
 class Badge_Full_Serializer(serializers.ModelSerializer):
@@ -91,6 +93,16 @@ class Badge_Full_Serializer(serializers.ModelSerializer):
         sorted_prerequisites = sorted(prerequisites, key=lambda x: x['sequence_no'])
         representation['prerequisites'] = sorted_prerequisites
         return representation
+
+
+class Task_Full_Serializer(serializers.ModelSerializer):
+    '''
+    Return all Badge fields and pre-requisites
+    '''
+
+    class Meta:
+        model = Task
+        fields = '__all__'
 
 
 class Roadmap_Min_Serializer(serializers.ModelSerializer):
