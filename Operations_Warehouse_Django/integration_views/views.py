@@ -568,8 +568,8 @@ class GroupBadgeStatusView(TemplateView):
                 group_resources,
                 resource_badges,
                 all_required_badge_ids,
-                roadmap_badges_by_roadmap,  # ← NEW: Badges grouped by roadmap
-                resource_to_roadmap  # ← NEW: Resource-to-roadmap mapping
+                roadmap_badges_by_roadmap, 
+                resource_to_roadmap
             )
 
             group_name = group.get('group_descriptive_name', '').lower()
