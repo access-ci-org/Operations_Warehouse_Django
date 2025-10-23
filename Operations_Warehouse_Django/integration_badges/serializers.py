@@ -72,7 +72,17 @@ class Badge_Prerequisite_Detail_Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = Badge_Prerequisite_Badge
-        fields = ('sequence_no', 'badge_id')
+        fields = ('badge_id', 'sequence_no')
+
+
+class Badge_Task_Detail_Serializer(serializers.ModelSerializer):
+    '''
+    Returns Badge prerequisite badge selected fields
+    '''
+
+    class Meta:
+        model = Badge_Task
+        fields = ('task_id', 'required', 'sequence_no')
 
 
 class Badge_Full_Serializer(serializers.ModelSerializer):
@@ -81,6 +91,7 @@ class Badge_Full_Serializer(serializers.ModelSerializer):
     '''
 
     prerequisites = Badge_Prerequisite_Detail_Serializer(source='badge_prerequisites', many=True)
+    tasks = Badge_Task_Detail_Serializer(source='badge_tasks', many=True)
 
     class Meta:
         model = Badge
@@ -88,10 +99,19 @@ class Badge_Full_Serializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+
         prerequisites = representation.get('prerequisites', [])
         # sort the prerequisites by sequence_no
         sorted_prerequisites = sorted(prerequisites, key=lambda x: x['sequence_no'])
         representation['prerequisites'] = sorted_prerequisites
+
+
+        tasks = representation.get('tasks', [])
+        # sort the tasks by sequence_no
+        sorted_tasks = sorted(tasks, key=lambda x: x['sequence_no'])
+        representation['tasks'] = sorted_tasks
+
+
         return representation
 
 
