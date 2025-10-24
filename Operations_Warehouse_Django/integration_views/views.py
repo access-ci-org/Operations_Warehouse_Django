@@ -227,7 +227,7 @@ class RoadmapResourceBadgesView(TemplateView):
         completed_count = 0
         in_progress_count = 0
 
-        completed_statuses = {'verified', 'tasks-completed', 'tasls-completed', 'complete', 'completed'}
+        completed_statuses = {'verified', 'tasks-completed', 'complete', 'completed'}
         excluded_statuses = {'not planned', 'not-planned', ''}
 
         for badge_record in resource_roadmap_badges_data:
