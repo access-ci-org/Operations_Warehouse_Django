@@ -133,8 +133,13 @@ class Badge_Full_v1(GenericAPIView):
     '''
     Integration Badge(s) and pre-requisites
     '''
-    permission_classes = (ReadOnly,)
-    authentication_classes = []
+
+
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsCoordinator | (IsAuthenticated & ReadOnly)]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
 
@@ -152,6 +157,86 @@ class Badge_Full_v1(GenericAPIView):
 
         serializer = self.serializer_class(item, context={'request': request}, many=many)
         return MyAPIResponse({'results': serializer.data})
+
+
+    def post(self, request, format=None, **kwargs):
+        badge_id = self.kwargs.get('badge_id')
+
+        name = request.data.get('name')
+        researcher_summary = request.data.get('researcher_summary')
+        resource_provider_summary = request.data.get('resource_provider_summary')
+        verification_summary = request.data.get('verification_summary')
+        verification_method = request.data.get('verification_method')
+        default_badge_access_url = request.data.get('default_badge_access_url')
+        default_badge_access_url_label = request.data.get('default_badge_access_url_label')
+        prerequisites = request.data.get('prerequisites')
+        tasks = request.data.get('tasks')
+
+        for prerequisite in prerequisites:
+            try:
+                Badge.objects.get(badge_id=prerequisite.get('badge_id'))
+            except Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                     detail=f'Badge not found ({prerequisite.get("badge_id")})')
+
+        for task in tasks:
+            try:
+                Task.objects.get(task_id=task.get('task_id'))
+            except Task.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                     detail=f'Task not found ({task.get("task_id")})')
+
+        if badge_id:
+            try:
+                badge = Roadmap.objects.get(badge_id=badge_id)
+            except Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Badge not found ({badge_id})')
+
+            badge.name = name
+            badge.researcher_summary = researcher_summary
+            badge.resource_provider_summary = resource_provider_summary
+            badge.verification_summary = verification_summary
+            badge.verification_method = verification_method
+            badge.default_badge_access_url = default_badge_access_url
+            badge.default_badge_access_url_label = default_badge_access_url_label
+
+            badge.save()
+
+            Badge_Task.objects.filter(badge_id=badge_id).delete()
+            Badge_Prerequisite_Badge.objects.filter(badge_id=badge_id).delete()
+        else:
+            badge = Badge(
+                name=name,
+                researcher_summary=researcher_summary,
+                resource_provider_summary=resource_provider_summary,
+                verification_summary=verification_summary,
+                verification_method=verification_method,
+                default_badge_access_url=default_badge_access_url,
+                default_badge_access_url_label=default_badge_access_url_label
+            )
+            badge.save()
+
+        for sequence_no in range(len(tasks)):
+            task = tasks[sequence_no]
+            Badge_Task(
+                badge=badge,
+                task_id=task.get('task_id'),
+                sequence_no=sequence_no,
+                required=task.get('required')
+            ).save()
+
+        for sequence_no in range(len(prerequisites)):
+            prerequisite = prerequisites[sequence_no]
+            Badge_Prerequisite_Badge(
+                badge=badge,
+                prerequisite_badge_id=prerequisite.get('badge_id'),
+                sequence_no=sequence_no,
+                # required=prerequisite.get('required')
+            ).save()
+
+        serializer = self.serializer_class(badge, context={'request': request}, many=False)
+        return MyAPIResponse({'results': serializer.data})
+
 
 
 class Task_Full_v1(GenericAPIView):
