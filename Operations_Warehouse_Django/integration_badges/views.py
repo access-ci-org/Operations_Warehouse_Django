@@ -188,7 +188,7 @@ class Badge_Full_v1(GenericAPIView):
 
         if badge_id:
             try:
-                badge = Roadmap.objects.get(badge_id=badge_id)
+                badge = Badge.objects.get(badge_id=badge_id)
             except Badge.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Badge not found ({badge_id})')
 
