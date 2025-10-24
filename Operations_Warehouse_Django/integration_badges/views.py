@@ -892,14 +892,14 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         elif request.user.has_perm("cider.coordinator_" + info_group_id):
             effective_role = "cider.coordinator_" + info_group_id
             if badge_task_workflow_status in [
-                BadgeTaskWorkflowStatus.TASKS_COMPLETED,
+                BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
             ]:
                 can_post_status = True
         elif request.user.has_perm("cider.implementer_" + info_group_id):
             effective_role = "cider.implementer_" + info_group_id
             if badge_task_workflow_status in [
-                BadgeTaskWorkflowStatus.TASKS_COMPLETED,
+                BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
             ]:
                 can_post_status = True
