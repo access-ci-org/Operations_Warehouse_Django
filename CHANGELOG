@@ -1,3 +1,6 @@
+v3.68.0 2025-10-24 EBB
+ - Implement integration badges update permissions CTT-695
+
 v3.67.0 2025-10-10 jlambertson
  - adding updated RP view for badge statuses
  - reworked url structure for better future functionality
