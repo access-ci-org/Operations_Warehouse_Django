@@ -400,7 +400,7 @@ class GroupBadgeStatusView(TemplateView):
         endpoints = {
             'groups': f'{base_url}/cider/v1/access-active-groups/',
             'resource_roadmap_badges': f'{base_url}/integration_badges/v1/resource_roadmap_badges/',
-            'roadmap_badges': f'{base_url}/integration_badges/v1/roadmap_badges_by_roadmap/',  # ← Fixed endpoint
+            'roadmap_badges': f'{base_url}/integration_badges/v1/roadmap_badges_by_roadmap/', 
         }
 
         url = endpoints.get(endpoint, endpoint)
