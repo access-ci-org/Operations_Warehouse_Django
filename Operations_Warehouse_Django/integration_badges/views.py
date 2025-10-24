@@ -742,7 +742,7 @@ class Resource_Badge_Status_v1(GenericAPIView):
         can_post_status = False
         effective_role = ""
 
-        if request.user.has_perm("Concierge"):
+        if request.user.has_perm("cider.concierge"):
             can_post_status = True
         elif request.user.has_perm("cider.coordinator_" + info_group_id):
             effective_role = "cider.coordinator_" + info_group_id
@@ -887,7 +887,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
         can_post_status = False
         effective_role = ""
 
-        if request.user.has_perm("Concierge"):
+        if request.user.has_perm("cider.concierge"):
             can_post_status = True
         elif request.user.has_perm("cider.coordinator_" + info_group_id):
             effective_role = "cider.coordinator_" + info_group_id
