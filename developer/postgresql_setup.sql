@@ -12,5 +12,5 @@ GRANT info_django TO opsdba;
 
 \c warehouse2
 
-CREATE SCHEMA info AUTHORIZATION info_django;
-ALTER ROLE info_django SET search_path TO info;
+CREATE SCHEMA info_django AUTHORIZATION info_django;
+-- ALTER ROLE info_django SET search_path TO info_django;
