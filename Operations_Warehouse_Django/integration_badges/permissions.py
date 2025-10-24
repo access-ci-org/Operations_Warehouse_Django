@@ -82,7 +82,7 @@ class IsStaffRole(permissions.BasePermission):
         if request.user.is_authenticated:
             #print(f'User {request.user.username} is authenticated')
             #print(f'User permissions {request.user.get_all_permissions()}')
-            return request.user.has_perm(self.rolename)
+            return request.user.has_perm('cider.'+self.rolename)
         else:
             return False
 
