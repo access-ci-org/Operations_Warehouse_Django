@@ -1,9 +1,12 @@
+v3.68.1 2025-10-17 JP
+  - Fix Badge verification view not displaying correct tasks-completed/pending verification (CTT-739)
+
 v3.68.0 2025-10-24 EBB
  - Implement integration badges update permissions CTT-695
 
 v3.67.0 2025-10-10 jlambertson
- - adding updated RP view for badge statuses
- - reworked url structure for better future functionality
+  - adding updated RP view for badge statuses
+  - reworked url structure for better future functionality
 
 v3.66.0 2025-09-26 jlambertson
   - Adding new view for RP badge status

@@ -296,7 +296,7 @@ class Badge_Verification_v1(GenericAPIView):
                 required=False,
                 location=OpenApiParameter.PATH,
                 enum=BadgeWorkflowStatus,
-                default="task-completed",
+                default='tasks-completed'
             )
         ]
     )
@@ -314,11 +314,10 @@ class Badge_Verification_v1(GenericAPIView):
             key = f"{item.info_resourceid}:{item.roadmap_id}:{item.badge_id}"
             if key not in workflow_status:
                 workflow_status[key] = {
-                    "status_updated_by": item.status_updated_by,
-                    "status_updated_at": item.status_updated_at,
-                    "status": item.status,
-                    "comment": item.comment,
-                }
+                    'status_updated_by': item.status_updated_by,
+                    'status_updated_at': item.status_updated_at,
+                    'status': item.status.replace('-', '_'),
+                    'comment': item.comment }
 
         status_facet = {}
         unverified_badges = []  # All the ones that aren't in available/verified status
@@ -342,7 +341,7 @@ class Badge_Verification_v1(GenericAPIView):
 
         if not mode:
             for x in (
-                "task-completed",
+                "tasks-completed",
                 "verification-failed",
                 "unknown",
                 "planned",
@@ -352,7 +351,7 @@ class Badge_Verification_v1(GenericAPIView):
                 if status_facet.get(facet_key, 0) > 0:
                     mode = x
                     break
-            mode = mode or "task-completed"
+            mode = mode or "tasks-completed"
 
         results = {
             "mode": mode,
