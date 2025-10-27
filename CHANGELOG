@@ -1,3 +1,6 @@
+v3.68.2 2025-10-27 EBB
+  - Set permission classes on all Integration Badges views to accept unauthenticated ReadOnly (CTT-752)
+
 v3.68.1 2025-10-17 JP
   - Fix Badge verification view not displaying correct tasks-completed/pending verification (CTT-739)
 
