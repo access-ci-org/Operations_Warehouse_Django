@@ -163,61 +163,6 @@ class Roadmap_Full_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
-    def post(self, request, format=None, **kwargs):
-        roadmap_id = self.kwargs.get('roadmap_id')
-
-        name = request.data.get('name')
-        executive_summary = request.data.get('executive_summary')
-        infrastructure_types = request.data.get('infrastructure_types')
-        integration_coordinators = request.data.get('integration_coordinators')
-        status = request.data.get('status')
-        badges = request.data.get('badges')
-
-        for badge in badges:
-            try:
-                Badge.objects.get(badge_id=badge.get('badge_id'))
-            except Badge.DoesNotExist:
-                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Badge not found ({badge.get("badge_id")})')
-
-        if roadmap_id:
-            try:
-                roadmap = Roadmap.objects.get(roadmap_id=roadmap_id)
-            except Roadmap.DoesNotExist:
-                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Roadmap not found ({roadmap_id})')
-
-            roadmap.name = name
-            roadmap.executive_summary = executive_summary
-            roadmap.infrastructure_types = infrastructure_types
-            roadmap.integration_coordinators = integration_coordinators
-            roadmap.status = status
-
-            roadmap.save()
-
-            Roadmap_Badge.objects.filter(roadmap_id=roadmap_id).delete()
-        else:
-            roadmap = Roadmap(
-                name=name,
-                executive_summary=executive_summary,
-                infrastructure_types=infrastructure_types,
-                integration_coordinators=integration_coordinators,
-                status=status
-            )
-            roadmap.save()
-
-        for sequence_no in range(len(badges)):
-            badge = badges[sequence_no]
-            Roadmap_Badge(
-                roadmap=roadmap,
-                badge_id=badge.get('badge_id'),
-                sequence_no=sequence_no,
-                required=badge.get('required')
-            ).save()
-
-
-        serializer = self.serializer_class(roadmap, context={'request': request}, many=False)
-        return MyAPIResponse({'results': serializer.data})
-
-
 class Badge_Full_v1(GenericAPIView):
     """
     Integration Badge(s) and pre-requisites
