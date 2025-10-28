@@ -172,7 +172,7 @@ class Badge_Full_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | ReadOnly]
+        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
