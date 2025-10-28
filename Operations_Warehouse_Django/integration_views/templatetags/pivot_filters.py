@@ -13,11 +13,11 @@ def get_item(dictionary, key):
 def badge_status_symbol(status):
     """Convert badge status to legend symbol"""
     if status == 'verified':
-        return '<span class="text-success fs-4">&#x2714;</span>'  # Green check - Functional
+        return '<span class="text-success fs-4">&#x2714;</span>'  # Green check - In Production
     elif status == 'planned':
-        return '<span class="fs-5" style="color: gray;">&#x2714;</span>'  # Gray check - Planned
+        return '<span class="fs-4" style="color: gray;">&#x26A0;</span>'  # In-Progress
     else:
-        return '-'  # Dash - Not Planned (None, retired, verification_failed, etc.) - Not functional
+        return '-'  # Dash - Not Planned (None, retired, verification_failed, etc.) - Neither in-Progress or in production
 
 # trimming out 'ACCESS ' from the bage name if present
 @register.filter
