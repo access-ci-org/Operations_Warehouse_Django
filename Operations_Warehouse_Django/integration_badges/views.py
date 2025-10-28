@@ -289,17 +289,53 @@ class Task_Full_v1(GenericAPIView):
 
     def get(self, request, format=None, **kwargs):
         task_id = self.kwargs.get('task_id')
-        if task_id:
-            try:
-                item = Task.objects.get(pk=task_id)
-                many = False
-            except Task.DoesNotExist:
-                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
-        else:
-            item = Task.objects.all()
-            many = True
 
-        serializer = self.serializer_class(item, context={'request': request}, many=many)
+        try:
+            task = Task.objects.get(pk=task_id)
+            serializer = self.serializer_class(task, context={'request': request}, many=False)
+        except Task.DoesNotExist:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
+
+        return MyAPIResponse({'results': serializer.data})
+
+
+class Tasks_Full_v1(GenericAPIView):
+    '''
+    Integration Badge(s) and pre-requisites
+    '''
+    permission_classes = (ReadOnly,)
+    authentication_classes = []
+    renderer_classes = (JSONRenderer,)
+    serializer_class = Task_Full_Serializer
+
+    @extend_schema(
+        responses=Task_Full_Serializer,
+        parameters=[
+            OpenApiParameter(
+                name='badge_id',
+                description='Badge ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            )
+        ]
+    )
+    def get(self, request, format=None, **kwargs):
+        badge_id = self.request.query_params.get('badge_id')
+
+        if badge_id:
+            try:
+                badge = Badge.objects.get(pk=badge_id)
+                badge_tasks = Badge_Task.objects.filter(badge_id=badge_id)
+                task_ids = [badge_task.task_id for badge_task in badge_tasks]
+                tasks = Task.objects.filter(pk__in=task_ids)
+            except Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified badge_id not found')
+        else:
+            tasks = Task.objects.all()
+
+        serializer = self.serializer_class(tasks, context={'request': request}, many=True)
+
         return MyAPIResponse({'results': serializer.data})
 
 
