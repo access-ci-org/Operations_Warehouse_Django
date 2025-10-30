@@ -172,8 +172,23 @@ class GroupBadgeStatusView(TemplateView):
             if resource_id and badge_id:
                 resource_badges[str(resource_id)][badge_id] = status
 
+        # Fetch resource details to check statuses
+        from cider.models import CiderInfrastructure
+        from django.db.models import Q
+
+        preproduction_statuses = ['pre-production', 'pre_production', 'coming soon', 'coming_soon']
+
+        # Get all resources with their statuses
+        all_resources = CiderInfrastructure.objects.filter(
+            Q(project_affiliation__icontains='ACCESS')
+        ).values('info_resourceid', 'latest_status')
+
+        resource_status_lookup = {
+            str(res['info_resourceid']): res.get('latest_status', '').lower().strip()
+            for res in all_resources
+        }
+
         group_stats = []
-        preproduction_keywords = ['coming soon', 'coming-soon', 'coming_soon','pre-production', 'preproduction']
 
         for group in groups_data:
             if not isinstance(group, dict):
@@ -193,8 +208,28 @@ class GroupBadgeStatusView(TemplateView):
                 resource_to_roadmap
             )
 
-            group_name = group.get('group_descriptive_name', '').lower()
-            has_preproduction = any(keyword in group_name for keyword in preproduction_keywords)
+            # Check resource statuses within the group
+            has_preproduction = False
+            group_statuses = set()
+            status_counts = defaultdict(int)
+
+            for resource_id in group_resources:
+                status = resource_status_lookup.get(str(resource_id), 'unknown')
+
+                group_statuses.add(status)
+                status_counts[status] += 1
+
+                if (status in preproduction_statuses or
+                    any(keyword in status for keyword in preproduction_statuses)):
+                    has_preproduction = True
+
+            # Determine group status
+            if len(group_statuses) == 1:
+                group_status = list(group_statuses)[0]
+                has_mixed_status = False
+            else:
+                group_status = 'mixed'
+                has_mixed_status = True
 
             group_stats.append({
                 'group_id': group.get('group_id'),
@@ -202,6 +237,9 @@ class GroupBadgeStatusView(TemplateView):
                 'name': group.get('group_descriptive_name', 'Unknown Group'),
                 'resource_count': len(group_resources),
                 'has_preproduction': has_preproduction,
+                'group_status': group_status,
+                'has_mixed_status': has_mixed_status,
+                'status_breakdown': dict(zip(*zip(*[(s, list(group_statuses).count(s)) for s in set(group_statuses)]))),  # Count each status
                 **counts
             })
 

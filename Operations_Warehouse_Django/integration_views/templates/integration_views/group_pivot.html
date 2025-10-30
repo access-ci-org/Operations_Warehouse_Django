@@ -95,13 +95,16 @@ table.table thead tr {
             <th class="rotated-th" style="width: 100px;"><div class="rotated-th__label text-danger fs-5">Required Badges</div></th>
         </tr>
     </thead>
-    <tbody>
+        <tbody>
         {% for group in group_stats %}
-        <tr {% if group.has_preproduction %}class="table-warning"{% endif %}>
+        <tr {% if group.has_preproduction %}class="table-warning"{% elif group.has_mixed_status %}class="table-info"{% endif %}>
             <td class="text-center fs-6">
                 <strong>{{ group.name }}</strong>
                 {% if group.has_preproduction %}
                     <br><small class="badge bg-info text-dark">Pre-Production</small>
+                {% endif %}
+                {% if group.has_mixed_status %}
+                    <br><small class="badge bg-warning text-dark">Mixed Status</small>
                 {% endif %}
                 <br><small>{{ group.info_groupid }}</small>
             </td>
