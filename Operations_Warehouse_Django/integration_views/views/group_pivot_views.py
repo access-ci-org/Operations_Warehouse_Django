@@ -1,11 +1,12 @@
 # used Claude 4 Code to assist in this code and verified against docs and other examples from the web. No inappropriate data was shared in the process
 from django.conf import settings
 from django.views.generic import TemplateView
-import requests
+from django.shortcuts import redirect
 from datetime import datetime
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from collections import defaultdict
+from django.db.models import Q
 
 from django.test import RequestFactory
 from rest_framework.request import Request as DRFRequest
@@ -15,6 +16,7 @@ from integration_badges.views import (
     Roadmap_Full_v1,
     Resource_Roadmap_Badges_Status_v1
 )
+
 # cider views
 from cider.views import CiderACCESSActiveGroups_v2_List
 
@@ -24,46 +26,50 @@ class GroupBadgeStatusView(TemplateView):
     """Group badge view"""
     template_name = 'integration_views/group_pivot.html'
 
+    def call_integration_group_views(self, view_class, **kwargs):
+        """importing view content from integration_badges"""
+        factory = RequestFactory()
+        django_request = factory.get('/', kwargs)
+
+        drf_request = DRFRequest(django_request)
+        drf_request.user = self.request.user
+
+        view = view_class()
+        view.request = drf_request
+        view.format_kwarg = None
+        view.kwargs = kwargs
+
+        response = view.get(drf_request, **kwargs)
+
+        if hasattr(response, 'data'):
+            data = response.data
+            if isinstance(data, dict):
+                return data.get('results', data.get('active_groups', []))
+            return data
+        return []
+
     def fetch_api_data(self, endpoint, params=None):
-        """Fetch data from API endpoints"""
-        base_url = 'https://operations-beta-api.access-ci.org/wh2'
-        endpoints = {
-            'groups': f'{base_url}/cider/v1/access-active-groups/',
-            'resource_roadmap_badges': f'{base_url}/integration_badges/v1/resource_roadmap_badges/',
-            'roadmap_badges': f'{base_url}/integration_badges/v1/roadmap_badges_by_roadmap/', 
+        """Fetch data from internal DRF views"""
+        endpoint_mapping = {
+            'groups': CiderACCESSActiveGroups_v2_List,
+            'resource_roadmap_badges': Resource_Roadmap_Badges_Status_v1,
+            'roadmaps': Roadmap_Full_v1,
         }
 
-        url = endpoints.get(endpoint, endpoint)
-
-        # DEBUG
-        print(f"Fetching: {url}")
+        view_class = endpoint_mapping.get(endpoint)
+        if not view_class:
+            return []
 
         try:
-            response = requests.get(url, params={'format': 'json', **(params or {})}, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+            data = self.call_integration_group_views(view_class, **(params or {}))
 
-            # Handle different API response formats
-            if isinstance(data, list):
-                result = data
-            elif isinstance(data, dict):
-                # For groups endpoint, extract the groups list
-                if endpoint == 'groups' and 'active_groups' in data:
-                    result = data['active_groups']
-                else:
-                    result = data.get('results', data.get('data', []))
-            else:
-                result = []
+            # Handle groups endpoint special case
+            if endpoint == 'groups' and isinstance(data, dict) and 'active_groups' in data:
+                return data['active_groups']
 
-            # DEBUG
-            # print(f"Got {len(result)} items from {endpoint}")
-            # if result and isinstance(result, list):
-            #     print(f"First item type: {type(result[0])}")
-
-            return result
-        except requests.RequestException as e:
-            # DEBUG
-            print(f"Error: {e}")
+            return data
+        except Exception as e:
+            print(f"Error fetching {endpoint}: {e}")
             return []
 
     def calculate_group_badge_counts(self, group_resources, resource_badges, all_required_badge_ids, roadmap_badges_by_roadmap, resource_to_roadmap):
@@ -82,16 +88,13 @@ class GroupBadgeStatusView(TemplateView):
             resource_badge_data = resource_badges.get(resource_id, {})
             resource_badge_ids = set(resource_badge_data.keys())
 
-            # Get the roadmap(s) this resource belongs to
             resource_roadmap_id = resource_to_roadmap.get(resource_id)
 
-            # Get badges only from this resource's roadmap
             if resource_roadmap_id and resource_roadmap_id in roadmap_badges_by_roadmap:
                 relevant_badge_ids = roadmap_badges_by_roadmap[resource_roadmap_id]
             else:
-                relevant_badge_ids = set()  # No roadmap = no expected badges
+                relevant_badge_ids = set()
 
-            # Count badges with explicit statuses
             for badge_id, status in resource_badge_data.items():
                 status_lower = status.lower().strip()
 
@@ -104,7 +107,6 @@ class GroupBadgeStatusView(TemplateView):
                 elif status_lower in explicit_not_planned_statuses or status_lower == '':
                     not_planned += 1
 
-            # Count badges missing from this resource's SPECIFIC roadmap
             missing_badges = relevant_badge_ids - resource_badge_ids
             not_planned += len(missing_badges)
 
@@ -119,7 +121,6 @@ class GroupBadgeStatusView(TemplateView):
             'required_percentage': required_percentage
         }
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -129,7 +130,6 @@ class GroupBadgeStatusView(TemplateView):
             if 'active_groups' in groups_data:
                 groups_data = groups_data['active_groups']
             else:
-                # DEBUG
                 print(f"ERROR: groups_data is dict but no 'active_groups' key. Keys: {groups_data.keys()}")
                 groups_data = []
 
@@ -143,18 +143,12 @@ class GroupBadgeStatusView(TemplateView):
             if resource_id and roadmap_id:
                 resource_to_roadmap[resource_id] = roadmap_id
 
-        # Fetch roadmap badges, keeping them separated by roadmap
+        # Fetch roadmap badges using internal API
         roadmap_badges_by_roadmap = defaultdict(set)
         all_required_badge_ids = set()
 
         try:
-            roadmaps_response = requests.get(
-                'https://operations-beta-api.access-ci.org/wh2/integration_badges/v1/roadmaps/',
-                params={'format': 'json'},
-                timeout=30
-            )
-            roadmaps_response.raise_for_status()
-            roadmaps = roadmaps_response.json().get('results', [])
+            roadmaps = self.fetch_api_data('roadmaps')
 
             for roadmap in roadmaps:
                 roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
@@ -168,7 +162,6 @@ class GroupBadgeStatusView(TemplateView):
                             if badge_record.get('required', False):
                                 all_required_badge_ids.add(badge_id)
         except Exception as e:
-            # DEBUG
             print(f"ERROR fetching roadmap badges: {e}")
 
         resource_badges = defaultdict(dict)
@@ -180,11 +173,10 @@ class GroupBadgeStatusView(TemplateView):
                 resource_badges[str(resource_id)][badge_id] = status
 
         group_stats = []
-        preproduction_keywords = ['coming soon', 'pre-production', 'preproduction']
+        preproduction_keywords = ['coming soon', 'coming-soon', 'coming_soon','pre-production', 'preproduction']
 
         for group in groups_data:
             if not isinstance(group, dict):
-                # DEBUG
                 print(f"WARNING: Skipping non-dict group: {type(group)} = {group}")
                 continue
 
