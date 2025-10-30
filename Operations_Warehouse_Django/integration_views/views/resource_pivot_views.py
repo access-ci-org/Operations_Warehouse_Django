@@ -120,7 +120,6 @@ class RoadmapResourceBadgesView(TemplateView):
 
         return filtered_data
 
-
     def build_lookups(self, badges_data, resources_data):
         badge_lookup = {
             str(badge.get('id') or badge.get('badge_id')): badge.get('name', 'Unknown Badge')

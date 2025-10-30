@@ -39,7 +39,6 @@ table.table th.rotated-th {
     padding: 0 !important;
     vertical-align: bottom !important;
     overflow: visible !important;
-    border: none !important;
     background-color: transparent !important;
 }
 
@@ -54,6 +53,27 @@ table.table th.rotated-th {
     z-index: 10;
     color: #000;
 }
+
+.table thead tr th:first-child {
+    text-align: center !important;
+}
+
+table.table thead tr {
+    border-bottom: 2px solid #000000 !important;
+}
+
+.table-group-pivot {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-group-pivot th:first-child,
+.table-group-pivot td:first-child {
+    width: 150px;
+    max-width: 150px;
+    white-space: nowrap;
+}
+
 </style>
 
 
@@ -64,15 +84,15 @@ table.table th.rotated-th {
 </div>
 
 
-<table class="table table-bordered table-hover">
+<table class="table table-group-pivot" style="table-layout: fixed; width: 100%;">
     <thead>
         <tr>
-            <th class="rotated-th"><div class="rotated-th__label fs-5">Resource Group</div></th>
-            <th class="rotated-th"><div class="rotated-th__label fs-5">Resources</div></th>
-            <th class="rotated-th"><div class="rotated-th__label text-success fs-5">Available</div></th>
-            <th class="rotated-th"><div class="rotated-th__label fs-5" style="color: gray;">In-Progress</div></th>
-            <th class="rotated-th"><div class="rotated-th__label fs-5">Not Planned</div></th>
-            <th class="rotated-th"><div class="rotated-th__label text-danger fs-5">Required Badges</div></th>
+            <th class="fs-5" style="width: 150px; max-width: 150px;">Resource Group</th>
+            <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5">Resources</div></th>
+            <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label text-success fs-5">Available</div></th>
+            <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5" style="color: gray;">In-Progress</div></th>
+            <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5">Not Planned</div></th>
+            <th class="rotated-th" style="width: 100px;"><div class="rotated-th__label text-danger fs-5">Required Badges</div></th>
         </tr>
     </thead>
     <tbody>
