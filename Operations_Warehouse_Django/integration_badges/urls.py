@@ -20,7 +20,7 @@ urlpatterns = [
      path(r'v1/tasks/',
           Task_Full_v1.as_view(), name='tasks-full-v1'),
 
-     path(r'v1/tasks/<str:task_id>/',
+     path(r'v1/task/<str:task_id>/',
           Task_Full_v1.as_view(), name='task-id-v1'),
 
      path(r'v1/roadmap_review/',
