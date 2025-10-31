@@ -157,7 +157,7 @@ class Roadmap_Badge(models.Model):
 class Badge_Task(models.Model):
     id = models.AutoField(primary_key=True)
     badge = models.ForeignKey(Badge, related_name='badge_tasks', on_delete=models.CASCADE)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, related_name='task_badges', on_delete=models.CASCADE)
     sequence_no = models.IntegerField()
     required = models.BooleanField(null=False, default=False)
 

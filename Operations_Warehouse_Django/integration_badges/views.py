@@ -168,11 +168,10 @@ class Badge_Full_v1(GenericAPIView):
     Integration Badge(s) and pre-requisites
     """
 
-
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
+        permission_classes = [IsBadgeMaintainer | ReadOnly]
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
@@ -282,24 +281,61 @@ class Task_Full_v1(GenericAPIView):
     '''
     Integration Badge(s) and pre-requisites
     '''
-    permission_classes = (ReadOnly,)
-    authentication_classes = []
+
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsBadgeMaintainer | ReadOnly]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Task_Full_Serializer
 
     def get(self, request, format=None, **kwargs):
         task_id = self.kwargs.get('task_id')
+
         if task_id:
             try:
-                item = Task.objects.get(pk=task_id)
-                many = False
+                task = Task.objects.get(pk=task_id)
+                serializer = self.serializer_class(task, context={'request': request}, many=False)
             except Task.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
         else:
-            item = Task.objects.all()
-            many = True
+            tasks = Task.objects.all()
+            serializer = self.serializer_class(tasks, context={'request': request}, many=True)
 
-        serializer = self.serializer_class(item, context={'request': request}, many=many)
+        return MyAPIResponse({'results': serializer.data})
+
+    def post(self, request, format=None, **kwargs):
+        task_id = self.kwargs.get('task_id')
+
+        name = request.data.get('name')
+        technical_summary = request.data.get('technical_summary')
+        task_experts = request.data.get('task_experts')
+        implementor_roles = request.data.get('implementor_roles')
+        detailed_instructions_url = request.data.get('detailed_instructions_url')
+
+        if task_id:
+            try:
+                task = Task.objects.get(pk=task_id)
+                task.name = name
+                task.technical_summary = technical_summary
+                task.task_experts = task_experts
+                task.implementor_roles = implementor_roles
+                task.detailed_instructions_url = detailed_instructions_url
+            except Task.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
+        else:
+            task = Task(
+                name=name,
+                technical_summary=technical_summary,
+                task_experts=task_experts,
+                implementor_roles=implementor_roles,
+                detailed_instructions_url=detailed_instructions_url
+            )
+
+        task.save()
+
+        serializer = self.serializer_class(task, context={'request': request}, many=False)
         return MyAPIResponse({'results': serializer.data})
 
 
@@ -475,36 +511,6 @@ class Badge_Verification_v1(GenericAPIView):
             )
         else:
             return MyAPIResponse({"results": results})
-
-
-class Badge_Task_Full_v1(GenericAPIView):
-    """
-    Retrieve an Integration Task by ID
-    """
-
-    permission_classes = (ReadOnly,)
-    authentication_classes = []
-    renderer_classes = (JSONRenderer,)
-    serializer_class = Badge_Task_Full_Serializer
-
-    def get(self, request, *args, **kwargs):
-        badge_id = kwargs.get("badge_id")
-        if not badge_id:
-            raise MyAPIException(
-                code=status.HTTP_400_BAD_REQUEST, detail="Badge ID is required"
-            )
-
-        badge_tasks = Badge_Task.objects.filter(badge_id=badge_id).order_by(
-            "sequence_no"
-        )
-        if badge_tasks.exists():
-            serializer = self.serializer_class(
-                badge_tasks, context={"request": request}, many=True
-            )
-            return MyAPIResponse({"results": serializer.data})
-        else:
-            # Return empty list if no tasks found, not an error
-            return MyAPIResponse({"results": []})
 
 
 class Resources_Eligible_List_v1(GenericAPIView):

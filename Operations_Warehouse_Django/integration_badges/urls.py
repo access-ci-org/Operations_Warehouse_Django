@@ -14,8 +14,14 @@ urlpatterns = [
      path(r'v1/badges/',
           Badge_Full_v1.as_view(), name='badges-full-v1'),
 
+     path(r'v1/badge/<str:badge_id>/',
+          Badge_Full_v1.as_view(), name='badge-id-v1'),
+
      path(r'v1/tasks/',
           Task_Full_v1.as_view(), name='tasks-full-v1'),
+
+     path(r'v1/task/<str:task_id>/',
+          Task_Full_v1.as_view(), name='task-id-v1'),
 
      path(r'v1/roadmap_review/',
           Roadmap_Review_v1.as_view(), name='roadmaps-review-v1'),
@@ -31,12 +37,6 @@ urlpatterns = [
 
      path(r'v1/badge_verification/',
           Badge_Verification_v1.as_view(), name='badges-verification-v1'),
-
-     path(r'v1/badge/<str:badge_id>/',
-          Badge_Full_v1.as_view(), name='badge-id-v1'),
-
-     path(r'v1/badge/<str:badge_id>/tasks/',
-          Badge_Task_Full_v1.as_view(), name='badge-id-tasks-v1'),
 
      path(r'v1/resources/',
           Resources_Eligible_List_v1.as_view(), name='resources-eligible-list-v1'),
