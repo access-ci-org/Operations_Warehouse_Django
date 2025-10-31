@@ -168,12 +168,7 @@ class Badge_Full_v1(GenericAPIView):
     Integration Badge(s) and pre-requisites
     """
 
-
-    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
-        permission_classes = (AllowAny,)
-    else:
-        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
-
+    permission_classes = [IsBadgeMaintainer | ReadOnly]
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
 
@@ -283,11 +278,7 @@ class Task_Full_v1(GenericAPIView):
     Integration Badge(s) and pre-requisites
     '''
 
-    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
-        permission_classes = (AllowAny,)
-    else:
-        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
-
+    permission_classes = [IsBadgeMaintainer | ReadOnly]
     renderer_classes = (JSONRenderer,)
     serializer_class = Task_Full_Serializer
 
