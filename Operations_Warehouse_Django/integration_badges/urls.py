@@ -18,7 +18,7 @@ urlpatterns = [
           Badge_Full_v1.as_view(), name='badge-id-v1'),
 
      path(r'v1/tasks/',
-          Tasks_Full_v1.as_view(), name='tasks-full-v1'),
+          Task_Full_v1.as_view(), name='tasks-full-v1'),
 
      path(r'v1/tasks/<str:task_id>/',
           Task_Full_v1.as_view(), name='task-id-v1'),
