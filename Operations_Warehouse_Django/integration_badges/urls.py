@@ -14,6 +14,9 @@ urlpatterns = [
      path(r'v1/badges/',
           Badge_Full_v1.as_view(), name='badges-full-v1'),
 
+     path(r'v1/tasks/',
+          Task_Full_v1.as_view(), name='tasks-full-v1'),
+
      path(r'v1/roadmap_review/',
           Roadmap_Review_v1.as_view(), name='roadmaps-review-v1'),
 
