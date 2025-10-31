@@ -22,7 +22,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from .models import Resource_Badge_Workflow
-from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
+from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
 
 log = logging.getLogger(__name__)
 
@@ -172,7 +172,7 @@ class Badge_Full_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | ReadOnly]
+        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
@@ -277,6 +277,7 @@ class Badge_Full_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
+
 class Task_Full_v1(GenericAPIView):
     '''
     Integration Badge(s) and pre-requisites
@@ -285,7 +286,7 @@ class Task_Full_v1(GenericAPIView):
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
         permission_classes = (AllowAny,)
     else:
-        permission_classes = [IsCoordinator | ReadOnly]
+        permission_classes = [IsRoadmapMaintainer | IsBadgeMaintainer | ReadOnly]
 
     renderer_classes = (JSONRenderer,)
     serializer_class = Task_Full_Serializer
