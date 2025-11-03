@@ -154,9 +154,10 @@ class GroupBadgeStatusView(TemplateView):
                 roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
                 if 'badges' in roadmap:
                     for badge_record in roadmap['badges']:
-                        badge_id = str(badge_record.get('badge_id'))
+                        badge_id = badge_record.get('badge_id')
 
-                        if badge_id:
+                        if badge_id: 
+                            badge_id = str(badge_id)
                             roadmap_badges_by_roadmap[roadmap_id].add(badge_id)
 
                             if badge_record.get('required', False):
@@ -167,10 +168,11 @@ class GroupBadgeStatusView(TemplateView):
         resource_badges = defaultdict(dict)
         for badge_record in resource_roadmap_badges_data:
             resource_id = badge_record.get('info_resourceid')
-            badge_id = str(badge_record.get('badge_id'))
+            badge_id = badge_record.get('badge_id')
             status = badge_record.get('status', '')
-            if resource_id and badge_id:
-                resource_badges[str(resource_id)][badge_id] = status
+
+            if resource_id and badge_id: 
+                resource_badges[str(resource_id)][str(badge_id)] = status
 
         # Fetch resource details to check statuses
         from cider.models import CiderInfrastructure

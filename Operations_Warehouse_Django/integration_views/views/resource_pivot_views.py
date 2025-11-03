@@ -427,7 +427,13 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Build badges list from roadmap badges
         for badge_record in roadmap_badges_data:
-            badge_id = str(badge_record.get('badge_id'))
+            badge_id = badge_record.get('badge_id')
+
+            # Skip invalid badge IDs
+            if not badge_id:
+                continue
+
+            badge_id = str(badge_id)
             badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
             is_required = badge_record.get('required', False)
 
@@ -444,7 +450,13 @@ class RoadmapResourceBadgesView(TemplateView):
         # Add badges from resource badge records
         for badge_record in resource_roadmap_badges_data:
             if badge_record.get('roadmap_id') == selected_roadmap_int:
-                badge_id = str(badge_record.get('badge_id'))
+                badge_id = badge_record.get('badge_id')
+
+                # Skip invalid badge IDs
+                if not badge_id:
+                    continue
+
+                badge_id = str(badge_id)
                 badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
 
                 if badge_id not in seen_badges:
