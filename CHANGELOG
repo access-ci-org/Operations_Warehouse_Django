@@ -1,3 +1,7 @@
+v3.70.0 2025-11-11 jlambertson
+ - Added group badge status view
+ - better segmented structure
+
 v3.69.0 2025-10-28 Dinuka
   - Enabling badge post endpoint (CTT-675)
 
