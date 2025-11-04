@@ -132,10 +132,11 @@ class GroupBadgeStatusView(TemplateView):
         # Build resource-to-roadmap mapping
         resource_to_roadmap = {}
         for badge_record in resource_roadmap_badges_data:
-            resource_id = str(badge_record.get('info_resourceid'))
+            resource_id = badge_record.get('info_resourceid')
             roadmap_id = badge_record.get('roadmap_id')
-            if resource_id and roadmap_id:
-                resource_to_roadmap[resource_id] = roadmap_id
+            # Validation
+            if resource_id is not None and roadmap_id is not None:
+                resource_to_roadmap[str(resource_id)] = roadmap_id
 
         # Fetch roadmap badges using internal API
         roadmap_badges_by_roadmap = defaultdict(set)
@@ -144,28 +145,32 @@ class GroupBadgeStatusView(TemplateView):
         try:
             roadmaps = self.fetch_api_data('roadmaps')
 
+            
             for roadmap in roadmaps:
                 roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
                 if 'badges' in roadmap:
                     for badge_record in roadmap['badges']:
                         badge_id = badge_record.get('badge_id')
 
-                        if badge_id: 
-                            badge_id = str(badge_id)
-                            roadmap_badges_by_roadmap[roadmap_id].add(badge_id)
+                        # Validation
+                        if badge_id is not None:
+                            badge_id_str = str(badge_id)
+                            roadmap_badges_by_roadmap[roadmap_id].add(badge_id_str)
 
                             if badge_record.get('required', False):
-                                all_required_badge_ids.add(badge_id)
+                                all_required_badge_ids.add(badge_id_str)
         except Exception as e:
             print(f"ERROR fetching roadmap badges: {e}")
 
+        
         resource_badges = defaultdict(dict)
         for badge_record in resource_roadmap_badges_data:
             resource_id = badge_record.get('info_resourceid')
             badge_id = badge_record.get('badge_id')
             status = badge_record.get('status', '')
 
-            if resource_id and badge_id: 
+            # Validation
+            if resource_id is not None and badge_id is not None:
                 resource_badges[str(resource_id)][str(badge_id)] = status
 
         # Fetch resource details to check statuses
@@ -179,10 +184,12 @@ class GroupBadgeStatusView(TemplateView):
             Q(project_affiliation__icontains='ACCESS')
         ).values('info_resourceid', 'latest_status')
 
-        resource_status_lookup = {
-            str(res['info_resourceid']): res.get('latest_status', '').lower().strip()
-            for res in all_resources
-        }
+        resource_status_lookup = {}
+        for res in all_resources:
+            resource_id = res.get('info_resourceid')
+            # Validation
+            if resource_id is not None:
+                resource_status_lookup[str(resource_id)] = res.get('latest_status', '').lower().strip()
 
         group_stats = []
 

@@ -115,17 +115,22 @@ class RoadmapResourceBadgesView(TemplateView):
         return filtered_data
 
     def build_lookups(self, badges_data, resources_data):
-        badge_lookup = {
-            str(badge.get('id') or badge.get('badge_id')): badge.get('name', 'Unknown Badge')
-            for badge in badges_data if badge.get('id') or badge.get('badge_id')
-        }
+        badge_lookup = {}
+        for badge in badges_data:
+            badge_id = badge.get('id') or badge.get('badge_id')
+            # Validation
+            if badge_id is not None:
+                badge_lookup[str(badge_id)] = badge.get('name', 'Unknown Badge')
 
-        resource_lookup = {
-            str(res.get('info_resourceid') or res.get('resource_id')): res
-            for res in resources_data if res.get('info_resourceid') or res.get('resource_id')
-        }
+        resource_lookup = {}
+        for res in resources_data:
+            resource_id = res.get('info_resourceid') or res.get('resource_id')
+            # Validation
+            if resource_id is not None:
+                resource_lookup[str(resource_id)] = res
 
         return badge_lookup, resource_lookup
+
 
     def process_roadmap_data(self, selected_roadmap, resource_roadmap_badges_data, badge_lookup, resource_lookup, resources_data, preproduction_by_roadmap):
         """Process and pivot data for the selected roadmap"""
@@ -144,8 +149,11 @@ class RoadmapResourceBadgesView(TemplateView):
         roadmap_badges = [item for item in resource_roadmap_badges_data 
                         if item.get('roadmap_id') == selected_roadmap_int]
 
-        resource_ids_with_badges = {str(item.get('info_resourceid')) for item in roadmap_badges 
-                                if item.get('info_resourceid')}
+        resource_ids_with_badges = {
+            str(item.get('info_resourceid')) 
+            for item in roadmap_badges 
+            if item.get('info_resourceid') is not None
+}
 
         all_resource_ids = resource_ids_with_badges | preproduction_resource_ids
 
@@ -162,7 +170,10 @@ class RoadmapResourceBadgesView(TemplateView):
             badge_statuses = {}
             for rb in resource_badges:
                 badge_id = rb.get('badge_id')
-                badge_statuses[str(badge_id)] = rb.get('status')
+                # Validation fire
+                if badge_id is not None:
+                    badge_statuses[str(badge_id)] = rb.get('status')
+
 
             latest_status_begin_str = resource_info.get('latest_status_begin')
             latest_status_begin_date = None
@@ -217,10 +228,12 @@ class RoadmapResourceBadgesView(TemplateView):
 
         resource_to_roadmap = {}
         for badge_record in resource_roadmap_badges_data:
-            resource_id = str(badge_record.get('info_resourceid'))
+            # Get values 
+            resource_id = badge_record.get('info_resourceid')
             roadmap_id = badge_record.get('roadmap_id')
-            if resource_id and roadmap_id:
-                resource_to_roadmap[resource_id] = roadmap_id
+            # Validation
+            if resource_id is not None and roadmap_id is not None:
+                resource_to_roadmap[str(resource_id)] = roadmap_id
 
         preproduction_by_roadmap = {}
 
@@ -325,9 +338,10 @@ class RoadmapResourceBadgesView(TemplateView):
         required_badge_ids = set()
         for badge_record in roadmap_badges_data:
             if badge_record.get('required', False):
-                badge_id = str(badge_record.get('badge_id'))
-                if badge_id and badge_id != 'None':
-                    required_badge_ids.add(badge_id)
+                badge_id = badge_record.get('badge_id')
+                # Validation
+                if badge_id is not None:
+                    required_badge_ids.add(str(badge_id))
 
         if not required_badge_ids:
             return 100, 0, 0
@@ -336,8 +350,11 @@ class RoadmapResourceBadgesView(TemplateView):
         total_required_instances = 0
 
         for badge_record in resource_roadmap_badges_data:
+            badge_id = badge_record.get('badge_id')
+            # Validation
             if (badge_record.get('roadmap_id') == selected_roadmap_int and 
-                str(badge_record.get('badge_id')) in required_badge_ids):
+                badge_id is not None and
+                str(badge_id) in required_badge_ids):
                 total_required_instances += 1
                 if badge_record.get('status') == 'verified':
                     verified_required_count += 1
@@ -426,38 +443,36 @@ class RoadmapResourceBadgesView(TemplateView):
             badge_id = badge_record.get('badge_id')
 
             # Skip invalid badge IDs
-            if not badge_id:
+            if badge_id is None:
                 continue
 
-            badge_id = str(badge_id)
-            badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
-            is_required = badge_record.get('required', False)
+            badge_id_str = str(badge_id)
+            badge_name = badge_lookup.get(badge_id_str, f'Badge {badge_id_str}')
 
-            if badge_id not in seen_badges:
-                seen_badges[badge_id] = {
-                    'id': badge_id,
+            if badge_id_str not in seen_badges:
+                seen_badges[badge_id_str] = {
+                    'id': badge_id_str,
                     'badge': {'name': badge_name},
-                    'required': is_required
+                    'required': badge_record.get('required', False)
                 }
-            else:
-                if is_required:
-                    seen_badges[badge_id]['required'] = True
+            elif badge_record.get('required', False):
+                seen_badges[badge_id_str]['required'] = True
 
         # Add badges from resource badge records
         for badge_record in resource_roadmap_badges_data:
             if badge_record.get('roadmap_id') == selected_roadmap_int:
                 badge_id = badge_record.get('badge_id')
 
-                # Skip invalid badge IDs
-                if not badge_id:
+                # Skip invalid badge IDs (explicit None check)
+                if badge_id is None:
                     continue
 
-                badge_id = str(badge_id)
-                badge_name = badge_lookup.get(badge_id, f'Badge {badge_id}')
+                badge_id_str = str(badge_id)
+                badge_name = badge_lookup.get(badge_id_str, f'Badge {badge_id_str}')
 
-                if badge_id not in seen_badges:
-                    seen_badges[badge_id] = {
-                        'id': badge_id,
+                if badge_id_str not in seen_badges:
+                    seen_badges[badge_id_str] = {
+                        'id': badge_id_str,
                         'badge': {'name': badge_name},
                         'required': False
                     }
