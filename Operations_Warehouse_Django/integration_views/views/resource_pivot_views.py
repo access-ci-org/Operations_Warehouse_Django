@@ -52,7 +52,7 @@ class RoadmapResourceBadgesView(TemplateView):
         return []
 
     def fetch_api_data(self, endpoint, params=None):
-        """Fetch data from internal DRF views"""
+        """ """
 
         # Special handling for resources - get ALL types
         if endpoint == 'resources':

@@ -43,7 +43,7 @@ class GroupBadgeStatusView(TemplateView):
         return []
 
     def fetch_api_data(self, endpoint, params=None):
-        """Fetch data from internal DRF views"""
+        """ """
         endpoint_mapping = {
             'groups': CiderACCESSActiveGroups_v2_List,
             'resource_roadmap_badges': Resource_Roadmap_Badges_Status_v1,
