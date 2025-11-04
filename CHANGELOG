@@ -1,3 +1,6 @@
+v3.69.1 2025-10-31 Dinuka
+  - Enabling task post endpoint (CTT-675)
+
 v3.69.0 2025-10-28 Dinuka
   - Enabling badge post endpoint (CTT-675)
 
