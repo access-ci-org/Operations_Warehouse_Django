@@ -8,9 +8,6 @@ from django.views.decorators.cache import cache_page
 from collections import defaultdict
 from django.db.models import Q
 
-from django.test import RequestFactory
-from rest_framework.request import Request as DRFRequest
-
 # integration_badges views
 from integration_badges.views import (
     Roadmap_Full_v1,
@@ -27,19 +24,16 @@ class GroupBadgeStatusView(TemplateView):
     template_name = 'integration_views/group_pivot.html'
 
     def call_integration_group_views(self, view_class, **kwargs):
-        """importing view content from integration_badges"""
-        factory = RequestFactory()
-        django_request = factory.get('/', kwargs)
+        """ """
+        request = self.request
+        if kwargs:
+            from django.http import QueryDict
+            query_dict = QueryDict('', mutable=True)
+            query_dict.update(kwargs)
+            request.GET = query_dict
 
-        drf_request = DRFRequest(django_request)
-        drf_request.user = self.request.user
-
-        view = view_class()
-        view.request = drf_request
-        view.format_kwarg = None
-        view.kwargs = kwargs
-
-        response = view.get(drf_request, **kwargs)
+        view = view_class.as_view()
+        response = view(request, **kwargs)
 
         if hasattr(response, 'data'):
             data = response.data
