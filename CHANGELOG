@@ -1,3 +1,7 @@
+v3.70.0 2025-11-11 jlambertson (CTT-727)
+  - Added group badge status view
+  - better segmented structure
+
 v3.69.1 2025-10-31 Dinuka
   - Enabling task post endpoint (CTT-675)
 
@@ -11,7 +15,7 @@ v3.68.1 2025-10-17 JP
   - Fix Badge verification view not displaying correct tasks-completed/pending verification (CTT-739)
 
 v3.68.0 2025-10-24 EBB
- - Implement integration badges update permissions CTT-695
+  - Implement integration badges update permissions CTT-695
 
 v3.67.0 2025-10-10 jlambertson
   - adding updated RP view for badge statuses
