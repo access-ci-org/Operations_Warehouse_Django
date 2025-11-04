@@ -85,6 +85,16 @@ class Badge_Task_Detail_Serializer(serializers.ModelSerializer):
         fields = ('task_id', 'required', 'sequence_no')
 
 
+class Task_Badge_Detail_Serializer(serializers.ModelSerializer):
+    '''
+    Returns Badge prerequisite badge selected fields
+    '''
+
+    class Meta:
+        model = Badge_Task
+        fields = ('badge_id', 'required', 'sequence_no')
+
+
 class Badge_Full_Serializer(serializers.ModelSerializer):
     '''
     Return all Badge fields and pre-requisites
@@ -119,6 +129,8 @@ class Task_Full_Serializer(serializers.ModelSerializer):
     '''
     Return all Badge fields and pre-requisites
     '''
+
+    badges = Task_Badge_Detail_Serializer(source='task_badges', many=True)
 
     class Meta:
         model = Task
