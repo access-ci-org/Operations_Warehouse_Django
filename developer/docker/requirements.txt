@@ -27,4 +27,5 @@ pyyaml
 tzdata
 ansible
 access-django-user-admin==1.4.4
-
+globus-sdk==4.1.0
+pydantic==2.12.3

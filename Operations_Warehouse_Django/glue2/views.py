@@ -1,5 +1,8 @@
+import globus_sdk
+from django.conf import settings
 from django.shortcuts import render
 from django.utils import timezone
+from pydantic import ValidationError
 
 # Create your views here.
 from rest_framework import viewsets, status
@@ -1275,3 +1278,41 @@ class Jobs_by_ProfileID(APIView):
             raise MyAPIException(code=status.HTTP_400_BAD_REQUEST, detail='Invalid request')
         serializer = ComputingActivity_Expand_Serializer(jobstoreturn, many=True, context={'request': request})
         return MyAPIResponse({'result_set': serializer.data}, template_name='glue2_views_api/jobs.html')
+
+class Try_and_add_Globus(APIView):
+    serializer_class = None
+
+    def __init__(self, *args, **kwargs):
+        self.app = globus_sdk.ClientApp(
+            " ACCESS-CI Operations Warehouse Globus Service Client",
+            client_id=settings.GLOBUS_CLIENT_ID,
+            client_secret=settings.GLOBUS_CLIENT_SECRET
+        )
+        self.search_client = globus_sdk.SearchClient(app=self.app)
+        self.search_endpoint = "3cc4aeec-55a5-4cd6-96d1-8531aef88e83"
+        super().__init__(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        search = self.search_client.post_search(
+            self.search_endpoint,
+            {"q": "*"}
+        )
+        return Response(search)
+
+    def post(self, request, *args, **kwargs):
+
+        try:
+            warehouse_software_model = DjangoWarehouseSoftware(**request.data)
+            gmeta_list = {
+                "ingest_type": "GMetaList",
+                "ingest_data": {
+                    "gmeta": [warehouse_software_model.model_dump()]
+                }
+            }
+            self.search_client.ingest(self.search_endpoint, gmeta_list)
+        except globus_sdk.SearchAPIError as err:
+            return Response({"error": str(err)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as err:
+            return Response({"error": str(err)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"status": "POST received"})

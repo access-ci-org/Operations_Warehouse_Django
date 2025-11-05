@@ -433,3 +433,6 @@ if SETTINGS_MODE == 'SERVER':
             }
         }
     }
+
+GLOBUS_CLIENT_ID = CONF.get('GLOBUS_CLIENT_ID', None)
+GLOBUS_CLIENT_SECRET = CONF.get('GLOBUS_CLIENT_SECRET', None)

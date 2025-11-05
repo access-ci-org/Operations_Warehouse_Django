@@ -1,4 +1,8 @@
 from django.db import models
+from pydantic import BaseModel, HttpUrl, Field
+
+from typing import List, Optional
+from datetime import datetime
 
 ################################################################################
 # The abstract model(s) derived from abstract GLUE2 entities
@@ -111,3 +115,26 @@ class EntityHistory(models.Model):
     ResourceID = models.CharField(db_index=True, max_length=40, null=True)
     ReceivedTime = models.DateTimeField()
     EntityJSON = models.JSONField()
+
+
+class DjangoWarehouseSoftware(BaseModel):
+    Category: Optional[str] = Field(None, description="General classification of the resource (e.g., Compute, Storage).")
+    CreationTime: Optional[datetime] = Field(None, description="Timestamp for when this entry was created.")
+    Default: Optional[bool] = Field(False, description="Indicates whether this entry is the default option.")
+    Description: Optional[str] = Field(None, description="Detailed explanation or summary of the resource.")
+    HandleKey: Optional[str] = Field(None, description="Key used in handle system to uniquely reference the resource.")
+    HandleType: Optional[str] = Field(None, description="Type of handle used for this entry (e.g., DOI, URN).")
+    ID: Optional[str] = Field(None, description="Unique identifier, typically an existing URN from Django.")
+    Info_GroupID: Optional[str] = Field(None, description="Identifier for the associated group (if applicable).")
+    Info_GroupName: Optional[str] = Field(None, description="Human-readable name of the associated group.")
+    Info_ResourceID: Optional[str] = Field(None, description="Unique identifier of the resource in the catalog.")
+    Info_ResourceName: Optional[str] = Field(None, description="Descriptive name of the resource in the catalog.")
+    Keywords: Optional[List[str]] = Field(default_factory=list, description="Relevant keywords or tags for searching.")
+    Name: Optional[str] = Field(None, description="Common display name for the entry.")
+    Organization_ID: Optional[int] = Field(None, description="Numeric ID of the affiliated organization.")
+    Organization_Name: Optional[str] = Field(None, description="Full name of the affiliated organization.")
+    SupportContact: Optional[str] = Field(None, description="Contact email or URL for technical support.")
+    SupportStatus: Optional[str] = Field(None, description="Current support phase (e.g., development, testing, production).")
+    URL: Optional[HttpUrl] = Field(None, description="Primary web link for more information or access.")
+    Validity: Optional[int] = Field(None, description="Duration of validity for the entry, in seconds.")
+    Version: Optional[str] = Field(None, description="Version or release identifier of the resource entry.")
