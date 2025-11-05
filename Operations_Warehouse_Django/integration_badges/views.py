@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Q
-from django.db.models import Subquery, OuterRef, Exists, Max, Count
+from django.db.models import Subquery, OuterRef, Exists, Max, Count, Sum
 
 from integration_badges.models import *
 from integration_badges.serializers import *
@@ -1254,45 +1254,55 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
                 badge_id=badge_id
             )
 
-        result = (
-            resource_badge_workflow_subquery.filter(
+        filtered_resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
 
-                # Making sure the resource if a part of the organization
-                Exists(resource_subquery.filter(
-                    info_resourceid=OuterRef('info_resourceid')
-                )),
+            # Making sure the resource if a part of the organization
+            Exists(resource_subquery.filter(
+                info_resourceid=OuterRef('info_resourceid')
+            )),
 
-                # Making sure the badge is a part of the roadmap
-                Exists(
-                    Roadmap_Badge.objects.filter(
-                        roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
-                    )
-                ),
-                # Making sure the resource is enrolled to the roadmap badge
-                Exists(
-                    Resource_Badge.objects.filter(
-                        info_resourceid=OuterRef("info_resourceid"),
-                        roadmap_id=OuterRef("roadmap_id"),
-                        badge_id=OuterRef("badge_id"),
-                    )
-                ),
-                # Filtering the workflow entries with the latest time stamp
-                status_updated_at=Subquery(
-                    Resource_Badge_Workflow.objects.filter(
-                        info_resourceid=OuterRef("info_resourceid"),
-                        roadmap_id=OuterRef("roadmap_id"),
-                        badge_id=OuterRef("badge_id"),
-                    )
-                    .values("info_resourceid", "roadmap_id", "badge_id")
-                    .annotate(max_status_updated_at=Max("status_updated_at"))
-                    .values("max_status_updated_at")
-                ),
-            )
-            .values("status")
-            .annotate(count=Count("workflow_id"))
+            # Making sure the badge is a part of the roadmap
+            Exists(
+                Roadmap_Badge.objects.filter(
+                    roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
+                )
+            ),
+            # Making sure the resource is enrolled to the roadmap badge
+            Exists(
+                Resource_Badge.objects.filter(
+                    info_resourceid=OuterRef("info_resourceid"),
+                    roadmap_id=OuterRef("roadmap_id"),
+                    badge_id=OuterRef("badge_id"),
+                )
+            ),
+            # Filtering the workflow entries with the latest time stamp
+            status_updated_at=Subquery(
+                Resource_Badge_Workflow.objects.filter(
+                    info_resourceid=OuterRef("info_resourceid"),
+                    roadmap_id=OuterRef("roadmap_id"),
+                    badge_id=OuterRef("badge_id"),
+                )
+                .values("info_resourceid", "roadmap_id", "badge_id")
+                .annotate(max_status_updated_at=Max("status_updated_at"))
+                .values("max_status_updated_at")
+            ),
         )
 
-        return MyAPIResponse({"results": result.values("status", "count")})
+        count_by_status_list = (
+            filtered_resource_badge_workflow_subquery
+            .values("status")
+            .annotate(count=Count("workflow_id"))
+        ).values("status", "count")
+
+        result = {"total": 0}
+        for (status_key, status_label) in BadgeWorkflowStatus.choices:
+            result[status_key] = 0
+
+        for count_by_status in  count_by_status_list:
+            result[count_by_status["status"]] = count_by_status["count"]
+            result["total"] += count_by_status["count"]
+
+        return MyAPIResponse({"results": result})
 
 
 class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
