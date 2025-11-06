@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Q
-from django.db.models import Subquery, OuterRef, Exists, Max, Count, Sum
+from django.db.models import Subquery, OuterRef, Exists, Max, Count
 
 from integration_badges.models import *
 from integration_badges.serializers import *
