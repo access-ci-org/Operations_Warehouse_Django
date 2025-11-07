@@ -1,3 +1,6 @@
+v3.70.1 2025-11-07 jlambertson (CTT-727)
+ - adding URL to view for Early Resources List
+ 
 v3.70.0 2025-11-11 jlambertson (CTT-727)
   - Added group badge status view
   - better segmented structure
