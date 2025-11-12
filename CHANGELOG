@@ -1,3 +1,7 @@
+v3.70.3 2025-11-12 Dinuka
+  - Enabling the roadmap graphic upload as a data url (CTT-756)
+  - Enabling the badge graphic upload as a data url (CTT-756)
+
 v3.70.2 2025-11-12 Dinuka
   - Refactoring the resource badge summary endpoint to return a dictionary (CTT-395)
 
