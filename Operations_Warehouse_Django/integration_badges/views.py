@@ -11,6 +11,9 @@ from django.conf import settings
 from django.db.models import Q
 from django.db.models import Subquery, OuterRef, Exists, Max, Count
 
+import base64
+from urllib.parse import urlparse
+
 from integration_badges.models import *
 from integration_badges.serializers import *
 from cider.serializers import *
@@ -112,6 +115,7 @@ class Roadmap_Full_v1(GenericAPIView):
         roadmap_id = self.kwargs.get('roadmap_id')
 
         name = request.data.get('name')
+        graphic = request.data.get('graphic') # base64_image_string
         executive_summary = request.data.get('executive_summary')
         infrastructure_types = request.data.get('infrastructure_types')
         integration_coordinators = request.data.get('integration_coordinators')
@@ -148,6 +152,17 @@ class Roadmap_Full_v1(GenericAPIView):
                 status=status
             )
             roadmap.save()
+
+        # The graphic is updated only if the input is a data url
+        if urlparse(graphic).scheme == 'data':
+            try:
+                graphic_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                graphic = get_image_content_file_from_base64(
+                    graphic, file_name=f"roadmap-{roadmap.roadmap_id}-graphic-{graphic_timestamp}")
+                roadmap.graphic = graphic
+                roadmap.save()
+            except Exception:
+                traceback.print_exc()
 
         for sequence_no in range(len(badges)):
             badge = badges[sequence_no]
@@ -202,6 +217,7 @@ class Badge_Full_v1(GenericAPIView):
 
         name = request.data.get('name')
         researcher_summary = request.data.get('researcher_summary')
+        graphic = request.data.get('graphic') # base64_image_string
         resource_provider_summary = request.data.get('resource_provider_summary')
         verification_summary = request.data.get('verification_summary')
         verification_method = request.data.get('verification_method')
@@ -253,6 +269,17 @@ class Badge_Full_v1(GenericAPIView):
                 default_badge_access_url_label=default_badge_access_url_label
             )
             badge.save()
+
+        # The graphic is updated only if the input is a data url
+        if urlparse(graphic).scheme == 'data':
+            try:
+                graphic_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                graphic = get_image_content_file_from_base64(
+                    graphic, file_name=f"badge-{badge.badge_id}-graphic-{graphic_timestamp}")
+                badge.graphic = graphic
+                badge.save()
+            except Exception:
+                traceback.print_exc()
 
         for sequence_no in range(len(tasks)):
             task = tasks[sequence_no]
@@ -1596,3 +1623,47 @@ class DatabaseFile_v1(GenericAPIView):
         response["Content-Disposition"] = 'inline; filename="%s"' % file.file_name
 
         return response
+
+
+def get_image_content_file_from_base64(base64_image_string, file_name):
+
+    MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+
+    # extensions to MIME types
+    ALLOWED_MIME_TYPES = {
+        'image/jpeg': ['.jpeg', '.jpg'],
+        'image/png': ['.png'],
+        'image/svg+xml': ['.svg']
+    }
+
+    try:
+        if ';base64,' in base64_image_string:
+            header, base64_data = base64_image_string.split(';base64,')
+            mime_type = header.split(':')[-1]
+        else:
+            base64_data = base64_image_string
+            mime_type = 'image/jpeg'
+
+        decoded_file = base64.b64decode(base64_data)
+        file_size = len(decoded_file)  # Get the size of the raw bytes
+
+        # Size Check
+        if file_size > MAX_UPLOAD_SIZE:
+            max_size_mb = MAX_UPLOAD_SIZE / (1024 * 1024)
+            raise ValueError(f"Image file size ({file_size} bytes) exceeds {max_size_mb} MB.")
+
+        # Type Check
+        if mime_type not in ALLOWED_MIME_TYPES:
+            raise ValueError(f"Unsupported MIME type: {mime_type}. Allowed: {', '.join(ALLOWED_MIME_TYPES.keys())}")
+        else:
+            extension = ALLOWED_MIME_TYPES[mime_type][0]
+
+        # Proceed to create the ContentFile if valid
+        file_name = f"{file_name}{extension}"
+        content_file = ContentFile(decoded_file, name=file_name)
+        setattr(content_file, 'content_type', mime_type)
+
+        return content_file
+
+    except Exception as e:
+        raise ValueError(f"Error processing image data: {str(e)}")
