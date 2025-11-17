@@ -22,7 +22,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from .models import Resource_Badge_Workflow
-from .permissions import IsRoadmapMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
+from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
 
 log = logging.getLogger(__name__)
 
@@ -168,8 +168,11 @@ class Badge_Full_v1(GenericAPIView):
     Integration Badge(s) and pre-requisites
     """
 
-    permission_classes = (ReadOnly,)
-    authentication_classes = []
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsBadgeMaintainer | ReadOnly]
+
     renderer_classes = (JSONRenderer,)
     serializer_class = Badge_Full_Serializer
 
@@ -192,6 +195,148 @@ class Badge_Full_v1(GenericAPIView):
             item, context={"request": request}, many=many
         )
         return MyAPIResponse({"results": serializer.data})
+
+
+    def post(self, request, format=None, **kwargs):
+        badge_id = self.kwargs.get('badge_id')
+
+        name = request.data.get('name')
+        researcher_summary = request.data.get('researcher_summary')
+        resource_provider_summary = request.data.get('resource_provider_summary')
+        verification_summary = request.data.get('verification_summary')
+        verification_method = request.data.get('verification_method')
+        default_badge_access_url = request.data.get('default_badge_access_url')
+        default_badge_access_url_label = request.data.get('default_badge_access_url_label')
+        prerequisites = request.data.get('prerequisites')
+        tasks = request.data.get('tasks')
+
+        for prerequisite in prerequisites:
+            try:
+                Badge.objects.get(badge_id=prerequisite.get('badge_id'))
+            except Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                     detail=f'Badge not found ({prerequisite.get("badge_id")})')
+
+        for task in tasks:
+            try:
+                Task.objects.get(task_id=task.get('task_id'))
+            except Task.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND,
+                                     detail=f'Task not found ({task.get("task_id")})')
+
+        if badge_id:
+            try:
+                badge = Badge.objects.get(badge_id=badge_id)
+            except Badge.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail=f'Badge not found ({badge_id})')
+
+            badge.name = name
+            badge.researcher_summary = researcher_summary
+            badge.resource_provider_summary = resource_provider_summary
+            badge.verification_summary = verification_summary
+            badge.verification_method = verification_method
+            badge.default_badge_access_url = default_badge_access_url
+            badge.default_badge_access_url_label = default_badge_access_url_label
+
+            badge.save()
+
+            Badge_Task.objects.filter(badge_id=badge_id).delete()
+            Badge_Prerequisite_Badge.objects.filter(badge_id=badge_id).delete()
+        else:
+            badge = Badge(
+                name=name,
+                researcher_summary=researcher_summary,
+                resource_provider_summary=resource_provider_summary,
+                verification_summary=verification_summary,
+                verification_method=verification_method,
+                default_badge_access_url=default_badge_access_url,
+                default_badge_access_url_label=default_badge_access_url_label
+            )
+            badge.save()
+
+        for sequence_no in range(len(tasks)):
+            task = tasks[sequence_no]
+            Badge_Task(
+                badge=badge,
+                task_id=task.get('task_id'),
+                sequence_no=sequence_no,
+                required=task.get('required')
+            ).save()
+
+        for sequence_no in range(len(prerequisites)):
+            prerequisite = prerequisites[sequence_no]
+            Badge_Prerequisite_Badge(
+                badge=badge,
+                prerequisite_badge_id=prerequisite.get('badge_id'),
+                sequence_no=sequence_no,
+                # required=prerequisite.get('required')
+            ).save()
+
+        serializer = self.serializer_class(badge, context={'request': request}, many=False)
+        return MyAPIResponse({'results': serializer.data})
+
+
+
+class Task_Full_v1(GenericAPIView):
+    '''
+    Integration Badge(s) and pre-requisites
+    '''
+
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = [IsBadgeMaintainer | ReadOnly]
+
+    renderer_classes = (JSONRenderer,)
+    serializer_class = Task_Full_Serializer
+
+    def get(self, request, format=None, **kwargs):
+        task_id = self.kwargs.get('task_id')
+
+        if task_id:
+            try:
+                task = Task.objects.get(pk=task_id)
+                serializer = self.serializer_class(task, context={'request': request}, many=False)
+            except Task.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
+        else:
+            tasks = Task.objects.all()
+            serializer = self.serializer_class(tasks, context={'request': request}, many=True)
+
+        return MyAPIResponse({'results': serializer.data})
+
+    def post(self, request, format=None, **kwargs):
+        task_id = self.kwargs.get('task_id')
+
+        name = request.data.get('name')
+        technical_summary = request.data.get('technical_summary')
+        task_experts = request.data.get('task_experts')
+        implementor_roles = request.data.get('implementor_roles')
+        detailed_instructions_url = request.data.get('detailed_instructions_url')
+
+        if task_id:
+            try:
+                task = Task.objects.get(pk=task_id)
+                task.name = name
+                task.technical_summary = technical_summary
+                task.task_experts = task_experts
+                task.implementor_roles = implementor_roles
+                task.detailed_instructions_url = detailed_instructions_url
+            except Task.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified task_id not found')
+        else:
+            task = Task(
+                name=name,
+                technical_summary=technical_summary,
+                task_experts=task_experts,
+                implementor_roles=implementor_roles,
+                detailed_instructions_url=detailed_instructions_url
+            )
+
+        task.save()
+
+        serializer = self.serializer_class(task, context={'request': request}, many=False)
+        return MyAPIResponse({'results': serializer.data})
 
 
 class Roadmap_Review_v1(GenericAPIView):
@@ -366,36 +511,6 @@ class Badge_Verification_v1(GenericAPIView):
             )
         else:
             return MyAPIResponse({"results": results})
-
-
-class Badge_Task_Full_v1(GenericAPIView):
-    """
-    Retrieve an Integration Task by ID
-    """
-
-    permission_classes = (ReadOnly,)
-    authentication_classes = []
-    renderer_classes = (JSONRenderer,)
-    serializer_class = Badge_Task_Full_Serializer
-
-    def get(self, request, *args, **kwargs):
-        badge_id = kwargs.get("badge_id")
-        if not badge_id:
-            raise MyAPIException(
-                code=status.HTTP_400_BAD_REQUEST, detail="Badge ID is required"
-            )
-
-        badge_tasks = Badge_Task.objects.filter(badge_id=badge_id).order_by(
-            "sequence_no"
-        )
-        if badge_tasks.exists():
-            serializer = self.serializer_class(
-                badge_tasks, context={"request": request}, many=True
-            )
-            return MyAPIResponse({"results": serializer.data})
-        else:
-            # Return empty list if no tasks found, not an error
-            return MyAPIResponse({"results": []})
 
 
 class Resources_Eligible_List_v1(GenericAPIView):
@@ -1139,45 +1254,55 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
                 badge_id=badge_id
             )
 
-        result = (
-            resource_badge_workflow_subquery.filter(
+        filtered_resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
 
-                # Making sure the resource if a part of the organization
-                Exists(resource_subquery.filter(
-                    info_resourceid=OuterRef('info_resourceid')
-                )),
+            # Making sure the resource if a part of the organization
+            Exists(resource_subquery.filter(
+                info_resourceid=OuterRef('info_resourceid')
+            )),
 
-                # Making sure the badge is a part of the roadmap
-                Exists(
-                    Roadmap_Badge.objects.filter(
-                        roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
-                    )
-                ),
-                # Making sure the resource is enrolled to the roadmap badge
-                Exists(
-                    Resource_Badge.objects.filter(
-                        info_resourceid=OuterRef("info_resourceid"),
-                        roadmap_id=OuterRef("roadmap_id"),
-                        badge_id=OuterRef("badge_id"),
-                    )
-                ),
-                # Filtering the workflow entries with the latest time stamp
-                status_updated_at=Subquery(
-                    Resource_Badge_Workflow.objects.filter(
-                        info_resourceid=OuterRef("info_resourceid"),
-                        roadmap_id=OuterRef("roadmap_id"),
-                        badge_id=OuterRef("badge_id"),
-                    )
-                    .values("info_resourceid", "roadmap_id", "badge_id")
-                    .annotate(max_status_updated_at=Max("status_updated_at"))
-                    .values("max_status_updated_at")
-                ),
-            )
-            .values("status")
-            .annotate(count=Count("workflow_id"))
+            # Making sure the badge is a part of the roadmap
+            Exists(
+                Roadmap_Badge.objects.filter(
+                    roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
+                )
+            ),
+            # Making sure the resource is enrolled to the roadmap badge
+            Exists(
+                Resource_Badge.objects.filter(
+                    info_resourceid=OuterRef("info_resourceid"),
+                    roadmap_id=OuterRef("roadmap_id"),
+                    badge_id=OuterRef("badge_id"),
+                )
+            ),
+            # Filtering the workflow entries with the latest time stamp
+            status_updated_at=Subquery(
+                Resource_Badge_Workflow.objects.filter(
+                    info_resourceid=OuterRef("info_resourceid"),
+                    roadmap_id=OuterRef("roadmap_id"),
+                    badge_id=OuterRef("badge_id"),
+                )
+                .values("info_resourceid", "roadmap_id", "badge_id")
+                .annotate(max_status_updated_at=Max("status_updated_at"))
+                .values("max_status_updated_at")
+            ),
         )
 
-        return MyAPIResponse({"results": result.values("status", "count")})
+        count_by_status_list = (
+            filtered_resource_badge_workflow_subquery
+            .values("status")
+            .annotate(count=Count("workflow_id"))
+        ).values("status", "count")
+
+        result = {"total": 0}
+        for (status_key, status_label) in BadgeWorkflowStatus.choices:
+            result[status_key] = 0
+
+        for count_by_status in  count_by_status_list:
+            result[count_by_status["status"]] = count_by_status["count"]
+            result["total"] += count_by_status["count"]
+
+        return MyAPIResponse({"results": result})
 
 
 class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
