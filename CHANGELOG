@@ -1,3 +1,6 @@
+v3.70.2 2025-11-12 Dinuka
+  - Refactoring the resource badge summary endpoint to return a dictionary (CTT-395)
+
 v3.70.1 2025-11-07 jlambertson (CTT-727)
  - adding URL to view for Early Resources List
  
