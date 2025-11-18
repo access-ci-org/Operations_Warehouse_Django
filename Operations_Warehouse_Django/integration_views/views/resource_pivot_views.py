@@ -1,4 +1,6 @@
 # used Claude 4 Code to assist in this code and verified against docs and other examples from the web. No inappropriate data was shared in the process
+
+from django.http import JsonResponse
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
@@ -7,6 +9,16 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from collections import defaultdict
 from django.db.models import Q
+
+# API View imports
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
+
+# serializers and API stuff
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from ..serializers import ResourcePivotResponseSerializer
 
 # integration_badges views
 from integration_badges.views import (
@@ -26,11 +38,17 @@ from cider.views import (
     CiderInfrastructure_v2_ACCESSAllList,
 )
 
+# logging DEBUG
+import logging
+logger = logging.getLogger(__name__)
+
+
 @method_decorator(cache_page(60 * 5), name='get')
 class RoadmapResourceBadgesView(TemplateView):
     """Resource badge status view"""
     template_name = 'integration_views/resource_pivot.html'
     DEFAULT_ROADMAP = 67
+
 
     def call_integration_badges_views(self, view_class, **kwargs):
         """ """
@@ -50,6 +68,7 @@ class RoadmapResourceBadgesView(TemplateView):
                 return data.get('results', [])
             return data
         return []
+
 
     def fetch_api_data(self, endpoint, params=None):
         """ """
@@ -73,6 +92,7 @@ class RoadmapResourceBadgesView(TemplateView):
         except Exception as e:
             print(f"Error fetching {endpoint}: {e}")
             return []
+
 
     def get_all_cider_resources(self):
         """Get ALL ACCESS resources from CiDeR, including pre-production, excluding decommissioned"""
@@ -110,9 +130,11 @@ class RoadmapResourceBadgesView(TemplateView):
             if r.get('fixed_status', '').lower() in [s.lower() for s in active_statuses_for_view]
         ]
 
-        print(f"Resources: {len(filtered_data)} (excluded decommissioned)")
+        # DEBUG
+        # print(f"Resources: {len(filtered_data)} (excluded decommissioned)")
 
         return filtered_data
+
 
     def build_lookups(self, badges_data, resources_data):
         badge_lookup = {}
@@ -207,6 +229,7 @@ class RoadmapResourceBadgesView(TemplateView):
 
         return pivot_data, resources_without_badges
 
+
     def get_preproduction_resources(self, resources_data, resource_roadmap_badges_data, roadmaps_data):
         """Get all pre-production resources grouped by roadmap"""
         # Update status list to match actual values
@@ -288,6 +311,7 @@ class RoadmapResourceBadgesView(TemplateView):
 
         return preproduction_by_roadmap
 
+
     def fetch_roadmap_badges_data(self, selected_roadmap):
         """Fetch roadmap-specific badge data with required field"""
         try:
@@ -304,8 +328,9 @@ class RoadmapResourceBadgesView(TemplateView):
         except (ValueError, TypeError):
             return []
 
-    def calculate_badge_status_counts(self, selected_roadmap, resource_roadmap_badges_data):
-        """Count completed and in-progress badges for all resources"""
+
+    def calculate_badge_status_counts(self, selected_roadmap, resource_roadmap_badges_data, roadmap_badges_data, pivot_data):
+        """Count completed and in-progress badges for all resources, including pre-production missing badges"""
         try:
             selected_roadmap_int = int(selected_roadmap)
         except (ValueError, TypeError):
@@ -317,6 +342,14 @@ class RoadmapResourceBadgesView(TemplateView):
         completed_statuses = {'verified', 'tasks-completed', 'complete', 'completed'}
         excluded_statuses = {'not planned', 'not-planned', ''}
 
+        # Get required badge IDs for this roadmap
+        required_badge_ids = {
+            str(badge.get('badge_id')) 
+            for badge in roadmap_badges_data 
+            if badge.get('required', False) and badge.get('badge_id') is not None
+        }
+
+        # Count badges from explicit records
         for badge_record in resource_roadmap_badges_data:
             if badge_record.get('roadmap_id') == selected_roadmap_int:
                 status = badge_record.get('status', '').lower().strip()
@@ -326,44 +359,27 @@ class RoadmapResourceBadgesView(TemplateView):
                 elif status and status not in excluded_statuses:
                     in_progress_count += 1
 
+        # For pre-production resources, count missing required badges as in-progress
+        for resource_id, resource_data in pivot_data.items():
+
+            # Get badge IDs this resource already has records for
+            existing_badge_ids = set(resource_data.get('badge_statuses', {}).keys())
+
+            # Get verified badge IDs for this resource 
+            verified_badge_ids = {
+                badge_id for badge_id, status in resource_data.get('badge_statuses', {}).items()
+                if status and status.lower().strip() in completed_statuses
+            }
+
+            # Find required badges that are either missing or not verified
+            non_verified_required = required_badge_ids - verified_badge_ids
+
+            # Count them as in-progress (but don't double-count ones already in records)
+            missing_required = non_verified_required - existing_badge_ids
+            in_progress_count += len(missing_required)
+
         return completed_count, in_progress_count
 
-    def calculate_required_badge_percentage(self, selected_roadmap, roadmap_badges_data, resource_roadmap_badges_data):
-        """Calculate percentage of required badges that are verified"""
-        try:
-            selected_roadmap_int = int(selected_roadmap)
-        except (ValueError, TypeError):
-            return 0, 0, 0
-
-        required_badge_ids = set()
-        for badge_record in roadmap_badges_data:
-            if badge_record.get('required', False):
-                badge_id = badge_record.get('badge_id')
-                # Validation
-                if badge_id is not None:
-                    required_badge_ids.add(str(badge_id))
-
-        if not required_badge_ids:
-            return 100, 0, 0
-
-        verified_required_count = 0
-        total_required_instances = 0
-
-        for badge_record in resource_roadmap_badges_data:
-            badge_id = badge_record.get('badge_id')
-            # Validation
-            if (badge_record.get('roadmap_id') == selected_roadmap_int and 
-                badge_id is not None and
-                str(badge_id) in required_badge_ids):
-                total_required_instances += 1
-                if badge_record.get('status') == 'verified':
-                    verified_required_count += 1
-
-        if total_required_instances == 0:
-            return 0, 0, 0
-
-        percentage = round((verified_required_count / total_required_instances) * 100, 1)
-        return percentage, verified_required_count, total_required_instances
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -375,7 +391,7 @@ class RoadmapResourceBadgesView(TemplateView):
         resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
 
         # DEBUG
-        print(f"\nData Fetch: Roadmaps={len(roadmaps_data)} | Resources={len(resources_data)} | Badges={len(resource_roadmap_badges_data)}")
+        # print(f"\nData Fetch: Roadmaps={len(roadmaps_data)} | Resources={len(resources_data)} | Badges={len(resource_roadmap_badges_data)}")
 
         # Get pre-production resources grouped by roadmap
         preproduction_by_roadmap = self.get_preproduction_resources(
@@ -427,16 +443,26 @@ class RoadmapResourceBadgesView(TemplateView):
         roadmap_badges_data = self.fetch_roadmap_badges_data(selected_roadmap)
 
         # Calculate percentages
-        required_percentage, verified_count, total_count = self.calculate_required_badge_percentage(
-            selected_roadmap,
-            roadmap_badges_data,
-            resource_roadmap_badges_data
-        )
+        verified_count = 0
+        completed_statuses = {'verified', 'available', 'approved', 'complete', 'completed'}
+
+        for badge_record in resource_roadmap_badges_data:
+            if (str(badge_record.get('roadmap_id')) == str(selected_roadmap) and
+                str(badge_record.get('badge_id')) in [str(b.get('badge_id')) for b in roadmap_badges_data if b.get('required', False)] and
+                badge_record.get('status', '').lower().strip() in completed_statuses):
+                verified_count += 1
 
         completed_badges, in_progress_badges = self.calculate_badge_status_counts(
             selected_roadmap,
-            resource_roadmap_badges_data
+            resource_roadmap_badges_data,
+            roadmap_badges_data,
+            pivot_data
         )
+
+        # potential completions
+        potential_total = len(pivot_data) * len([b for b in roadmap_badges_data if b.get('required', False)])
+        potential_percentage = round((verified_count / potential_total) * 100, 1) if potential_total > 0 else 0
+
 
         # Build badges list from roadmap badges
         for badge_record in roadmap_badges_data:
@@ -487,18 +513,77 @@ class RoadmapResourceBadgesView(TemplateView):
             'selected_roadmap': int(selected_roadmap) if selected_roadmap else None,
             'pivot_data': pivot_data,
             'badges_list': badges_list,
-            'required_percentage': required_percentage,
+            # 'required_percentage': required_percentage,
             'verified_required_count': verified_count,
-            'total_required_count': total_count,
+            # 'total_required_count': total_count,
             'completed_badges': completed_badges,
             'in_progress_badges': in_progress_badges,
             'preproduction_by_roadmap': preproduction_by_roadmap,
+            'potential_required_total': potential_total,
+            'potential_percentage': potential_percentage,
         })
 
         return context
+
 
     def dispatch(self, request, *args, **kwargs):
         # Default roadmap
         if not request.GET.get('roadmap'):
             return redirect(f'{request.path}?roadmap={self.DEFAULT_ROADMAP}')
         return super().dispatch(request, *args, **kwargs)
+    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from ..serializers import ResourcePivotResponseSerializer, GroupPivotResponseSerializer
+
+
+class RoadmapResourceBadgesAPI(GenericAPIView):
+    """JSON API endpoint for resource badge status"""
+    permission_classes = [AllowAny]
+    renderer_classes = [JSONRenderer]
+
+    @extend_schema(
+        operation_id='resource_pivot_json',
+        description='Get resource badge status data grouped by roadmap',
+        parameters=[
+            OpenApiParameter(
+                name='roadmap',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Roadmap ID',
+                required=False
+            )
+        ],
+        responses={200: ResourcePivotResponseSerializer}
+    )
+    def get(self, request):
+        view = RoadmapResourceBadgesView()
+        view.request = request._request
+        view.kwargs = {}
+
+        roadmap = request.GET.get('roadmap', RoadmapResourceBadgesView.DEFAULT_ROADMAP)
+
+        from django.http import QueryDict
+        new_get = QueryDict('', mutable=True)
+        new_get.update(view.request.GET)
+        new_get['roadmap'] = str(roadmap)
+        view.request.GET = new_get
+
+        context = view.get_context_data()
+
+        return Response({
+            'roadmaps': context.get('roadmaps', []),
+            'selected_roadmap': context.get('selected_roadmap'),
+            'pivot_data': context.get('pivot_data', {}),
+            'badges_list': context.get('badges_list', []),
+            'completed_badges': context.get('completed_badges', 0),
+            'in_progress_badges': context.get('in_progress_badges', 0),
+            'verified_required_count': context.get('verified_required_count', 0),
+            'potential_required_total': context.get('potential_required_total', 0),
+            'potential_percentage': context.get('potential_percentage', 0),
+            'preproduction_by_roadmap': context.get('preproduction_by_roadmap', {}),
+        })
+

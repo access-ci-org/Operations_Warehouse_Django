@@ -98,7 +98,6 @@ table.table thead tr {
             <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5">Resources</div></th>
             <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label text-success fs-5">Available</div></th>
             <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5" style="color: gray;">In-Progress</div></th>
-            <th class="rotated-th" style="width: 80px;"><div class="rotated-th__label fs-5">Not Planned</div></th>
             <th class="rotated-th" style="width: 100px;"><div class="rotated-th__label text-danger fs-5">Required Badges</div></th>
         </tr>
     </thead>
@@ -118,9 +117,8 @@ table.table thead tr {
             <td class="text-center fs-6">{{ group.resource_count }}</td>
             <td class="text-center text-success fs-6">{{ group.available }}</td>
             <td class="text-center fs-6">{{ group.in_progress }}</td>
-            <td class="text-center fs-6">{{ group.not_planned }}</td>
             <td class="text-center fs-6">
-                {{ group.required_available }} of {{ group.total_required }} ({{ group.required_percentage }}%)
+                {{ group.verified_required }} of {{ group.total_required }} ({{ group.required_percentage }}%)
             </td>
         </tr>
         {% endfor %}

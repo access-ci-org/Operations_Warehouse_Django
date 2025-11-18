@@ -5,24 +5,37 @@ register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
-    """Get item by key"""
-    return dictionary.get(key, [])
+    """Get item from dictionary by key"""
+    if dictionary and key:
+        return dictionary.get(str(key))
+    return None
 
+@register.filter
+def is_verified(status):
+    """Check if badge status is verified/completed"""
+    if not status:
+        return False
+    completed_statuses = {'verified', 'tasks-completed', 'complete', 'completed'}
+    return status.lower().strip() in completed_statuses
 
 @register.filter
 def badge_status_symbol(status):
-    """Convert badge status to legend symbol"""
-    if status == 'verified':
-        return '<span class="text-success fs-4">&#x2714;</span>'  # Green check - In Production
-    elif status == 'planned':
-        return '<span class="fs-4" style="color: gray;">&#x26A0;</span>'  # In-Progress
-    else:
-        return '-'  # Dash - Not Planned (None, retired, verification_failed, etc.) - Neither in-Progress or in production
+    """Convert badge status to symbol"""
+    if not status:
+        return '-'
 
-# trimming out 'ACCESS ' from the bage name if present
+    status_lower = status.lower().strip()
+
+    if status_lower in {'verified', 'tasks-completed', 'complete', 'completed'}:
+        return '<span class="text-success fs-5">&#x2714;</span>'
+    elif status_lower in {'not planned', 'not-planned'}:
+        return '-'
+    else:
+        return '<span class="fs-5" style="color: gray;">&#x26A0;</span>'
+
 @register.filter
-def trim_access_prefix(badge_name):
-    """Remove 'ACCESS ' prefix from badge name if present"""
-    if badge_name and badge_name.startswith('ACCESS '):
-        return badge_name[7:] 
-    return badge_name
+def trim_access_prefix(name):
+    """Remove 'ACCESS ' prefix from badge names"""
+    if name and name.startswith('ACCESS '):
+        return name[7:]
+    return name

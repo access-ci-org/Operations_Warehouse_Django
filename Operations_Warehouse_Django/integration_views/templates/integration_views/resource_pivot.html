@@ -58,6 +58,11 @@ table.table thead tr {
     z-index: 10;
     color: #000;
 }
+
+/* Override bold on badge symbols */
+table.badge-table tbody td span {
+    font-weight: normal !important;
+}
 </style>
 
 
@@ -83,11 +88,36 @@ table.table thead tr {
 
 {% if selected_roadmap %}
 
-    {% if required_percentage > 0 %}
+    {% if potential_percentage > 0 %}
     
     <div class="container">
         <div class="row">
-            <!-- 1st column: Legend -->
+            <!-- 1st column: column: Overall badge counts and numbers -->
+            <div class="col">
+
+                <div class="text-center mb-4">
+                    <div class="card d-inline-block">
+                        <div class="card-body py-2 px-4">
+                            <h4 class="mb-0">
+                                <strong>{{ in_progress_badges }}</strong> badges <span style="color: gray;">In-Progress &#x26A0;</span> <br />
+                                <strong>{{ completed_badges }}</strong> badges <span class="text-success">available &#x2714;</span> <br />
+                                <strong>{{ verified_required_count }}</strong> of {{ potential_required_total }} <span class="text-danger">required</span> badges <span class="text-success">available</span> ({{ potential_percentage }}%)
+                            </h4>
+                            <br />
+                            <div class="text-center mb-4">
+                                <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
+                                target="_blank" 
+                                class="btn btn-outline-primary">
+                                    Early Resources List
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+                        <!-- 2nd column: Legend -->
             <div class="col">
 
                 <div class="table-responsive d-flex justify-content-center">
@@ -120,47 +150,7 @@ table.table thead tr {
                 </div>
 
             </div>
-            
-            <!-- 2nd column: Required badges percentage -->
-            <div class="col">
 
-                <div class="text-center mb-4">
-                    <div class="card d-inline-block">
-                        <div class="card-body py-2 px-4">
-                            <h3 class="mb-0">
-                                <strong>{{ verified_required_count }}</strong> of {{ total_required_count }} <span class="text-danger">required</span> badges <span class="text-success">available</span> ({{ required_percentage }}%)
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-
-                    <div class="text-center mb-4">
-                        <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
-                        target="_blank" 
-                        class="btn btn-outline-primary">
-                            Early Resources List
-                        </a>
-                    </div>
-
-            </div>
-
-            <!-- 3rd column: Overall badge counts -->
-            <div class="col">
-
-                <div class="text-center mb-4">
-                    <div class="card d-inline-block">
-                        <div class="card-body py-2 px-4">
-                            <h4 class="mb-2">
-                                <strong>{{ completed_badges }}</strong> badges <span class="text-success">available</span>
-                            </h4>
-                            <h4 class="mb-0">
-                                <strong>{{ in_progress_badges }}</strong> badges In-Progress
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </div>
     </div>
 
@@ -194,7 +184,6 @@ table.table thead tr {
                             <small>{{ resource_data.resource_info.info_resourceid }}</small>
                         </td>
 
-
                         <td class="text-center" style="width: 120px;">
                             <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
                                 {{ resource_data.fixed_status|title|default:"—" }} 
@@ -208,13 +197,22 @@ table.table thead tr {
                         {% for badge in badges_list %}
                         {% with badge_status=resource_data.badge_statuses|get_item:badge.id %}
                         <td class="text-center">
-                            {{ badge_status|badge_status_symbol|safe }}
+                            {% if badge_status|is_verified %}
+                                {{ badge_status|badge_status_symbol|safe }}
+                            {% elif badge.required %}
+                                <span class="fs-5" style="color: gray;">&#x26A0;</span>
+                            {% elif badge_status %}
+                                {{ badge_status|badge_status_symbol|safe }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
                         {% endwith %}
                         {% endfor %}
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
         </div>
 
