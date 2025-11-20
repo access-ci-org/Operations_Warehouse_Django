@@ -532,13 +532,6 @@ class RoadmapResourceBadgesView(TemplateView):
             return redirect(f'{request.path}?roadmap={self.DEFAULT_ROADMAP}')
         return super().dispatch(request, *args, **kwargs)
     
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework.renderers import JSONRenderer
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from ..serializers import ResourcePivotResponseSerializer, GroupPivotResponseSerializer
-
 
 class RoadmapResourceBadgesAPI(GenericAPIView):
     """JSON API endpoint for resource badge status"""
