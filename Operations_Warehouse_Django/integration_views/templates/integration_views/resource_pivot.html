@@ -168,7 +168,7 @@ table.badge-table tbody td span {
                         {% for badge in badges_list %}
                         <th class="rotated-th">
                             <div class="rotated-th__label">
-                                {% if badge.required %}<span class="text-danger">*</span><br />{% endif %}
+                                {% if badge.required %}<span class="text-danger">*</span>{% endif %}
                                 {{ badge.badge.name|trim_access_prefix }}
                             </div>
                         </th>
