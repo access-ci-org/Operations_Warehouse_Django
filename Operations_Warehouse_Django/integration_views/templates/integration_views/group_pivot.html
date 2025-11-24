@@ -103,6 +103,15 @@ table.table thead tr {
     </thead>
         <tbody>
         {% for group in group_stats %}
+        <!-- DEBUG --->
+            <!-- Group: {{ group.name }}
+            Keys: {{ group.keys }}
+            Available: {{ group.available }}
+            In Progress: {{ group.in_progress }}
+            Verified Required: {{ group.verified_required }}
+            Total Required: {{ group.total_required }}
+            Percentage: {{ group.required_percentage }} -->
+        <!-- DEBUG END -->
         <tr {% if group.has_preproduction %}class="table-warning"{% elif group.has_mixed_status %}class="table-info"{% endif %}>
             <td class="text-center fs-6">
                 <strong>{{ group.name }}</strong>

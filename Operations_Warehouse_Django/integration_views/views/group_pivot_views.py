@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from collections import defaultdict
 from django.db.models import Q
+import sys
 
 # API View imports
 from rest_framework.generics import GenericAPIView
@@ -85,133 +86,79 @@ class GroupBadgeStatusView(TemplateView):
             logger.error(f"Error fetching {endpoint}: {e}")
             return []
 
-    def calculate_group_badge_counts(self, group_resources, resource_badges, all_required_badge_ids, roadmap_badges_by_roadmap, resource_to_roadmap, resource_status_lookup, resource_type_lookup):
-        """Calculate badge counts for a group, treating non-verified required badges as in-progress"""
-        # DEBUG
-        # print(f"DEBUG: calculate_group_badge_counts called with {len(group_resources)} resources: {group_resources}")
+    def calculate_group_badge_counts(self, group_resources, resource_badges, 
+                                    all_required_badge_ids, roadmap_badges_by_roadmap,
+                                    resource_to_roadmap, resource_status_lookup, 
+                                    resource_type_lookup):
+        """Calculate badge counts for a resource group"""
 
-        available = 0
-        in_progress = 0
-        not_planned = 0
-        verified_required = 0
-        in_progress_required = 0
+        available_count = 0
+        in_progress_count = 0
+        required_verified = 0
 
-        # pre production statuses
-        preproduction_statuses = {'pre-production', 'pre_production', 'coming soon', 'coming_soon'}
-
-        # Status classification - aligned with resource_pivot.py
         completed_statuses = {'verified'}
+        excluded_statuses = {'not planned', 'not-planned', ''}
 
-        in_progress_statuses = {
-            'planned',
-            'testing',
-            'tasks-completed',
-            'in-progress',
-            'available',
-            'approved',
-            'complete',
-            'completed',
-            'failed'
-        }
-
-        not_planned_statuses = {
-            'not planned',
-            'not-planned',
-            ''
-        }
-
-        # Default roadmap mapping by type
-        type_to_roadmap = {
-            'compute': 67,
-            'storage': 68,
-            'cloud': 34,
-            'data': 68
-        }
+        # DEBUG
+        print(f"\n=== GROUP BADGE COUNT DEBUG ===", file=sys.stderr)
+        print(f"Processing {len(group_resources)} resources", file=sys.stderr)
 
         for resource_id in group_resources:
-            resource_status = resource_status_lookup.get(str(resource_id), '').lower().strip()
-            is_preproduction = resource_status in preproduction_statuses or any(keyword in resource_status for keyword in preproduction_statuses)
+            badge_statuses = resource_badges.get(resource_id, {})
+            roadmap_id = resource_to_roadmap.get(resource_id)
+            required_badge_ids = roadmap_badges_by_roadmap.get(roadmap_id, set())
 
-            resource_badge_data = resource_badges.get(str(resource_id), {})
-            resource_roadmap_id = resource_to_roadmap.get(str(resource_id))
+            # DEBUG
+            # print(f"\n  Resource: {resource_id}", file=sys.stderr)
+            # print(f"    Roadmap ID: {roadmap_id}", file=sys.stderr)
+            # print(f"    Required badge IDs: {required_badge_ids}", file=sys.stderr)
+            # print(f"    Badge statuses count: {len(badge_statuses)}", file=sys.stderr)
 
-            # If no roadmap mapping, infer from cider_type
-            if not resource_roadmap_id:
-                resource_type = resource_type_lookup.get(str(resource_id), '').lower()
-                resource_roadmap_id = type_to_roadmap.get(resource_type)
-                # DEBUG
-                # if resource_roadmap_id:
-                    # print(f"Inferred roadmap {resource_roadmap_id} for {resource_id} (type={resource_type})")
+            # Get badge IDs this resource already has records for
+            existing_badge_ids = set(badge_statuses.keys())
+            print(f"    Existing badge IDs: {existing_badge_ids}", file=sys.stderr)
 
-            if resource_roadmap_id and resource_roadmap_id in roadmap_badges_by_roadmap:
-                resource_required_badge_ids = roadmap_badges_by_roadmap[resource_roadmap_id]
-            else:
-                resource_required_badge_ids = set()
 
-            # Track which required badges we've seen
-            seen_required_badges = set()
+            # Get verified badge IDs for this resource
+            verified_badge_ids = {
+                badge_id for badge_id, status in badge_statuses.items()
+                if status and status.lower().strip() in completed_statuses
+            }
+            print(f"    Verified badge IDs: {verified_badge_ids}", file=sys.stderr)
 
-            # Process existing badge records
-            for badge_id, status in resource_badge_data.items():
-                status_lower = status.lower().strip()
+            # Process explicit badge records
+            for badge_id, status in badge_statuses.items():
+                status_lower = status.lower().strip() if status else ''
+                is_required = str(badge_id) in required_badge_ids
 
-                # For NON-preproduction: count all badges by status
-                if not is_preproduction:
-                    if status_lower in completed_statuses:
-                        available += 1
-                    elif status_lower in in_progress_statuses:
-                        in_progress += 1
-                    elif status_lower in not_planned_statuses:
-                        not_planned += 1
+                if status_lower in completed_statuses:
+                    available_count += 1
+                    if is_required:
+                        required_verified += 1
+                elif status_lower and status_lower not in excluded_statuses:
+                    in_progress_count += 1
 
-                # For ALL resources: handle required badges
-                if badge_id in resource_required_badge_ids:
-                    seen_required_badges.add(badge_id)
+            # Add implicit in-progress badges for missing required badges
+            non_verified_required = required_badge_ids - {str(bid) for bid in verified_badge_ids}
+            missing_required = non_verified_required - {str(bid) for bid in existing_badge_ids}
 
-                    if status_lower in completed_statuses:
-                        verified_required += 1
-                        # DEBUG
-                        # if is_preproduction:
-                        #     print(f"  Required badge {badge_id}: VERIFIED")
-                    else:
-                        in_progress_required += 1
-                        # DEBUG
-                        # if is_preproduction:
-                        #     print(f"  Required badge {badge_id}: IN-PROGRESS (status={status})")
+            in_progress_count += len(missing_required)
 
-            # Count missing required badges as in-progress
-            missing_required = resource_required_badge_ids - seen_required_badges
-            if missing_required:
-                in_progress_required += len(missing_required)
-                # DEBUG
-                # if is_preproduction:
-                #     print(f"  Missing {len(missing_required)} required badges, counted as in-progress")
+        # Calculate required_total
+        required_total = 0
+        for resource_id in group_resources:
+            roadmap_id = resource_to_roadmap.get(resource_id)
+            if roadmap_id:
+                required_badge_ids = roadmap_badges_by_roadmap.get(roadmap_id, set())
+                required_total += len(required_badge_ids)
 
-        # Total calculations
-        in_progress += in_progress_required
-        total_required = verified_required + in_progress_required
-        required_percentage = round((verified_required / total_required * 100), 1) if total_required > 0 else 0
-
-        return {
-            'available': available, 
-            'in_progress': in_progress, 
-            'not_planned': not_planned,
-            'verified_required': verified_required, 
-            'in_progress_required': in_progress_required,
-            'total_required': total_required,        
-            'required_percentage': required_percentage,
-        }
-
+        return available_count, in_progress_count, required_verified, required_total
 
 
     def get_context_data(self, **kwargs):
-        # DEBUG
-        # print("DEBUG: get_context_data called")
         context = super().get_context_data(**kwargs)
 
         groups_data = self.fetch_api_data('groups')
-        # DEBUG
-        # print(f"DEBUG: Fetched {len(groups_data) if isinstance(groups_data, list) else 'non-list'} groups")
 
         if isinstance(groups_data, dict):
             if 'active_groups' in groups_data:
@@ -220,26 +167,35 @@ class GroupBadgeStatusView(TemplateView):
                 logger.error(f"groups_data is dict but no 'active_groups' key. Keys: {groups_data.keys()}")
                 groups_data = []
 
+        roadmaps_data = self.fetch_api_data('roadmaps')
         resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
-        # DEBUG
-        # print(f"DEBUG: Fetched {len(resource_roadmap_badges_data)} badge records")
 
-        # Build resource-to-roadmap mapping
+
+        # Build resource_to_roadmap from explicit badge records
         resource_to_roadmap = {}
         for badge_record in resource_roadmap_badges_data:
             resource_id = badge_record.get('info_resourceid')
             roadmap_id = badge_record.get('roadmap_id')
-            if resource_id is not None and roadmap_id is not None:
+            if resource_id and roadmap_id:
                 resource_to_roadmap[str(resource_id)] = roadmap_id
 
-        preproduction_statuses = ['pre-production', 'pre_production', 'coming soon', 'coming_soon']
+        # Map roadmap names to IDs
+        type_to_roadmap = {}
+        for roadmap in roadmaps_data:
+            roadmap_name = roadmap.get('name', '').lower()
+            roadmap_id = roadmap.get('roadmap_id') or roadmap.get('id')
 
+            if 'compute' in roadmap_name:
+                type_to_roadmap['compute'] = roadmap_id
+            elif 'storage' in roadmap_name:
+                type_to_roadmap['storage'] = roadmap_id
+            elif 'cloud' in roadmap_name:
+                type_to_roadmap['cloud'] = roadmap_id
+
+        # Get resource status and type from database
         all_resources = CiderInfrastructure.objects.filter(
             Q(project_affiliation__icontains='ACCESS')
         ).values('info_resourceid', 'latest_status', 'cider_type')
-
-        # DEBUG
-        # print(f"DEBUG: Fetched {len(list(all_resources))} CiderInfrastructure records")
 
         resource_status_lookup = {}
         resource_type_lookup = {}
@@ -250,15 +206,33 @@ class GroupBadgeStatusView(TemplateView):
                 resource_status_lookup[str(resource_id)] = res.get('latest_status', '').lower().strip()
                 resource_type_lookup[str(resource_id)] = res.get('cider_type', '').lower().strip()
 
+        # Add cider_type-based mapping for resources without explicit roadmap assignment
+        for resource_id, cider_type in resource_type_lookup.items():
+            if resource_id not in resource_to_roadmap:
+                if cider_type in type_to_roadmap:
+                    resource_to_roadmap[resource_id] = type_to_roadmap[cider_type]
 
-        # Fetch roadmap badges
+        preproduction_statuses = ['pre-production', 'pre_production', 'coming soon', 'coming_soon']
+
+
+        all_resources = CiderInfrastructure.objects.filter(
+            Q(project_affiliation__icontains='ACCESS')
+        ).values('info_resourceid', 'latest_status', 'cider_type')
+
+        resource_status_lookup = {}
+        resource_type_lookup = {}
+
+        for res in all_resources:
+            resource_id = res.get('info_resourceid')
+            if resource_id is not None:
+                resource_status_lookup[str(resource_id)] = res.get('latest_status', '').lower().strip()
+                resource_type_lookup[str(resource_id)] = res.get('cider_type', '').lower().strip()
+
         roadmap_badges_by_roadmap = defaultdict(set)
         all_required_badge_ids = set()
 
         try:
             roadmaps = self.fetch_api_data('roadmaps')
-            # DEBUG
-            # print(f"DEBUG: Fetched {len(roadmaps)} roadmaps")
 
             draft_roadmap_ids = set()
             for roadmap in roadmaps:
@@ -281,9 +255,6 @@ class GroupBadgeStatusView(TemplateView):
             roadmap_badges_by_roadmap = defaultdict(set)
             all_required_badge_ids = set()
 
-        # DEBUG
-        # print(f"DEBUG: Processed roadmaps, found {len(roadmap_badges_by_roadmap)} roadmap badge sets")
-
         resource_badges = defaultdict(dict)
         for badge_record in resource_roadmap_badges_data:
             resource_id = badge_record.get('info_resourceid')
@@ -293,8 +264,6 @@ class GroupBadgeStatusView(TemplateView):
                 resource_badges[str(resource_id)][str(badge_id)] = status
 
         group_stats = []
-        # DEBUG
-        # print(f"DEBUG: About to loop through {len(groups_data)} groups")
 
         for group in groups_data:
             if not isinstance(group, dict):
@@ -303,11 +272,8 @@ class GroupBadgeStatusView(TemplateView):
 
             group_resources = group.get('rollup_info_resourceids', [])
             if not group_resources:
-                # DEBUG
-                # print(f"DEBUG: Skipping group with no resources")
                 continue
 
-            # Build group_roadmap_ids with inference
             group_roadmap_ids = set()
             type_to_roadmap = {
                 'compute': 67,
@@ -317,18 +283,14 @@ class GroupBadgeStatusView(TemplateView):
             }
 
             for res_id in group_resources:
-                # Try explicit mapping first
                 roadmap_id = resource_to_roadmap.get(str(res_id))
                 if roadmap_id:
                     group_roadmap_ids.add(roadmap_id)
                 else:
-                    # Try inference from cider_type
                     cider_type = resource_type_lookup.get(str(res_id), '').lower().strip()
                     inferred_roadmap = type_to_roadmap.get(cider_type)
                     if inferred_roadmap:
                         group_roadmap_ids.add(inferred_roadmap)
-            # DEBUG
-            # print(f"DEBUG: Group '{group.get('group_descriptive_name')}' roadmap_ids: {group_roadmap_ids}, draft_ids: {draft_roadmap_ids}")
 
             if group_roadmap_ids:
                 if group_roadmap_ids.issubset(draft_roadmap_ids):
@@ -345,6 +307,8 @@ class GroupBadgeStatusView(TemplateView):
                 resource_status_lookup,
                 resource_type_lookup
             )
+
+            available_count, in_progress_count, required_verified, required_total = counts
 
             has_preproduction = False
             group_statuses = set()
@@ -375,13 +339,18 @@ class GroupBadgeStatusView(TemplateView):
                 'group_status': group_status,
                 'has_mixed_status': has_mixed_status,
                 'status_breakdown': dict(status_counts),
-                **counts
-            })
+                'available': available_count,
+                'in_progress': in_progress_count,
+                'verified_required': required_verified,
+                'total_required': required_total,
+                'required_percentage': round((required_verified / required_total * 100), 1) if required_total > 0 else 0
+                        })
 
         group_stats.sort(key=lambda x: x['name'])
         context['group_stats'] = group_stats
 
         return context
+
 
 class GroupBadgeStatusAPI(GenericAPIView):
     """JSON API endpoint for group badge status"""
@@ -398,6 +367,13 @@ class GroupBadgeStatusAPI(GenericAPIView):
         view = GroupBadgeStatusView()
         view.request = request._request
         view.kwargs = {}
+
+        print(f"\n=== FINAL CONTEXT DEBUG ===", file=sys.stderr)
+        print(f"Total groups: {len(group_stats)}", file=sys.stderr)
+        if group_stats:
+            sample = group_stats[0]
+            print(f"Sample group: {sample}", file=sys.stderr)
+        print(f"=== END CONTEXT DEBUG ===\n", file=sys.stderr)
 
         context = view.get_context_data()
         group_stats = context.get('group_stats', [])

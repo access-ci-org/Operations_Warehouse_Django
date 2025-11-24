@@ -569,7 +569,6 @@ class RoadmapResourceBadgesView(TemplateView):
         # print(f"=== END DEBUG ===", file=sys.stderr)
 
 
-
         completed_badges, in_progress_badges = self.calculate_badge_status_counts(
             selected_roadmap,
             resource_roadmap_badges_data,
