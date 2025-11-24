@@ -136,9 +136,10 @@ class GroupBadgeStatusView(TemplateView):
                     if is_required:
                         required_verified += 1
                 elif status_lower and status_lower not in excluded_statuses:
-                    in_progress_count += 1
+                    if not is_required:  # Only optional badges
+                        in_progress_count += 1
 
-            # Add implicit in-progress badges for missing required badges
+            # implicit in-progress badges for missing required badges
             non_verified_required = required_badge_ids - {str(bid) for bid in verified_badge_ids}
             missing_required = non_verified_required - {str(bid) for bid in existing_badge_ids}
 
@@ -359,21 +360,14 @@ class GroupBadgeStatusAPI(GenericAPIView):
     serializer_class = GroupPivotResponseSerializer
 
     @extend_schema(
-        operation_id='group_pivot_json',
-        description='Get group badge status data',
-        responses={200: GroupPivotResponseSerializer}
-    )
+    operation_id='group_pivot_json',
+    description='Get group badge status data',
+    responses={200: GroupPivotResponseSerializer}
+)
     def get(self, request):
         view = GroupBadgeStatusView()
         view.request = request._request
         view.kwargs = {}
-
-        print(f"\n=== FINAL CONTEXT DEBUG ===", file=sys.stderr)
-        print(f"Total groups: {len(group_stats)}", file=sys.stderr)
-        if group_stats:
-            sample = group_stats[0]
-            print(f"Sample group: {sample}", file=sys.stderr)
-        print(f"=== END CONTEXT DEBUG ===\n", file=sys.stderr)
 
         context = view.get_context_data()
         group_stats = context.get('group_stats', [])
@@ -384,5 +378,5 @@ class GroupBadgeStatusAPI(GenericAPIView):
             'pivot_data': {},
             'badges_list': [],
             'completed_badges': sum(g.get('verified_required', 0) for g in group_stats),
-            'in_progress_badges': sum(g.get('in_progress_required', 0) for g in group_stats),
+            'in_progress_badges': sum(g.get('in_progress', 0) for g in group_stats),
         })
