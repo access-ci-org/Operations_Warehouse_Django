@@ -178,16 +178,17 @@ table.badge-table tbody td span {
 
                 <tbody>
                     {% for resource_id, resource_data in pivot_data.items %}
-                    <tr {% if resource_data.is_preproduction %}class="table-warning"{% endif %}>
+                    
+                    <tr {% if resource_data.fixed_status|is_preproduction_status %}class="table-warning"{% elif resource_data.fixed_status == 'post-production' or resource_data.fixed_status == 'post_production' %}class="table-secondary"{% endif %}>
                         <td class="text-center" style="width: 250px;">
                             <strong>{{ resource_data.resource_info.resource_descriptive_name }}</strong><br/>
                             <small>{{ resource_data.resource_info.info_resourceid }}</small>
                         </td>
 
                         <td class="text-center" style="width: 120px;">
-                            <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
+                            <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' or resource_data.fixed_status == 'coming_soon' %}bg-warning text-dark{% elif resource_data.fixed_status == 'production' %}bg-secondary text-white{% else %}bg-light text-dark{% endif %}">
                                 {{ resource_data.fixed_status|title|default:"—" }} 
-                                {% if resource_data.is_preproduction and resource_data.latest_status_begin %}
+                                {% if resource_data.latest_status_begin and resource_data.fixed_status|is_preproduction_status %}
                                     <br />
                                     <small>{{ resource_data.latest_status_begin|date:"M d, Y" }}</small>
                                 {% endif %}
@@ -210,6 +211,7 @@ table.badge-table tbody td span {
                         {% endwith %}
                         {% endfor %}
                     </tr>
+
                     {% endfor %}
                 </tbody>
 

@@ -39,3 +39,12 @@ def trim_access_prefix(name):
     if name and name.startswith('ACCESS '):
         return name[7:]
     return name
+
+@register.filter
+def is_preproduction_status(status):
+    """Check if status is actually pre-production or coming soon"""
+    if not status:
+        return False
+    status_lower = str(status).lower().strip()
+    return any(x in status_lower for x in ['pre-production', 'pre_production', 'coming soon', 'coming_soon'])
+

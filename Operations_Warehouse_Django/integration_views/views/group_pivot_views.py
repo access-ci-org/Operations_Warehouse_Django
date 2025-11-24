@@ -96,17 +96,36 @@ class GroupBadgeStatusView(TemplateView):
         verified_required = 0
         in_progress_required = 0
 
-        completed_statuses = {'verified', 'available', 'approved', 'complete', 'completed'}
-        in_progress_statuses = {'planned', 'failed', 'testing', 'tasks-completed', 'tasls-completed', 'in-progress'}
-        explicit_not_planned_statuses = {'not planned', 'not-planned'}
+        # pre production statuses
         preproduction_statuses = {'pre-production', 'pre_production', 'coming soon', 'coming_soon'}
+
+        # Status classification - aligned with resource_pivot.py
+        completed_statuses = {'verified'}
+
+        in_progress_statuses = {
+            'planned',
+            'testing',
+            'tasks-completed',
+            'in-progress',
+            'available',
+            'approved',
+            'complete',
+            'completed',
+            'failed'
+        }
+
+        not_planned_statuses = {
+            'not planned',
+            'not-planned',
+            ''
+        }
 
         # Default roadmap mapping by type
         type_to_roadmap = {
             'compute': 67,
             'storage': 68,
             'cloud': 34,
-            'data': 68  # Adjust as needed
+            'data': 68
         }
 
         for resource_id in group_resources:
@@ -142,7 +161,7 @@ class GroupBadgeStatusView(TemplateView):
                         available += 1
                     elif status_lower in in_progress_statuses:
                         in_progress += 1
-                    elif status_lower in explicit_not_planned_statuses or status_lower == '':
+                    elif status_lower in not_planned_statuses:
                         not_planned += 1
 
                 # For ALL resources: handle required badges
