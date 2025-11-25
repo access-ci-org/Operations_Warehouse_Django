@@ -100,8 +100,8 @@ class GroupBadgeStatusView(TemplateView):
         excluded_statuses = {'not planned', 'not-planned', ''}
 
         # DEBUG
-        print(f"\n=== GROUP BADGE COUNT DEBUG ===", file=sys.stderr)
-        print(f"Processing {len(group_resources)} resources", file=sys.stderr)
+        # print(f"\n=== GROUP BADGE COUNT DEBUG ===", file=sys.stderr)
+        # print(f"Processing {len(group_resources)} resources", file=sys.stderr)
 
         for resource_id in group_resources:
             badge_statuses = resource_badges.get(resource_id, {})

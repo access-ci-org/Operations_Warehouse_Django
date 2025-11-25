@@ -133,17 +133,6 @@ class RoadmapResourceBadgesView(TemplateView):
             if r.get('fixed_status', '').lower() in [s.lower() for s in active_statuses_for_view]
         ]
 
-        # DEBUG: Check CloudBank resources from CiDeR
-        cloudbank_resources = [r for r in filtered_data if 'cloudbank' in r.get('info_resourceid', '').lower()]
-        print(f"\n=== CIDER CLOUDBANK RESOURCES ===", file=sys.stderr)
-        for r in cloudbank_resources:
-            print(f"  ID: {r.get('info_resourceid')}", file=sys.stderr)
-            print(f"  Name: {r.get('resource_descriptive_name')}", file=sys.stderr)
-            print(f"  Type: {r.get('cider_type')}", file=sys.stderr)
-            print(f"  Status: {r.get('latest_status')} → Fixed: {r.get('fixed_status')}", file=sys.stderr)
-            print(f"  ---", file=sys.stderr)
-        print(f"Total CloudBank resources from CiDeR: {len(cloudbank_resources)}", file=sys.stderr)
-
         return filtered_data
 
 
