@@ -79,60 +79,53 @@ table.table thead tr {
 
 <div class="container-fluid px-5">
 
-<div class="text-center mb-4">
-    <h2>Resource Group Badge Status</h2>
-</div>
-<div class="text-center mb-4">
-    <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
-    target="_blank" 
-    class="btn btn-outline-primary">
-        Early Resources engaged with ACCESS <br />that aren't yet grouped below
-    </a>
-</div>
+    <div class="text-center mb-4">
+        <h2>Resource Group Badge Status</h2>
+    </div>
+    <div class="text-center mb-4">
+        <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
+        target="_blank" 
+        class="btn btn-outline-primary">
+            Early Resources engaged with ACCESS <br />that aren't yet grouped below
+        </a>
+    </div>
 
+    <div class="table-responsive">
+        <table class="table table-group-pivot" style="min-width: 800px;">
+            <thead>
+                <tr>
+                    <th class="text-center fs-5" style="min-width: 150px;">Resource Group</th>
+                    <th class="text-center fs-5" style="min-width: 100px;">Resources</th>
+                    <th class="text-center text-success fs-5" style="min-width: 140px;">Available Badges</th>
+                    <th class="text-center fs-5" style="color: gray; min-width: 160px;">In-Progress Badges</th>
+                    <th class="text-center text-danger fs-5" style="min-width: 150px;">Required Badges</th>
+                </tr>
+            </thead>
+                <tbody>
+                {% for group in group_stats %}
 
-<table class="table table-group-pivot" style="table-layout: fixed; width: 100%;">
-    <thead>
-        <tr>
-            <th class="fs-5" style="width: 150px; max-width: 150px;">Resource Group</th>
-            <th class="fs-5" style="width: 80px;"><div class="fs-5">Resources</th>
-            <th class="text-success fs-5" style="width: 80px;">Available Badges</th>
-            <th class="fs-5" style="width: 80px; color: gray;">In-Progress Badges</th>
-            <th class="text-danger fs-5" style="width: 100px;">Required Badges</th>
-        </tr>
-    </thead>
-        <tbody>
-        {% for group in group_stats %}
-        <!-- DEBUG --->
-            <!-- Group: {{ group.name }}
-            Keys: {{ group.keys }}
-            Available: {{ group.available }}
-            In Progress: {{ group.in_progress }}
-            Verified Required: {{ group.verified_required }}
-            Total Required: {{ group.total_required }}
-            Percentage: {{ group.required_percentage }} -->
-        <!-- DEBUG END -->
-        <tr {% if group.has_preproduction %}class="table-warning"{% elif group.has_mixed_status %}class="table-info"{% endif %}>
-            <td class="text-center fs-6">
-                <strong>{{ group.name }}</strong>
-                {% if group.has_preproduction %}
-                    <br><small class="badge bg-info text-dark">Pre-Production</small>
-                {% endif %}
-                {% if group.has_mixed_status %}
-                    <br><small class="badge bg-warning text-dark">Mixed Status</small>
-                {% endif %}
-                <br><small>{{ group.info_groupid }}</small>
-            </td>
-            <td class="text-center fs-6">{{ group.resource_count }}</td>
-            <td class="text-center text-success fs-6">{{ group.available }}</td>
-            <td class="text-center fs-6">{{ group.in_progress }}</td>
-            <td class="text-center fs-6">
-                {{ group.verified_required }} of {{ group.total_required }} ({{ group.required_percentage }}%)
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <tr {% if group.has_preproduction %}class="table-warning"{% elif group.has_mixed_status %}class="table-info"{% endif %}>
+                    <td class="text-center fs-6">
+                        <strong>{{ group.name }}</strong>
+                        {% if group.has_preproduction %}
+                            <br><small class="badge bg-info text-dark">Pre-Production</small>
+                        {% endif %}
+                        {% if group.has_mixed_status %}
+                            <br><small class="badge bg-warning text-dark">Mixed Status</small>
+                        {% endif %}
+                        <br><small>{{ group.info_groupid }}</small>
+                    </td>
+                    <td class="text-center fs-6">{{ group.resource_count }}</td>
+                    <td class="text-center text-success fs-6">{{ group.available }}</td>
+                    <td class="text-center fs-6">{{ group.in_progress }}</td>
+                    <td class="text-center fs-6">
+                        {{ group.verified_required }} of {{ group.total_required }} ({{ group.required_percentage }}%)
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 
 </div>
