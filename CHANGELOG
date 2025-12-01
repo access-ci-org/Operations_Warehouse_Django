@@ -1,3 +1,7 @@
+v3.71.1 2025-12-01 Dinuka
+  - Fixing the task status update POST to authorize the badge status update as well (CTT-799)
+  - Adding the `organization_id` query to the resource roadmap badges endpoint (CTT-814)
+
 v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
   - updating aesthetics in integration_views
