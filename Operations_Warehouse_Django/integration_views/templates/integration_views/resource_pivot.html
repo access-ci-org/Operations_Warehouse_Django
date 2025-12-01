@@ -116,9 +116,11 @@ table.badge-table tbody td span {
                                 <td class="text-center fs-5" style="color: gray;"> <strong>{{ in_progress_badges }}</strong></td>
                             </tr>
                             <tr>
-                                <td class="text-left fs-5">Required Badges</td>
+                                <td class="text-left fs-5">Required Badges <br />
+                                    <small><i>for Production Resources</i></small>
+                                </td>
                                 <td class="text-center"><span class="text-danger">*</span></td>
-                                <td class="text-center fs-5"> <strong>{{ verified_required_count }}</strong> <span class="text-success">Available</span> of {{ potential_required_total }} <span class="text-danger">Required</span> ({{ potential_percentage }}%)</td>
+                                <td class="text-center fs-5"> <strong>{{ verified_required_count }}</strong> <span class="text-success">Available</span> of {{ potential_required_total }} <span class="text-danger">Required</span> <br /> ({{ potential_percentage }}%) </td>
                             </tr>
                             <tr>
                                 <td class="text-left fs-5">Not Planned</td>

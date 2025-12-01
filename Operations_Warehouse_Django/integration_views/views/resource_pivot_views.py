@@ -421,32 +421,31 @@ class RoadmapResourceBadgesView(TemplateView):
             if badge.get('required', False) and badge.get('badge_id') is not None
         }
 
-        # Count badges from explicit records
+        # Get resource IDs in pivot_data
+        pivot_resource_ids = set(pivot_data.keys())
+
+        # Count badges ONLY from resources in pivot_data
         for badge_record in resource_roadmap_badges_data:
-            if badge_record.get('roadmap_id') == selected_roadmap_int:
+            if (badge_record.get('roadmap_id') == selected_roadmap_int and
+                str(badge_record.get('info_resourceid')) in pivot_resource_ids):
+
                 status = badge_record.get('status', '').lower().strip()
 
                 if status in completed_statuses:
                     completed_count += 1
                 elif status and status not in excluded_statuses:
                     in_progress_count += 1
-
+        
         # For pre-production resources, count missing required badges as in-progress
         for resource_id, resource_data in pivot_data.items():
-
-            # Get badge IDs this resource already has records for
             existing_badge_ids = set(resource_data.get('badge_statuses', {}).keys())
 
-            # Get verified badge IDs for this resource 
             verified_badge_ids = {
                 badge_id for badge_id, status in resource_data.get('badge_statuses', {}).items()
                 if status and status.lower().strip() in completed_statuses
             }
 
-            # Find required badges that are either missing or not verified
             non_verified_required = required_badge_ids - verified_badge_ids
-
-            # Count them as in-progress (but don't double-count ones already in records)
             missing_required = non_verified_required - existing_badge_ids
             in_progress_count += len(missing_required)
 
@@ -461,7 +460,6 @@ class RoadmapResourceBadgesView(TemplateView):
         roadmaps_data = self.fetch_api_data('roadmaps')
         resources_data = self.fetch_api_data('resources')
         resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges')
-
 
         # Get pre-production resources grouped by roadmap
         preproduction_by_roadmap = self.get_preproduction_resources(
@@ -483,7 +481,7 @@ class RoadmapResourceBadgesView(TemplateView):
             combined_resources_by_roadmap[roadmap_id] = (
                 preproduction_by_roadmap.get(roadmap_id, []) +
                 resources_by_type.get(roadmap_id, [])
-    )
+            )
 
         # Filter roadmaps (exclude drafts)
         roadmaps = [{
@@ -527,9 +525,10 @@ class RoadmapResourceBadgesView(TemplateView):
 
         roadmap_badges_data = self.fetch_roadmap_badges_data(selected_roadmap)
 
-        # Calculate percentages
+        # Calculate verified count for PRODUCTION resources only
         verified_count = 0
         completed_statuses = {'verified'}
+        production_statuses = {'production', 'post-production', 'post_production'}
 
         # Get required badge IDs
         required_badge_ids = {
@@ -538,25 +537,28 @@ class RoadmapResourceBadgesView(TemplateView):
             if b.get('required', False)
         }
 
-        # DEBUG
-        # print(f"=== BADGE COUNT DEBUG ===", file=sys.stderr)
-        # print(f"Status set: {completed_statuses}", file=sys.stderr)
-        # print(f"Required badge IDs: {len(required_badge_ids)}", file=sys.stderr)
-        # print(f"Resources in pivot_data: {len(pivot_data)}", file=sys.stderr)
-
-        # Count verified badges ONLY from resources in pivot_data
+        # Count verified badges ONLY from production resources in pivot_data
         for resource_id, resource_data in pivot_data.items():
+            fixed_status = resource_data.get('fixed_status', '').lower().replace('-', '_')
+
+            # Skip pre-production resources
+            if fixed_status not in production_statuses:
+                continue
+
             badge_statuses = resource_data.get('badge_statuses', {})
 
             for badge_id, status in badge_statuses.items():
                 if badge_id in required_badge_ids and status and status.lower().strip() in completed_statuses:
                     verified_count += 1
-                    print(f"  Counted: {resource_data['resource_info'].get('resource_descriptive_name')} - Badge {badge_id}", file=sys.stderr)
 
-        # DEBUG        
-        # print(f"Final verified_count: {verified_count}", file=sys.stderr)
-        # print(f"=== END DEBUG ===", file=sys.stderr)
+        # Calculate potential total ONLY for production resources
+        production_resource_count = sum(
+            1 for resource_data in pivot_data.values()
+            if resource_data.get('fixed_status', '').lower().replace('-', '_') in production_statuses
+        )
 
+        potential_total = production_resource_count * len(required_badge_ids)
+        potential_percentage = round((verified_count / potential_total) * 100, 1) if potential_total > 0 else 0
 
         completed_badges, in_progress_badges = self.calculate_badge_status_counts(
             selected_roadmap,
@@ -564,11 +566,6 @@ class RoadmapResourceBadgesView(TemplateView):
             roadmap_badges_data,
             pivot_data
         )
-
-        # potential completions
-        potential_total = len(pivot_data) * len([b for b in roadmap_badges_data if b.get('required', False)])
-        potential_percentage = round((verified_count / potential_total) * 100, 1) if potential_total > 0 else 0
-
 
         # Build badges list from roadmap badges
         for badge_record in roadmap_badges_data:
@@ -595,7 +592,7 @@ class RoadmapResourceBadgesView(TemplateView):
             if badge_record.get('roadmap_id') == selected_roadmap_int:
                 badge_id = badge_record.get('badge_id')
 
-                # Skip invalid badge IDs (explicit None check)
+                # Skip invalid badge IDs
                 if badge_id is None:
                     continue
 
@@ -619,9 +616,7 @@ class RoadmapResourceBadgesView(TemplateView):
             'selected_roadmap': int(selected_roadmap) if selected_roadmap else None,
             'pivot_data': pivot_data,
             'badges_list': badges_list,
-            # 'required_percentage': required_percentage,
             'verified_required_count': verified_count,
-            # 'total_required_count': total_count,
             'completed_badges': completed_badges,
             'in_progress_badges': in_progress_badges,
             'preproduction_by_roadmap': combined_resources_by_roadmap,
