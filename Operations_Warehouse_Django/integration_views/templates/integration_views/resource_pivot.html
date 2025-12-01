@@ -58,6 +58,11 @@ table.table thead tr {
     z-index: 10;
     color: #000;
 }
+
+/* Override bold on badge symbols */
+table.badge-table tbody td span {
+    font-weight: normal !important;
+}
 </style>
 
 
@@ -83,90 +88,67 @@ table.table thead tr {
 
 {% if selected_roadmap %}
 
-    {% if required_percentage > 0 %}
+    {% if potential_percentage > 0 %}
     
     <div class="container">
         <div class="row">
-            <!-- 1st column: Legend -->
+            <!-- column -->
             <div class="col">
 
-                <div class="table-responsive d-flex justify-content-center">
-                    <table class="table table-bordered table-sm" style="width: auto; max-width: 600px;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
                         <thead class="table-success">
                             <tr>
                                 <th class="text-center fs-5">Legend</th>
                                 <th class="text-center fs-5">Symbol</th>
+                                <th class="text-center fs-5">Metrics</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td class="text-center fs-5">Available</td>  
+                                <td class="text-left fs-5">Available Badges</td>  
                                 <td class="text-center text-success fs-5">&#x2714;</td> 
+                                <td class="text-center text-success fs-5"> <strong>{{ completed_badges }}</strong></td> 
                             </tr>
                             <tr>
-                                <td class="text-center fs-5">In-Progress</td>
+                                <td class="text-left fs-5">In-Progress Badges</td>
                                 <td class="text-center fs-5" style="color: gray;">&#x26A0;</td>
+                                <td class="text-center fs-5" style="color: gray;"> <strong>{{ in_progress_badges }}</strong></td>
                             </tr>
                             <tr>
-                                <td class="text-center fs-5">Not Planned</td>
-                                <td class="text-center">-</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center fs-5">Required Badge</td>
+                                <td class="text-left fs-5">
+                                    Required Badges
+                                    <small class="d-block text-muted"><i>for Production Resources</i></small>
+                                </td>
                                 <td class="text-center"><span class="text-danger">*</span></td>
+                                <td class="text-center fs-5"> <strong>{{ verified_required_count }}</strong> <span class="text-success">Available</span> of {{ potential_required_total }} <span class="text-danger">Required</span> <br /> ({{ potential_percentage }}%) </td>
+                            </tr>
+                            <tr>
+                                <td class="text-left fs-5">Not Planned</td>
+                                <td class="text-center">-</td>
+                                <td class="text-center">-</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-            </div>
-            
-            <!-- 2nd column: Required badges percentage -->
-            <div class="col">
-
                 <div class="text-center mb-4">
-                    <div class="card d-inline-block">
-                        <div class="card-body py-2 px-4">
-                            <h3 class="mb-0">
-                                <strong>{{ verified_required_count }}</strong> of {{ total_required_count }} <span class="text-danger">required</span> badges <span class="text-success">available</span> ({{ required_percentage }}%)
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-
-                    <div class="text-center mb-4">
-                        <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
-                        target="_blank" 
-                        class="btn btn-outline-primary">
-                            Early Resources List
-                        </a>
-                    </div>
-
-            </div>
-
-            <!-- 3rd column: Overall badge counts -->
-            <div class="col">
-
-                <div class="text-center mb-4">
-                    <div class="card d-inline-block">
-                        <div class="card-body py-2 px-4">
-                            <h4 class="mb-2">
-                                <strong>{{ completed_badges }}</strong> badges <span class="text-success">available</span>
-                            </h4>
-                            <h4 class="mb-0">
-                                <strong>{{ in_progress_badges }}</strong> badges In-Progress
-                            </h4>
-                        </div>
-                    </div>
+                    <a href="https://docs.google.com/spreadsheets/d/1P4vFi7Qm-v7FTRwR1i7c51dUMBUCZXqmSQhzVz2wYsk/edit?usp=sharing" 
+                    target="_blank" 
+                    class="btn btn-outline-primary">
+                        Early Resources engaged with ACCESS <br />that aren't yet listed below
+                    </a>
                 </div>
 
             </div>
+
         </div>
     </div>
 
+
     {% endif %}
 
-
+    
     {% if pivot_data %}
         <div class="table-responsive">
             <table class="table table-bordered table-hover table-sm badge-table">
@@ -178,7 +160,7 @@ table.table thead tr {
                         {% for badge in badges_list %}
                         <th class="rotated-th">
                             <div class="rotated-th__label">
-                                {% if badge.required %}<span class="text-danger">*</span><br />{% endif %}
+                                {% if badge.required %}<span class="text-danger">*</span>{% endif %}
                                 {{ badge.badge.name|trim_access_prefix }}
                             </div>
                         </th>
@@ -188,17 +170,17 @@ table.table thead tr {
 
                 <tbody>
                     {% for resource_id, resource_data in pivot_data.items %}
-                    <tr {% if resource_data.is_preproduction %}class="table-warning"{% endif %}>
+                    
+                    <tr {% if resource_data.fixed_status|is_preproduction_status %}class="table-warning"{% elif resource_data.fixed_status == 'post-production' or resource_data.fixed_status == 'post_production' %}class="table-secondary"{% endif %}>
                         <td class="text-center" style="width: 250px;">
                             <strong>{{ resource_data.resource_info.resource_descriptive_name }}</strong><br/>
                             <small>{{ resource_data.resource_info.info_resourceid }}</small>
                         </td>
 
-
                         <td class="text-center" style="width: 120px;">
-                            <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' %}bg-warning text-dark{% else %}bg-light text-dark{% endif %}">
+                            <span class="badge {% if resource_data.fixed_status == 'pre-production' %}bg-info text-dark{% elif resource_data.fixed_status == 'coming soon' or resource_data.fixed_status == 'coming_soon' %}bg-warning text-dark{% elif resource_data.fixed_status == 'production' %}bg-secondary text-white{% else %}bg-light text-dark{% endif %}">
                                 {{ resource_data.fixed_status|title|default:"—" }} 
-                                {% if resource_data.is_preproduction and resource_data.latest_status_begin %}
+                                {% if resource_data.latest_status_begin and resource_data.fixed_status|is_preproduction_status %}
                                     <br />
                                     <small>{{ resource_data.latest_status_begin|date:"M d, Y" }}</small>
                                 {% endif %}
@@ -208,13 +190,23 @@ table.table thead tr {
                         {% for badge in badges_list %}
                         {% with badge_status=resource_data.badge_statuses|get_item:badge.id %}
                         <td class="text-center">
-                            {{ badge_status|badge_status_symbol|safe }}
+                            {% if badge_status|is_verified %}
+                                {{ badge_status|badge_status_symbol|safe }}
+                            {% elif badge.required %}
+                                <span class="fs-5" style="color: gray;">&#x26A0;</span>
+                            {% elif badge_status %}
+                                {{ badge_status|badge_status_symbol|safe }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
                         {% endwith %}
                         {% endfor %}
                     </tr>
+
                     {% endfor %}
                 </tbody>
+
             </table>
         </div>
 

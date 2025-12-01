@@ -1,5 +1,5 @@
-from .resource_pivot_views import RoadmapResourceBadgesView
-from .group_pivot_views import GroupBadgeStatusView
+from .resource_pivot_views import RoadmapResourceBadgesView, RoadmapResourceBadgesAPI
+from .group_pivot_views import GroupBadgeStatusView, GroupBadgeStatusAPI
 
 """
 have split the views into separate py files for reasons of human readability and troubleshooting 
@@ -7,5 +7,7 @@ have split the views into separate py files for reasons of human readability and
 
 __all__ = [
     'RoadmapResourceBadgesView',
+    'RoadmapResourceBadgesAPI',
     'GroupBadgeStatusView',
+    'GroupBadgeStatusAPI',
 ]
