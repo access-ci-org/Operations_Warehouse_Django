@@ -1,4 +1,4 @@
-v3.70.4 2025-11-26 jlambertson (ctt-759)
+v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
   - updating aesthetics in integration_views
   - adding integration_views to swagger with JSON
