@@ -86,11 +86,12 @@ class GroupBadgeStatusView(TemplateView):
             logger.error(f"Error fetching {endpoint}: {e}")
             return []
 
+
     def calculate_group_badge_counts(self, group_resources, resource_badges, 
                                     all_required_badge_ids, roadmap_badges_by_roadmap,
                                     resource_to_roadmap, resource_status_lookup, 
                                     resource_type_lookup):
-        """Calculate badge counts for a resource group"""
+        """Calculate badge counts for a resource group (PRODUCTION RESOURCES ONLY)"""
 
         available_count = 0
         in_progress_count = 0
@@ -98,33 +99,23 @@ class GroupBadgeStatusView(TemplateView):
 
         completed_statuses = {'verified'}
         excluded_statuses = {'not planned', 'not-planned', ''}
-
-        # DEBUG
-        # print(f"\n=== GROUP BADGE COUNT DEBUG ===", file=sys.stderr)
-        # print(f"Processing {len(group_resources)} resources", file=sys.stderr)
+        production_statuses = {'production', 'post-production', 'post_production'}
 
         for resource_id in group_resources:
+            # FILTER: Skip pre-production resources
+            resource_status = resource_status_lookup.get(resource_id, '').lower().replace('-', '_')
+            if resource_status not in production_statuses:
+                continue
+
             badge_statuses = resource_badges.get(resource_id, {})
             roadmap_id = resource_to_roadmap.get(resource_id)
             required_badge_ids = roadmap_badges_by_roadmap.get(roadmap_id, set())
 
-            # DEBUG
-            # print(f"\n  Resource: {resource_id}", file=sys.stderr)
-            # print(f"    Roadmap ID: {roadmap_id}", file=sys.stderr)
-            # print(f"    Required badge IDs: {required_badge_ids}", file=sys.stderr)
-            # print(f"    Badge statuses count: {len(badge_statuses)}", file=sys.stderr)
-
-            # Get badge IDs this resource already has records for
             existing_badge_ids = set(badge_statuses.keys())
-            print(f"    Existing badge IDs: {existing_badge_ids}", file=sys.stderr)
-
-
-            # Get verified badge IDs for this resource
             verified_badge_ids = {
                 badge_id for badge_id, status in badge_statuses.items()
                 if status and status.lower().strip() in completed_statuses
             }
-            print(f"    Verified badge IDs: {verified_badge_ids}", file=sys.stderr)
 
             # Process explicit badge records
             for badge_id, status in badge_statuses.items():
@@ -136,18 +127,21 @@ class GroupBadgeStatusView(TemplateView):
                     if is_required:
                         required_verified += 1
                 elif status_lower and status_lower not in excluded_statuses:
-                    if not is_required:  # Only optional badges
+                    if not is_required:
                         in_progress_count += 1
 
-            # implicit in-progress badges for missing required badges
+            # Missing required badges
             non_verified_required = required_badge_ids - {str(bid) for bid in verified_badge_ids}
             missing_required = non_verified_required - {str(bid) for bid in existing_badge_ids}
-
             in_progress_count += len(missing_required)
 
-        # Calculate required_total
+        # Calculate required_total (PRODUCTION RESOURCES ONLY)
         required_total = 0
         for resource_id in group_resources:
+            resource_status = resource_status_lookup.get(resource_id, '').lower().replace('-', '_')
+            if resource_status not in production_statuses:
+                continue
+
             roadmap_id = resource_to_roadmap.get(resource_id)
             if roadmap_id:
                 required_badge_ids = roadmap_badges_by_roadmap.get(roadmap_id, set())
@@ -311,6 +305,13 @@ class GroupBadgeStatusView(TemplateView):
 
             available_count, in_progress_count, required_verified, required_total = counts
 
+            # Production resource count for the group
+            production_resource_count = sum(
+                1 for resource_id in group_resources
+                if resource_status_lookup.get(str(resource_id), '').lower().replace('-', '_') 
+                in {'production', 'post-production', 'post_production'}
+)
+
             has_preproduction = False
             group_statuses = set()
             status_counts = defaultdict(int)
@@ -336,6 +337,7 @@ class GroupBadgeStatusView(TemplateView):
                 'info_groupid': group.get('info_groupid'),
                 'name': group.get('group_descriptive_name', 'Unknown Group'),
                 'resource_count': len(group_resources),
+                'production_resource_count': production_resource_count,
                 'has_preproduction': has_preproduction,
                 'group_status': group_status,
                 'has_mixed_status': has_mixed_status,
