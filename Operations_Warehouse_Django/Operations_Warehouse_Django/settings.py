@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     'warehouse_tools',
     'web',
     'integration_views',
-    'access_django_user_admin',
 ]
 
 MIDDLEWARE = [
@@ -228,6 +227,7 @@ if SETTINGS_MODE == 'SERVER':
         'cilogon_tokenauth',
         'dal',
         'dal_select2',
+        'access_django_user_admin',
     )
     
     SITE_ID = 1
