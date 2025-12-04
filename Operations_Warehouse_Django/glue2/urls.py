@@ -90,5 +90,7 @@ urlpatterns = [
     path(r'v1/jobs2/ResourceID/<str:resourceid>/Queue/<str:queue>/', Job_List.as_view(), name='jobs-list'),
     path(r'v1/jobs2/ResourceID/<str:resourceid>/LocalAccount/<str:localaccount>/', Job_List.as_view(), name='jobs-list'),
 
-    path(r'v1/try_globus/', Try_and_add_Globus.as_view(), name='try-globus'),
+    path(r'v1/search-globus/', SearchGlobus.as_view(), name='search-globus'),
+    path(r'v1/compare-warehouse/', compare_warehouse_view, name='compare-warehouse'),
+    path(r'v1/ingest-globus/', ingest_globus_view, name='ingest-globus'),
 ]

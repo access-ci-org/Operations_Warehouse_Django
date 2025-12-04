@@ -17,4 +17,7 @@ urlpatterns = [
     path(r'v4/resource_search/', Resource_Search.as_view(), name='resource-search'),
     path(r'v4/resource_esearch/', Resource_ESearch.as_view(), name='resource-esearch'),
     path(r'v4/relations_cache/', Relations_Cache.as_view(), name='relations-cache'),
+    path(r'v4/search-globus/', SearchGlobus.as_view(), name='search-globus'),
+    path(r'v4/compare-warehouse/', compare_warehouse_view, name='compare-warehouse'),
+    path(r'v4/ingest-globus/', ingest_globus_view, name='ingest-globus'),
 ]

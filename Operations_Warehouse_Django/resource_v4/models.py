@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
+
 
 ################################################################################
 # GLUE2 identifiers (AbstraceGlue2Entity)
@@ -94,3 +96,128 @@ class ResourceV4Relation(models.Model):
     RelationType = models.CharField(max_length=32, null=False)
     def __str__(self):
         return str(self.ID)
+
+
+class DjangoWarehouseSoftware(models.Model):
+    Category = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="General classification of the resource (e.g., Compute, Storage)."
+    )
+    CreationTime = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp for when this entry was created."
+    )
+    Default = models.BooleanField(
+        default=False,
+        help_text="Indicates whether this entry is the default option."
+    )
+    Description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Detailed explanation or summary of the resource."
+    )
+    HandleKey = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Key used in handle system to uniquely reference the resource."
+    )
+    HandleType = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Type of handle used for this entry (e.g., DOI, URN)."
+    )
+    ID = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Unique identifier, typically an existing URN from Django."
+    )
+    Info_GroupID = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Identifier for the associated group (if applicable)."
+    )
+    Info_GroupName = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Human-readable name of the associated group."
+    )
+    Info_ResourceID = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Unique identifier of the resource in the catalog."
+    )
+    Info_ResourceName = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Descriptive name of the resource in the catalog."
+    )
+    Keywords = ArrayField(
+        models.CharField(max_length=255),
+        default=list,
+        blank=True,
+        help_text="Relevant keywords or tags for searching."
+    )
+    Name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Common display name for the entry."
+    )
+    Organization_ID = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Numeric ID of the affiliated organization."
+    )
+    Organization_Name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Full name of the affiliated organization."
+    )
+    SupportContact = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="Contact email or URL for technical support."
+    )
+    SupportStatus = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Current support phase (e.g., development, testing, production)."
+    )
+    URL = models.URLField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="Primary web link for more information or access."
+    )
+    Validity = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Duration of validity for the entry, in seconds."
+    )
+    Version = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Version or release identifier of the resource entry."
+    )
+
+    class Meta:
+        db_table = 'django_warehouse_software'  # Optional: customize table name
+        verbose_name = 'Django Warehouse Software'
+        verbose_name_plural = 'Django Warehouse Software Entries'
+
+    def __str__(self):
+        return self.Name or self.ID or f"DjangoWarehouseSoftware {self.pk}"
