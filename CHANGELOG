@@ -9,6 +9,10 @@ v3.72.0 2025-12-19 JP (CTT-794)
   - Rewrite web/index.html to improve clarity and remove outdated information
   - Add new pyproject.toml to start migrating away from maintaining it in infrastructure ansible
 
+v3.71.1 2025-12-10 Dinuka
+  - Adding the `organization_id` query to the resource roadmap badges endpoint (CTT-814)
+  - Change the ordering of resource roadmap badges endpoint to resource id, badge, roadmap (CTT-779)
+
 v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
   - updating aesthetics in integration_views
