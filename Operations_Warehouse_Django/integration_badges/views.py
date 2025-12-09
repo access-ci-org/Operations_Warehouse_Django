@@ -1453,7 +1453,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                     resource_badge_subquery.values("badge_access_url_label")
                 )
             )
-            .order_by("-status_updated_at", "info_resourceid", "roadmap_id", "badge_id")
+            .order_by("info_resourceid", "badge__name", "roadmap__name", "-status_updated_at")
         )
 
         return MyAPIResponse({"results": result.values()})
