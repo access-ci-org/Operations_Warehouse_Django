@@ -376,7 +376,7 @@ class Roadmap_Review_v1(GenericAPIView):
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer)
     serializer_class = Roadmap_Review_Serializer
 
-    @extend_schema(operation_id="get_roadmap_review")
+    # @extend_schema(operation_id="get_roadmap_review")
     def get(self, request, format=None, **kwargs):
         roadmaps_nav = Roadmap_Review_Nav_Serializer(
             Roadmap.objects.all(), context={"request": request}, many=True
@@ -405,7 +405,7 @@ class Badge_Review_v1(GenericAPIView):
     serializer_class = Badge_Review_Serializer
 
     @extend_schema(
-        operation_id="get_badge_review",
+        # operation_id="get_badge_review",
         parameters=[
             OpenApiParameter(
                 name="mode",
