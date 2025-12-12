@@ -2,6 +2,7 @@ v3.72.0 2025-12-10 JP (CTT-794)
   - Django upgrade to 5.2.*
   - allauth config changes, black formatter changes
   - Remove deprecated and unused import sync_user_email_addresses in signals.py
+  - Introduce /docs/dump.html requiring authentication for debugging
 
 v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
