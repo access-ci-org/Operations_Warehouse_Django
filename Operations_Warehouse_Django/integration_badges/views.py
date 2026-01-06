@@ -1035,6 +1035,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             if badge_task_workflow_status in [
                 BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                BadgeTaskWorkflowStatus.NOT_APPLICABLE,
             ]:
                 can_post_status = True
         elif request.user.has_perm("cider.implementer_" + info_group_id):
@@ -1042,6 +1043,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             if badge_task_workflow_status in [
                 BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                BadgeTaskWorkflowStatus.NOT_APPLICABLE,
             ]:
                 can_post_status = True
         else:
