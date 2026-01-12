@@ -1,3 +1,11 @@
+v3.72.0 2025-12-19 JP (CTT-794)
+  - Django upgrade to 5.2.*
+  - allauth config changes, black formatter changes
+  - Remove deprecated and unused import sync_user_email_addresses in signals.py
+  - Introduce dump.html for debuggin and requiring authentication
+  - Rewrite web/index.html to improve clarity and remove outdated information
+  - Add new pyproject.toml to start migrating away from maintaining it in infrastructure ansible
+
 v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
   - updating aesthetics in integration_views

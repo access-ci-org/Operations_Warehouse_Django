@@ -1,0 +1,30 @@
+[project]
+name = "Operations_Warehouse_Django"
+version = "3.72.0"
+description = "ACCESS Operations (CONECT) Warehouse Django API Interface"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "django==5.2.*",
+    "django-allauth==65.*",
+    "django-autocomplete-light",
+    "django-bootstrap5==25.*",
+    "django-cors-headers",
+    "django-opensearch-dsl==0.5.*",
+    "djangorestframework",
+    "drf-spectacular",
+    "globus-sdk",
+    "gunicorn",
+    "markdown",
+    "mod-wsgi",
+    "Pillow",
+    "python3-openid",
+    "psycopg2-binary",
+    "pymemcache",
+    "python-jose",
+    "pyyaml",
+    "requests",
+    "requests-oauth2client",
+    "access-django-user-admin==1.5.2",
+    "cilogon-tokenauth==0.4.*",
+]
