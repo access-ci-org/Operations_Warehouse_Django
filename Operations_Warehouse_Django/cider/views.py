@@ -1,6 +1,8 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from itertools import chain
 from rest_framework.views import APIView
+from rest_framework.authentication import BasicAuthentication, SessionAuthentication
+from cilogon_tokenauth.auth import CITokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework import status
@@ -39,6 +41,8 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
     '''
 #    permission_classes = (IsAuthenticatedOrReadOnly,)
     permission_classes = (IsAuthenticated,)
+    # authentication classes override the defaults, so we need to list them all
+    authentication_classes = (BasicAuthentication, CITokenAuthentication, SessionAuthentication,)
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
     serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
     def get(self, request, format=None, **kwargs):
