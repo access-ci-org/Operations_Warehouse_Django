@@ -33,6 +33,7 @@ def badge_status_symbol(status):
     else:
         return '<span class="fs-5" style="color: gray;">&#x26A0;</span>'
 
+
 @register.filter
 def trim_access_prefix(name):
     """Remove 'ACCESS ' prefix from badge names"""

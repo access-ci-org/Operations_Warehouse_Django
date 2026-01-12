@@ -91,7 +91,7 @@ class RoadmapResourceBadgesView(TemplateView):
         try:
             return self.call_integration_badges_views(view_class, **(params or {}))
         except Exception as e:
-            print(f"Error fetching {endpoint}: {e}")
+            logger.error("Error fetching %s: %s", endpoint, e)
             return []
 
 
@@ -196,9 +196,15 @@ class RoadmapResourceBadgesView(TemplateView):
             badge_statuses = {}
             for rb in resource_badges:
                 badge_id = rb.get('badge_id')
-                # Validation fire
                 if badge_id is not None:
-                    badge_statuses[str(badge_id)] = rb.get('status')
+                    raw_status = rb.get('status')
+                    status_norm = (raw_status or '').strip().lower()
+                    # Treat 'planned' as in-progress for display purposes
+                    if status_norm == 'planned':
+                        display_status = 'in progress'
+                    else:
+                        display_status = raw_status
+                    badge_statuses[str(badge_id)] = display_status
 
 
             latest_status_begin_str = resource_info.get('latest_status_begin')
@@ -500,6 +506,7 @@ class RoadmapResourceBadgesView(TemplateView):
             except (ValueError, TypeError):
                 pass
 
+
         # Build lookups
         badge_lookup, resource_lookup = self.build_lookups(badges_data, resources_data)
 
@@ -608,7 +615,7 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Sort badges list
         badges_list = sorted(list(seen_badges.values()), 
-                key=lambda x: (not x['required'], x['badge']['name']))
+            key=lambda x: (not x['required'], x['badge']['name']))
 
         # Update context
         context.update({
