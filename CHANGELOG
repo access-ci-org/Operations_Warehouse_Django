@@ -1,3 +1,6 @@
+v3.72.1 2025-01-12 EBB 
+  - Added BasicAuthentication to the authentication classes for Contacts
+
 v3.72.0 2025-12-19 JP (CTT-794)
   - Django upgrade to 5.2.*
   - allauth config changes, black formatter changes
