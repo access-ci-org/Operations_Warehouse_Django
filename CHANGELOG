@@ -1,3 +1,6 @@
+v3.72.3 2026-01-15 JP
+ - Add missing integration_badges/migrations/0004_alter_badge_task_task_and_more.py
+
 v3.72.2 2026-01-12 jlambertson (ctt-844)
  - updated for better badge status handling
  - updated settings.py and signals.py to work with newer versions of django allauth
