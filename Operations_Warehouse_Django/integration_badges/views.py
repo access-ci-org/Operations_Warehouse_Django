@@ -1035,6 +1035,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             if badge_task_workflow_status in [
                 BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                BadgeTaskWorkflowStatus.NOT_APPLICABLE,
             ]:
                 can_post_status = True
         elif request.user.has_perm("cider.implementer_" + info_group_id):
@@ -1042,6 +1043,7 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             if badge_task_workflow_status in [
                 BadgeTaskWorkflowStatus.COMPLETED,
                 BadgeTaskWorkflowStatus.NOT_COMPLETED,
+                BadgeTaskWorkflowStatus.NOT_APPLICABLE,
             ]:
                 can_post_status = True
         else:
@@ -1350,6 +1352,13 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
+                name="organization_id",
+                description="Organization ID",
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
                 name="info_resourceid",
                 description="Info ResourceID",
                 type=str,
@@ -1381,12 +1390,23 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         ]
     )
     def get(self, request, format=None, **kwargs):
+        organization_id = self.request.query_params.get("organization_id")
         info_resourceid = self.request.query_params.get("info_resourceid")
         roadmap_id = self.request.query_params.get("roadmap_id")
         badge_id = self.request.query_params.get("badge_id")
         badge_workflow_status = self.request.query_params.get("badge_workflow_status")
 
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
+
+        if organization_id is not None:
+            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
+                Exists(
+                    CiderInfrastructure.objects.filter(
+                        other_attributes__organizations__0__organization_id=int(organization_id),
+                        info_resourceid = OuterRef("info_resourceid")
+                    )
+                )
+            )
 
         if info_resourceid is not None:
             resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
@@ -1453,7 +1473,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                     resource_badge_subquery.values("badge_access_url_label")
                 )
             )
-            .order_by("-status_updated_at", "info_resourceid", "roadmap_id", "badge_id")
+            .order_by("info_resourceid", "badge__name", "roadmap__name", "-status_updated_at")
         )
 
         return MyAPIResponse({"results": result.values()})
