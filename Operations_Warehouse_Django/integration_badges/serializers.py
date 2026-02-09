@@ -359,13 +359,14 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
     organization_logo_url = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
     roadmaps = serializers.SerializerMethodField()
+    badge_status_summary = serializers.JSONField()
 
     class Meta:
         model = CiderInfrastructure
         fields = ('info_resourceid', 'cider_resource_id', 'cider_type', 'resource_description',
                     'latest_status', 'short_name', 'resource_descriptive_name',
                     'organization_id', 'organization_name', 'organization_url', 'organization_logo_url',
-                    'user_guide_url', 'roadmaps',)
+                    'user_guide_url', 'roadmaps', 'badge_status_summary',)
     
     def get_short_name(self, object) -> str:
         try:
