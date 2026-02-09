@@ -1283,27 +1283,31 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
                 badge_id=badge_id
             )
 
+        resource_subquery = resource_subquery.filter(
+            info_resourceid=OuterRef('info_resourceid')
+        )
+
+        roadmap_badge_subquery = Roadmap_Badge.objects.filter(
+            roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
+        )
+
+        resource_badge_subquery = Resource_Badge.objects.filter(
+            info_resourceid=OuterRef("info_resourceid"),
+            roadmap_id=OuterRef("roadmap_id"),
+            badge_id=OuterRef("badge_id"),
+        )
+
         filtered_resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
 
             # Making sure the resource if a part of the organization
-            Exists(resource_subquery.filter(
-                info_resourceid=OuterRef('info_resourceid')
-            )),
+            Exists(resource_subquery),
 
             # Making sure the badge is a part of the roadmap
-            Exists(
-                Roadmap_Badge.objects.filter(
-                    roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
-                )
-            ),
+            Exists(roadmap_badge_subquery),
+
             # Making sure the resource is enrolled to the roadmap badge
-            Exists(
-                Resource_Badge.objects.filter(
-                    info_resourceid=OuterRef("info_resourceid"),
-                    roadmap_id=OuterRef("roadmap_id"),
-                    badge_id=OuterRef("badge_id"),
-                )
-            ),
+            Exists(resource_badge_subquery),
+
             # Filtering the workflow entries with the latest time stamp
             status_updated_at=Subquery(
                 Resource_Badge_Workflow.objects.filter(
@@ -1396,17 +1400,11 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         badge_id = self.request.query_params.get("badge_id")
         badge_workflow_status = self.request.query_params.get("badge_workflow_status")
 
+        resource_subquery  = CiderInfrastructure.objects#.filter(badging_filter)
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
 
         if organization_id is not None:
-            resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-                Exists(
-                    CiderInfrastructure.objects.filter(
-                        other_attributes__organizations__0__organization_id=int(organization_id),
-                        info_resourceid = OuterRef("info_resourceid")
-                    )
-                )
-            )
+            resource_subquery = resource_subquery.filter(other_attributes__organizations__0__organization_id=int(organization_id))
 
         if info_resourceid is not None:
             resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
@@ -1428,6 +1426,15 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 status=badge_workflow_status
             )
 
+        resource_subquery = resource_subquery.filter(
+            info_resourceid=OuterRef('info_resourceid')
+        )
+
+        roadmap_badge_subquery = Roadmap_Badge.objects.filter(
+            roadmap_id=OuterRef("roadmap_id"),
+            badge_id=OuterRef("badge_id"),
+        )
+
         resource_badge_subquery = Resource_Badge.objects.filter(
             info_resourceid=OuterRef("info_resourceid"),
             roadmap_id=OuterRef("roadmap_id"),
@@ -1436,20 +1443,16 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
 
         result = (
             resource_badge_workflow_subquery.filter(
+
+                # Making sure the resource if a part of the organization
+                Exists(resource_subquery),
+
                 # Making sure the badge is a part of the roadmap
-                Exists(
-                    Roadmap_Badge.objects.filter(
-                        roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
-                    )
-                ),
+                Exists(roadmap_badge_subquery),
+
                 # Making sure the resource is enrolled to the roadmap badge
-                Exists(
-                    Resource_Badge.objects.filter(
-                        info_resourceid=OuterRef("info_resourceid"),
-                        roadmap_id=OuterRef("roadmap_id"),
-                        badge_id=OuterRef("badge_id"),
-                    )
-                ),
+                Exists(resource_badge_subquery),
+
                 # Filtering the workflow entries with the latest time stamp
                 status_updated_at=Subquery(
                     Resource_Badge_Workflow.objects.filter(
@@ -1471,6 +1474,11 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
             .annotate(
                 badge_access_url_label=Subquery(
                     resource_badge_subquery.values("badge_access_url_label")
+                )
+            )
+            .annotate(
+                required=Subquery(
+                    roadmap_badge_subquery.values("required")
                 )
             )
             .order_by("info_resourceid", "badge__name", "roadmap__name", "-status_updated_at")
