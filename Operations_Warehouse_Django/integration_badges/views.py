@@ -661,6 +661,8 @@ class Resource_Full_v1(GenericAPIView):
             info_resourceid = resource.info_resourceid
             if info_resourceid in badge_status_summary_grouped_by_resource:
                 setattr(resource, "badge_status_summary", badge_status_summary_grouped_by_resource[info_resourceid])
+            else:
+                setattr(resource, "badge_status_summary", None)
 
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
@@ -1331,7 +1333,7 @@ def append_to_badge_status_summary_object(badge_status_summary_obj, badge_status
 
 
 def get_badge_status_subquery(organization_id, info_resourceid, roadmap_id, badge_id, group_by=["info_resourceid", "required"]):
-    resource_subquery = CiderInfrastructure.objects  # .filter(badging_filter)
+    resource_subquery = CiderInfrastructure.objects.filter(badging_filter)
     resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
 
     if organization_id is not None:
@@ -1464,7 +1466,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         badge_id = self.request.query_params.get("badge_id")
         badge_workflow_status = self.request.query_params.get("badge_workflow_status")
 
-        resource_subquery  = CiderInfrastructure.objects#.filter(badging_filter)
+        resource_subquery  = CiderInfrastructure.objects.filter(badging_filter)
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
 
         if organization_id is not None:
