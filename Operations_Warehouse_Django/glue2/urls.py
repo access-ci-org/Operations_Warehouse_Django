@@ -89,8 +89,4 @@ urlpatterns = [
     path(r'v1/userjobs/', Jobs_by_ProfileID.as_view(), name='jobs-profileid'),
     path(r'v1/jobs2/ResourceID/<str:resourceid>/Queue/<str:queue>/', Job_List.as_view(), name='jobs-list'),
     path(r'v1/jobs2/ResourceID/<str:resourceid>/LocalAccount/<str:localaccount>/', Job_List.as_view(), name='jobs-list'),
-
-    path(r'v1/search-globus/', SearchGlobus.as_view(), name='search-globus'),
-    path(r'v1/compare-warehouse/', compare_warehouse_view, name='compare-warehouse'),
-    path(r'v1/ingest-globus/', ingest_globus_view, name='ingest-globus'),
 ]

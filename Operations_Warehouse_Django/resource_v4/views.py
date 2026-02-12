@@ -1,5 +1,3 @@
-import globus_sdk
-import requests
 from django.db.models import Count
 from django.conf import settings as django_settings
 from django.core.paginator import Paginator
@@ -20,11 +18,12 @@ from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
+from cider.models import *
+from glue2.models import *
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 
 import datetime
-import json
 from datetime import datetime, timedelta
 import pytz
 Central = pytz.timezone("US/Central")
@@ -898,11 +897,11 @@ class SearchGlobus(APIView):
     def __init__(self, *args, **kwargs):
         self.app = globus_sdk.ClientApp(
             "ACCESS-CI Operations Warehouse Globus Service Client",
-            client_id=django_settings.GLOBUS_CLIENT_ID,
-            client_secret=django_settings.GLOBUS_CLIENT_SECRET
+            client_id=settings.GLOBUS_CLIENT_ID,
+            client_secret=settings.GLOBUS_CLIENT_SECRET
         )
         self.search_client = globus_sdk.SearchClient(app=self.app)
-        self.search_endpoint = django_settings.GLOBUS_SEARCH_INDEX_ID
+        self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
         super().__init__(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -924,41 +923,115 @@ class SearchGlobus(APIView):
             self.search_endpoint,
             search_query
         )
-        return Response(
-            json.dumps(search.data),
-            content_type="application/json",
-            headers={"Accept": "application/json; indent=4"}
-        )
-
-    def post(self, request, *args, **kwargs):
-        try:
-            warehouse_software_model = DjangoWarehouseSoftware(**request.data)
-            gmeta_list = {
-                "ingest_type": "GMetaList",
-                "ingest_data": {
-                    "gmeta": [warehouse_software_model.model_dump()]
-                }
-            }
-            self.search_client.ingest(self.search_endpoint, gmeta_list)
-        except globus_sdk.SearchAPIError as err:
-            return Response({"error": str(err)}, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as err:
-            return Response({"error": str(err)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(gmeta_list, status.HTTP_200_OK)
+        return Response(search)
 
 
 @api_view(["GET"])
 def compare_warehouse_view(request, *args, **kwargs):
-    response = compare_warehouse()
-    return Response(
-        json.dumps(response),
-        content_type="application/json"
-    )
+    from resource_v4.process import GlobusProcess
+
+    # Simulate incoming content items from GLUE2 router
+    glue2_remote_resources = ApplicationHandle.objects.order_by(
+        "-CreationTime").select_related()
+
+    # Build resourceV4 payload from remote GLUE2 resources (simulate incoming GLUE2 models in router)
+    payload = generate_payloads(glue2_remote_resources)
+
+    # Initiate a Globus Process
+    # Handles ingest, delete_by_query, and update.
+    globus_process = GlobusProcess()
+
+    # Process added/removed/updated items in ResourceV4Local table
+    if len(payload["added"]):
+        # Ingest new items into Globus Search Index
+        gmeta_list = {
+            "ingest_type": "GMetaList",
+            "ingest_data": {
+                "gmeta": []
+            }
+        }
+        for item in payload["added"]:
+            gmeta_entry = {
+                "subject": item["ID"],
+                "visible_to": ["public"],
+                "content": item["EntityJSON"]
+            }
+            gmeta_list["ingest_data"]["gmeta"].append(gmeta_entry)
+        globus_process.ingest(gmeta_list=gmeta_list)
+
+        # Bulk create new ResourceV4Local entries for added items in PostgreSQL
+        resource_v4_local_added = [
+            ResourceV4Local(**item) for item in payload["added"]
+        ]
+        try:
+            ResourceV4Local.objects.bulk_create(resource_v4_local_added)
+        except Exception as err:
+            print(err)
+            return Response(
+                [{"error": str(err)}],
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    if len(payload["removed"]):
+        # Delete items from Globus Search Index by querying on the ID field
+        globus_process.delete_by_query(payload["removed"])
+
+        # Delete items from ResourceV4Local table in PostgreSQL
+        resource_v4_local_removed = ResourceV4Local.objects.filter(
+            LocalID__in=payload["removed"]
+        )
+        try:
+            resource_v4_local_removed.delete()
+        except Exception as err:
+            print(err)
+            return Response(
+                [{"error": str(err)}],
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    if len(payload["updated"]):
+        # Ingest updated items into Globus Search Index
+        gmeta_list = {
+            "ingest_type": "GMetaList",
+            "ingest_data": {
+                "gmeta": []
+            }
+        }
+
+        for item in payload["updated"]:
+            try:
+                resource = ResourceV4Local.objects.get(LocalID=item["LocalID"])
+                for key, value in item["changes"].items():
+                    if key == "EntityJSON":
+                        for entity_json_key, entity_json_value in value.items():
+                            resource.EntityJSON[entity_json_key] = entity_json_value
+                    else:
+                        setattr(resource, key, value)
+                resource.save()
+
+                gmeta_entry = {
+                    "subject": resource.ID,
+                    "visible_to": ["public"],
+                    "content": resource.EntityJSON
+                }
+                gmeta_list["ingest_data"]["gmeta"].append(gmeta_entry)
+            except Exception as err:
+                print(err)
+                return Response(
+                    [{"error": str(err)}],
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        globus_process.update_by_subject(gmeta_list=gmeta_list)
+
+    return Response([{
+        "added": len(payload["added"]),
+        "removed": len(payload["removed"]),
+        "updated": len(payload["updated"]),
+    }])
 
 
-@api_view(["GET",])
-def ingest_globus_view(request, *args, **kwargs):
+@api_view(["GET"])
+def populate_resource_v4_local_view(request, *args, **kwargs):
     # Initial ingest of access-ci data into Globus
     try:
         remote_response = requests.get(
@@ -974,249 +1047,254 @@ def ingest_globus_view(request, *args, **kwargs):
     except Exception as err:
         return Response(err)
 
-    globus_response = convert_to_globus(remote_response.json()["results"])
+    software_models = []
+    for software in remote_response.json()["results"]:
+        software.pop("DetailURL")
+        software_models.append(ResourceV4Local(**software))
+    try:
+        from django.db import IntegrityError
+        ResourceV4Local.objects.bulk_create(software_models)
+    except IntegrityError as err:
+        if "duplicate key" in str(err).lower():
+            return Response(
+                "Duplicate key error: Some records already exist in ResourceV4Local", 
+                status=status.HTTP_409_CONFLICT
+            )
 
-    return Response(
-        json.dumps(globus_response),
-        content_type="application/json",
-        headers={"Accept": "application/json; indent=4"}
-    )
+    return Response(f"Inserted {len(software_models)} records into ResourceV4Local")
 
 
-def compare_warehouse():
-    remote_response = requests.get(
-        "https://operations-api.access-ci.org/wh2/resource/v4/local_search/",
-        params={
-            "affiliations": "access-ci.org",
-        }
-    )
+def generate_payloads(application_handles):
+    import hashlib
 
-    local_resources = ResourceV4Local.objects.filter(
+    def chunk_dict(data_dict, chunk_size):
+        for i in range(0, len(data_dict), chunk_size):
+            yield data_dict[i:i + chunk_size]
+
+    # Current list of resource_v4_local entries in DB
+    resource_v4_local_list_new = []
+    resource_v4_local_list_old = ResourceV4Local.objects.filter(
         Affiliation__exact="access-ci.org"
-    ).values()
-    remote_resources = remote_response.json()["results"]
+    ).order_by("-CreationTime")
 
-    results = compare_dicts(
-        local_resources,
-        remote_resources,
-        group_by="ID",
-        ignore_fields=[
-            "CreationTime",
-            "DetailURL",
-            "EntityJSON.CreationTime",
-            "Validity"
-        ]
-    )
+    for chunk in chunk_dict(application_handles, 250):
+        for application in chunk:
+            cider = CiderInfrastructure.objects.filter(
+                info_resourceid=application.ResourceID
+            ).first()
+            environment_id = application.ID
+            environment_id_utf8 = environment_id.encode('utf-8')
+            environment_id_hash = f"urn:ogf.org:glue2:access-ci.org:executable.software:{hashlib.md5(environment_id_utf8).hexdigest()}"
 
-    print(f"Added ({len(results['added'])}):")
-    for item in results['added']:
-        print(f"  {item}")
+            validity = application.ApplicationEnvironment.Validity
+            if validity:
+                validity = str(validity.total_seconds())
 
-    print(f"\nRemoved ({len(results['removed'])}):")
-    for item in results['removed']:
-        print(f"  {item}")
+            # Build EntityJSON for the software entity
+            entity_json = {
+                "ID": environment_id_hash,
+                "Category": application.ApplicationEnvironment.EntityJSON.get("Category", None),
+                "CreationTime": application.ApplicationEnvironment.CreationTime.isoformat(),
+                "Default": application.ApplicationEnvironment.EntityJSON.get("Default", True),
+                "Description": application.ApplicationEnvironment.Description,
+                "HandleKey": application.Value,
+                "HandleType": application.Type,
+                "Keywords": application.ApplicationEnvironment.EntityJSON.get("Keywords", None),
+                "LocalID": environment_id,
+                "Name": application.ApplicationEnvironment.AppName,
+                "SupportContact": application.ApplicationEnvironment.EntityJSON.get("SupportContact", "https://support.access-ci.org/help-ticket"),
+                "SupportStatus": application.ApplicationEnvironment.EntityJSON.get("SupportStatus", "production"),
+                "URL": application.ApplicationEnvironment.EntityJSON.get("URL", None),
+                "Validity": validity,
+                "Version": application.ApplicationEnvironment.AppVersion,
 
-    changes = []
-    print(f"\nUpdated ({len(results['updated'])}):")
-    for item in results['updated']:
-        changes.append(item)
-        print(f"  ID {item['ID']}:")
-        print_changes(item['changes'], indent=4)
-
-    response = [{
-        "response": {
-            "added": {
-                "items": len(results['added']),
-                "ID": [item["ID"] for item in results["added"]]
-            },
-            "removed": {
-                "items": len(results["removed"]),
-                "ID": [item["id"] for item in results["removed"]]
-            },
-            "updated": {
-                "items": len(results["updated"]),
-                "ID": [item["id"] for item in results["updated"]]
+                # Cider fields
+                "Info_GroupID": cider.other_attributes.get("groups", [])[0]["info_groupid"] if len(cider.other_attributes.get("groups", [])) else None,
+                "Info_GroupName": cider.other_attributes.get("groups", [])[0]["name"] if len(cider.other_attributes.get("groups", [])) else None,
+                "Info_ResourceID": cider.info_resourceid,
+                "Info_ResourceName": cider.resource_descriptive_name,
+                "Organization_ID": cider.info_siteid,
+                "Organization_Name": cider.other_attributes.get("organizations", [])[0]["organization_name"],
             }
-        },
-    }]
 
-    return response
+            # Build ResourceV4Local entry
+            resource_v4_local_entry = {
+                "ID": environment_id_hash,
+                "Affiliation": "access-ci.org",
+                "CatalogMetaURL": "urn:ogf.org:glue2:access-ci.org:catalog:glue2:executable.software",
+                "CreationTime": application.ApplicationEnvironment.CreationTime.isoformat(),
+                "LocalID": environment_id,
+                "LocalType": "GLUE2 Executable Software",
+                "LocalURL": f"https://operations-api.access-ci.org/wh2/glue2/v1/software_full/ID/{environment_id}/",
+                "Validity": validity,
+                "EntityJSON": entity_json,
+            }
+            resource_v4_local_list_new.append(resource_v4_local_entry)
+
+    payload = {
+        # List of items that were added/removed/updated since last run
+        # Returns a payload with the above keys
+        **compare_dict_lists(
+            resource_v4_local_list_old.values(),
+            resource_v4_local_list_new,
+        ),
+    }
+    return payload
 
 
-def compare_dicts(
-        old_list,
-        new_list,
-        group_by=None,
-        ignore_fields=None
+def compare_dict_lists(
+    old_list,
+    new_list,
+    id_key="LocalID",
+    ignore_fields=None,
 ):
     """
-    Compare two lists of dictionaries by their 'ID' key.
-
-    Args:
-        old_list: List of dictionaries from the old/database state
-        new_list: List of dictionaries with the new state
-        group_by: Optional string to convert lists to dicts keyed by 
-                  this arg for O(1) lookup i.e. a unique ID
-        ignore_fields: Optional list of field names to ignore when comparing
-                       Supports nested fields using dot notation (e.g., 'address.zip')
-
-    Returns:
-        dict with keys: 'added', 'removed', 'updated'
-        - added: list of dicts that exist in new_list but not old_list
-        - removed: list of dicts that exist in old_list but not new_list
-        - updated: list of dicts where ID exists in both but values differ
+    Compare two lists of dicts with:
+    - nested field diff output
+    - dot-notation ignore_fields support
+    - optimized for large datasets
+    - returns only the new value in 'changes'
     """
+
     if ignore_fields is None:
-        ignore_fields = []
+        ignore_fields = [
+            "CreationTime",
+            "ID",
+            "LocalID",
+            "Validity",
+            "EntityJSON.CreationTime",
+            "EntityJSON.ID",
+            "EntityJSON.LocalID",
+            "EntityJSON.Validity",
+        ]
 
-    # Always ignore ID field in change tracking
-    ignore_fields = set(ignore_fields) | {'ID'}
+    ignore_fields = set(ignore_fields)
 
-    def should_ignore_field(field_path):
-        """Check if a field path should be ignored."""
-        return field_path in ignore_fields
+    # -----------------------------
+    # Fast ignore matcher
+    # -----------------------------
+    def should_ignore(path):
+        return any(path == f or path.startswith(f + ".") for f in ignore_fields)
 
-    def compare_values(old_val, new_val, field_path=''):
-        """
-        Recursively compare values, handling nested dictionaries.
-        Returns a dict of changes or None if no changes.
-        """
-        # Check if this field should be ignored
-        if should_ignore_field(field_path):
-            return None
+    # -----------------------------
+    # Merge a change into a nested dictionary
+    # -----------------------------
+    def merge_change(d, path_list, value):
+        key = path_list[0]
+        if len(path_list) == 1:
+            d[key] = value  # only new value
+        else:
+            if key not in d:
+                d[key] = {}
+            merge_change(d[key], path_list[1:], value)
 
-        # Both are dicts - compare recursively
-        if isinstance(old_val, dict) and isinstance(new_val, dict):
-            all_keys = set(old_val.keys()) | set(new_val.keys())
-            nested_changes = {}
+    # -----------------------------
+    # Recursive diff engine
+    # -----------------------------
+    def deep_diff_nested(old, new, path="", changes=None):
+        if changes is None:
+            changes = {}
 
+        if old is new:
+            return changes
+
+        if type(old) != type(new):
+            merge_change(changes, path.split(".") if path else [], new)
+            return changes
+
+        if isinstance(old, dict):
+            all_keys = old.keys() | new.keys()
             for key in all_keys:
-                nested_path = f"{field_path}.{key}" if field_path else key
+                current_path = f"{path}.{key}" if path else key
 
-                if should_ignore_field(nested_path):
+                if should_ignore(current_path):
                     continue
 
-                old_nested = old_val.get(key)
-                new_nested = new_val.get(key)
+                if key not in old:
+                    merge_change(changes, current_path.split("."), new[key])
+                elif key not in new:
+                    merge_change(changes, current_path.split("."), None)
+                else:
+                    deep_diff_nested(old[key], new[key], current_path, changes)
 
-                if old_nested != new_nested:
-                    change = compare_values(old_nested, new_nested, nested_path)
-                    if change:
-                        nested_changes[key] = change
+            return changes
 
-            return nested_changes if nested_changes else None
+        if isinstance(old, list):
+            if len(old) != len(new):
+                merge_change(changes, path.split(".") if path else [], new)
+                return changes
+            for idx, (o, n) in enumerate(zip(old, new)):
+                deep_diff_nested(o, n, f"{path}[{idx}]", changes)
+            return changes
 
-        # One or both are not dicts - direct comparison
-        if old_val != new_val:
-            change = {
-                'old': old_val,
-                'new': new_val
-            }
+        # Primitive values
+        if old != new:
+            merge_change(changes, path.split(".") if path else [], new)
 
-            # Track if field was added or deleted
-            if old_val is None:
-                change['status'] = 'added'
-            elif new_val is None:
-                change['status'] = 'deleted'
-            else:
-                change['status'] = 'modified'
+        return changes
 
-            return change
+    # -----------------------------
+    # Lookup dicts for fast O(n) matching
+    # -----------------------------
+    old_dict = {item[id_key]: item for item in old_list}
+    new_dict = {item[id_key]: item for item in new_list}
 
-        return None
+    old_ids = set(old_dict)
+    new_ids = set(new_dict)
 
-    # Convert lists to dicts keyed by "group_by" for O(1) lookup
-    old_dict = {item[group_by]: item for item in old_list}
-    new_dict = {item[group_by]: item for item in new_list}
+    added = [new_dict[_id] for _id in new_ids - old_ids]
+    removed = list(old_ids - new_ids)
 
-    # Get ID sets for comparison
-    old_ids = set(old_dict.keys())
-    new_ids = set(new_dict.keys())
-
-    # Find added, removed, and potentially updated IDs
-    added_ids = new_ids - old_ids
-    removed_ids = old_ids - new_ids
-    common_ids = old_ids & new_ids
-
-    # Collect results
-    added = [new_dict[id] for id in added_ids]
-    removed = [old_dict[id] for id in removed_ids]
-
-    # For updated items, track what changed
     updated = []
-    for id in common_ids:
-        old_item = old_dict[id]
-        new_item = new_dict[id]
-
-        if old_item != new_item:
-            changes = compare_values(old_item, new_item)
-
-            if changes:
-                # Remove the ID from changes if it exists
-                changes.pop('ID', None)
-
-                updated.append({
-                    'ID': id,
-                    'data': new_item,
-                    'changes': changes
-                })
+    for _id in old_ids & new_ids:
+        changes = deep_diff_nested(old_dict[_id], new_dict[_id])
+        if changes:
+            updated.append({
+                "LocalID": _id,
+                "changes": changes
+            })
 
     return {
-        'added': added,
-        'removed': removed,
-        'updated': updated
+        "added": added,
+        "removed": removed,
+        "updated": updated
     }
 
 
-def convert_to_globus(response):
-    from pprint import pprint
+# Unused utility functions for comparing dictionaries and printing changes
+# Keeping for possible future use
+def compare_dict_lists_old(
+    old_list,
+    new_list,
+    id_key='LocalID',
+    ignore_fields=['CreationTime', 'ID', 'LocalID', 'Validity']
+):
+    ignore_fields = set(ignore_fields or [])
 
-    globus_response = []
-    for item in response:
-        globus = {
-            "Category": None,
-            "CreationTime": item.get("CreationTime", None),
-            "Default": False,
-            "Description": item["EntityJSON"].get("Description", None),
-            "HandleKey": item["EntityJSON"].get("HandleKey", None),
-            "HandleType": item["EntityJSON"].get("HandleType", None),
-            "ID": item.get("ID", None),
-            "Info_GroupID": [group.get("info_groupid", []) 
-                             for group in item["EntityJSON"].get("groups", [])],
-            "Info_GroupName": [group.get("name", []) 
-                               for group in item["EntityJSON"].get("groups", [])],
-            "Info_ResourceID": item["EntityJSON"].get("info_resourceid", None),
-            "Info_ResourceName": item["EntityJSON"].get("info_resourcename", None),
-            "Keywords": [],
-            "Name": None,
-            "Organization_ID": [organization.get("organization_id", [])
-                                for organization in item["EntityJSON"].get("organizations", [])],
-            "Organization_Name": [organization.get("organization_name", []) 
-                                  for organization in item["EntityJSON"].get("organizations", [])],
-            "SupportContact": None,
-            "SupportStatus": None,
-            "URL": item["EntityJSON"].get("public_url", None),
-            "Validity": item.get("Validity", None),
-            "Version": None,
-        }
-        globus_response.append(globus)
-    return globus_response
+    def dict_without_keys(d, keys):
+        return {k: v for k, v in d.items() if k not in keys}
 
+    # Build lookup dicts
+    old_dict = {item[id_key]: item for item in old_list}
+    new_dict = {item[id_key]: item for item in new_list}
 
-def print_changes(changes, indent=2):
-    """Recursively print changes, handling nested dictionaries."""
-    spacing = ' ' * indent
+    old_ids = set(old_dict)
+    new_ids = set(new_dict)
 
-    for field, change in changes.items():
-        # Check if this is a nested dictionary of changes
-        if isinstance(change, dict) and 'old' not in change and 'new' not in change:
-            print(f"{spacing}{field}:")
-            print_changes(change, indent + 2)
-        else:
-            status = change.get('status', 'modified')
-            if status == 'added':
-                print(f"{spacing}{field}: [ADDED] → {change['new']}")
-            elif status == 'deleted':
-                print(f"{spacing}{field}: {change['old']} → [DELETED]")
-            else:
-                print(f"{spacing}{field}: {change['old']} → {change['new']}")
+    # Added
+    added = [new_dict[_id] for _id in new_ids - old_ids]
+    # Removed
+    # Only need IDs for removed items
+    removed = [_id for _id in old_ids - new_ids]
+    # Updated
+    updated = []
+    for _id in old_ids & new_ids:
+        old_item = dict_without_keys(old_dict[_id], ignore_fields)
+        new_item = dict_without_keys(new_dict[_id], ignore_fields)
+        if old_item != new_item:
+            updated.append({
+                'old': old_dict[_id],
+                'new': new_dict[_id]
+            })
+
+    return {'added': added, 'removed': removed, 'updated': updated}
