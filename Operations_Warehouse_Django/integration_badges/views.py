@@ -1729,7 +1729,8 @@ class User_Permissions_v1(GenericAPIView):
         # print(idlist)
 
         # Reformat for presentation
-        results = {}
+        permsdict = {}
+        results = []
         for rawperm in permissionlist:
             # We need to split the permission string by "_"
             # If the permission is non-resource specific, there will not be a "_"
@@ -1737,12 +1738,20 @@ class User_Permissions_v1(GenericAPIView):
             parsedperm = rawperm.partition("_")
             if parsedperm[2]:
                 # This is a resource specific permission
-                if not parsedperm[0] in results:
-                    results[parsedperm[0]] = [parsedperm[2]]
+                if not parsedperm[0] in permsdict:
+                    groupid_dict = {"info_groupids": [parsedperm[2]]}
+                    permsdict[parsedperm[0]] = groupid_dict
                 else:
-                    results[parsedperm[0]].append(parsedperm[2])
+                    permsdict[parsedperm[0]]["info_groupids"].append(parsedperm[2])
             else:
                 # This is a non-resource specific permission
-                results[parsedperm[0]] = True
+                permsdict[parsedperm[0]] = True
+        #convert permsdict into a list of permissions dicts by role
+        for role in permsdict.keys():
+            if isinstance(permsdict[role], dict):
+                if "info_groupids" in permsdict[role]:
+                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+            else:
+                results.append({"permission": role})
 
         return MyAPIResponse({"results": {"permissions": results}})
