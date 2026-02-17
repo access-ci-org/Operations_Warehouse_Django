@@ -2,12 +2,15 @@ import json
 from typing import Iterable, List, Tuple, Any
 
 import globus_sdk
+import logging
 import requests
-from .documents import ResourceV4Index
+from requests.exceptions import HTTPError
 
+from .documents import ResourceV4Index
 from django.conf import settings
 from globus_sdk.scopes import SearchScopes
 
+logg2 = logging.getLogger("warehouse.logger")
 
 class GlobusProcess():
     def __init__(self, *args, **kwargs):
@@ -44,7 +47,7 @@ class GlobusProcess():
                 safety_ratio=0.9
             )
         ):
-            print(
+            logg2.info(
                 f"Batch {i}: "
                 f"{len(batch)} items | "
                 f"{size_bytes} bytes | "
@@ -60,11 +63,16 @@ class GlobusProcess():
                     }
                 )
             except globus_sdk.SearchAPIError as err:
-                print({"error": str(err), "status": "400"})
+                logg2.warning({"error": str(err), "status": "400"})
                 return {"error": str(err), "status": "400"}
+        logg2.info(
+            f"""
+            Successfully ingested {len(gmeta_list['ingest_data']['gmeta'])} 
+            items in {i+1} batches.
+            """
+        )
 
     def delete_by_query(self, local_ids):
-        print(local_ids)
         try:
             self.search_client.delete_by_query(
                 self.search_endpoint,
@@ -80,8 +88,9 @@ class GlobusProcess():
                 }
             )
         except globus_sdk.SearchAPIError as err:
-            print({"error": str(err), "status": "400"})
+            logg2.warning({"error": str(err), "status": "400"})
             return {"error": str(err), "status": "400"}
+        logg2.info(f"Successfully deleted {len(local_ids)} items")
         return {}
 
     def update_by_subject(self, gmeta_list):
@@ -98,12 +107,24 @@ class GlobusProcess():
                 "content": gmeta_entry["content"]
             }
 
-            # There is no built-in method in the SearchClient for 
-            # updating by subject, so we need to handle the auth 
+            # There is no built-in method in the SearchClient for
+            # updating by subject, so we need to handle the auth
             # header ourselves.
-            response = requests.put(url, json=payload, headers=headers)
-            response.raise_for_status()
-            print(response.json())
+            try:
+                response = requests.put(url, json=payload, headers=headers)
+                response.raise_for_status()
+            except HTTPError as http_err:
+                logg2.warning(f'HTTP error occurred: {http_err}')
+            except Exception as err:
+                logg2.warning(response.json())
+                logg2.warning(f'Other error occurred: {err}')
+
+        logg2.info(
+            f"""
+            Successfully updated
+            {len(gmeta_list['ingest_data']['gmeta'])} items
+            """
+        )
 
     # Utility functions
     def chunk_by_size(

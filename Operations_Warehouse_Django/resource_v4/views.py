@@ -969,7 +969,7 @@ def compare_warehouse_view(request, *args, **kwargs):
         try:
             ResourceV4Local.objects.bulk_create(resource_v4_local_added)
         except Exception as err:
-            print(err)
+            logg2.warning(err)
             return Response(
                 [{"error": str(err)}],
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -986,7 +986,7 @@ def compare_warehouse_view(request, *args, **kwargs):
         try:
             resource_v4_local_removed.delete()
         except Exception as err:
-            print(err)
+            logg2.warning(err)
             return Response(
                 [{"error": str(err)}],
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1019,13 +1019,14 @@ def compare_warehouse_view(request, *args, **kwargs):
                 }
                 gmeta_list["ingest_data"]["gmeta"].append(gmeta_entry)
             except Exception as err:
-                print(err)
+                logg2.warning(err)
                 return Response(
                     [{"error": str(err)}],
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         globus_process.update_by_subject(gmeta_list=gmeta_list)
 
+    logg2.info(payload)
     return Response([{
         "added": len(payload["added"]),
         "removed": len(payload["removed"]),
