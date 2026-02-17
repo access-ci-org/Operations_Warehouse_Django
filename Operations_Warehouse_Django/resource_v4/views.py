@@ -20,8 +20,10 @@ from .models import *
 from .serializers import *
 from cider.models import *
 from glue2.models import *
+from django.conf import settings
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+import globus_sdk
 
 import datetime
 from datetime import datetime, timedelta
@@ -895,6 +897,7 @@ class SearchGlobus(APIView):
     serializer_class = None
 
     def __init__(self, *args, **kwargs):
+        self.allowed_params = ['q', 'filter', 'fields', 'sort_by', 'limit', 'offset']
         self.app = globus_sdk.ClientApp(
             "ACCESS-CI Operations Warehouse Globus Service Client",
             client_id=settings.GLOBUS_CLIENT_ID,
@@ -911,7 +914,7 @@ class SearchGlobus(APIView):
             cleaned_params["q"] = "*"
 
         for query_param in request.query_params.lists():
-            if query_param[0] not in ['q', 'filter', 'fields', 'sort_by', 'limit', 'offset']:
+            if query_param[0] not in self.allowed_params:
                 return Response(
                     {"error": f"Invalid query parameter: {query_param[0]}"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -1259,42 +1262,3 @@ def compare_dict_lists(
         "removed": removed,
         "updated": updated
     }
-
-
-# Unused utility functions for comparing dictionaries and printing changes
-# Keeping for possible future use
-def compare_dict_lists_old(
-    old_list,
-    new_list,
-    id_key='LocalID',
-    ignore_fields=['CreationTime', 'ID', 'LocalID', 'Validity']
-):
-    ignore_fields = set(ignore_fields or [])
-
-    def dict_without_keys(d, keys):
-        return {k: v for k, v in d.items() if k not in keys}
-
-    # Build lookup dicts
-    old_dict = {item[id_key]: item for item in old_list}
-    new_dict = {item[id_key]: item for item in new_list}
-
-    old_ids = set(old_dict)
-    new_ids = set(new_dict)
-
-    # Added
-    added = [new_dict[_id] for _id in new_ids - old_ids]
-    # Removed
-    # Only need IDs for removed items
-    removed = [_id for _id in old_ids - new_ids]
-    # Updated
-    updated = []
-    for _id in old_ids & new_ids:
-        old_item = dict_without_keys(old_dict[_id], ignore_fields)
-        new_item = dict_without_keys(new_dict[_id], ignore_fields)
-        if old_item != new_item:
-            updated.append({
-                'old': old_dict[_id],
-                'new': new_dict[_id]
-            })
-
-    return {'added': added, 'removed': removed, 'updated': updated}

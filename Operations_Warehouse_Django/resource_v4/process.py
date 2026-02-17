@@ -23,10 +23,14 @@ class GlobusProcess():
         })
 
         # Get the authorization header for the Search PUT requests
+        # This is for the update_by_subject method which uses the
+        # Search API directly via requests.
         authorizer = self.app.get_authorizer("search.api.globus.org")
         self.authorization_header = authorizer.get_authorization_header()
 
         # Initialize the SearchClient with the app and required scopes
+        # For ingest and delete_by_query operations we can use the SearchClient 
+        # directly.
         self.search_client = globus_sdk.SearchClient(
             app=self.app, app_scopes=[SearchScopes.all]
         )
@@ -94,6 +98,9 @@ class GlobusProcess():
                 "content": gmeta_entry["content"]
             }
 
+            # There is no built-in method in the SearchClient for 
+            # updating by subject, so we need to handle the auth 
+            # header ourselves.
             response = requests.put(url, json=payload, headers=headers)
             response.raise_for_status()
             print(response.json())
@@ -154,8 +161,6 @@ class GlobusProcess():
         if chunk:
             yield chunk, current_size
 
-    def put_search_entry(self, payload):
-        pass
 
 class ResourceV4Process():
 
