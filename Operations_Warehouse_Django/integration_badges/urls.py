@@ -70,4 +70,8 @@ urlpatterns = [
 
      path(r'v1/files/<str:file_id>/',
           DatabaseFile_v1.as_view(), name='database-file-id-v1'),
+
+     path(r'v1/permissions/',
+          User_Permissions_v1.as_view(), name='user-permissions-v1'),
+
 ]

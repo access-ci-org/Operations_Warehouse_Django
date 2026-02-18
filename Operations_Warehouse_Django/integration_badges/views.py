@@ -10,6 +10,8 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Q
 from django.db.models import Subquery, OuterRef, Exists, Max, Count
+from django.contrib.auth.models import Permission
+from itertools import chain
 
 import base64
 from urllib.parse import urlparse
@@ -1761,3 +1763,69 @@ def get_image_content_file_from_base64(base64_image_string, file_name):
 
     except Exception as e:
         raise ValueError(f"Error processing image data: {str(e)}")
+
+
+class User_Permissions_v1(GenericAPIView):
+    """
+    All permissions held by the requesting user
+    """
+
+    if DISABLE_PERMISSIONS_FOR_DEBUGGING:
+        permission_classes = (AllowAny,)
+    else:
+        permission_classes = (IsAuthenticated,)
+
+    renderer_classes = (JSONRenderer,)
+
+    def get(self, request, format=None, **kwargs):
+        user = request.user.id
+
+        userpermissions = Permission.objects.filter(user=user)
+        grouppermissions = Permission.objects.filter(group__user=user)
+
+        permissionlist = []
+        idlist = []
+
+        # allperms = userpermissions|grouppermissions
+        # for some reason we were getting a duplicate permission for coordinator of expanse.sdsc.access-ci.org-- permission 335 is arriving in the query set twice
+        # The really strange thing is that it appears only once in
+        # userpermissions, and not at all in grouppermissions, but twice
+        # in userpermissions|grouppermissions
+        # oddly this seems to be happening because of the |, but does not happen
+        # if we use chain from itertools.
+
+        allperms = list(chain(userpermissions, grouppermissions))
+        for perm in allperms:
+            permissionlist.append(perm.codename)
+            # idlist.append(perm.id)
+
+        # print(permissionlist)
+        # print(idlist)
+
+        # Reformat for presentation
+        permsdict = {}
+        results = []
+        for rawperm in permissionlist:
+            # We need to split the permission string by "_"
+            # If the permission is non-resource specific, there will not be a "_"
+            # so there will not be anything at parsedperm[2]
+            parsedperm = rawperm.partition("_")
+            if parsedperm[2]:
+                # This is a resource specific permission
+                if not parsedperm[0] in permsdict:
+                    groupid_dict = {"info_groupids": [parsedperm[2]]}
+                    permsdict[parsedperm[0]] = groupid_dict
+                else:
+                    permsdict[parsedperm[0]]["info_groupids"].append(parsedperm[2])
+            else:
+                # This is a non-resource specific permission
+                permsdict[parsedperm[0]] = True
+        #convert permsdict into a list of permissions dicts by role
+        for role in permsdict.keys():
+            if isinstance(permsdict[role], dict):
+                if "info_groupids" in permsdict[role]:
+                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+            else:
+                results.append({"permission": role})
+
+        return MyAPIResponse({"results": {"permissions": results}})
