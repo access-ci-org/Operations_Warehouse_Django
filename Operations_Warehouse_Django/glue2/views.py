@@ -1,17 +1,9 @@
-import globus_sdk
-import json
-import requests
-from globus_sdk.scopes import GroupsScopes
-from django.conf import settings
-from django.forms.models import model_to_dict
-from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from pydantic import ValidationError
 
 # Create your views here.
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, schema
+from rest_framework.decorators import schema
 from rest_framework.generics import UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.authentication import BasicAuthentication
@@ -19,11 +11,9 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from cider.filters import CiderInfrastructure_All_Filter
-from cider.models import CiderInfrastructure
 from glue2.models import *
 from glue2.serializers import *
 from glue2.process import glue2_process_raw_ipf
-from resource_v4.models import ResourceV4Local
 
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
