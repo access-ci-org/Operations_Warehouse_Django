@@ -14,6 +14,9 @@ def get_current_username(requestuser):
     else:
         return 'unknown'
 
+class RoadmapBadgeCategory(models.TextChoices):
+    REQUIRED = "required", "Required"
+    OPTIONAL = "optional", "Optional"
 
 class BadgeWorkflowStatus(models.TextChoices):
     NOT_PLANNED = "not-planned", "Not Planned"
@@ -153,6 +156,13 @@ class Roadmap_Badge(models.Model):
 
     class Meta:
         unique_together = ('roadmap', 'badge',)
+
+    @property
+    def roadmap_badge_category(self):
+        if self.required:
+            return RoadmapBadgeCategory.REQUIRED
+        else:
+            return RoadmapBadgeCategory.OPTIONAL
 
 
 class Badge_Task(models.Model):
