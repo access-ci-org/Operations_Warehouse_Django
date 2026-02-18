@@ -1,0 +1,31 @@
+django == 5.0.*
+django-opensearch-dsl == 0.5.*
+psycopg2 == 2.9.*
+urllib3<2
+requests
+django-cors-headers
+django-rest-framework
+amqp
+cilogon_tokenauth
+django-autocomplete-light
+django-allauth == 0.52.*
+django-bootstrap5 == 24.*
+djangorestframework
+requests_oauth2client
+drf-spectacular == 0.24.*
+gunicorn == 22.*
+markdown
+pip-versions
+pillow
+python-jose
+python3-openid
+pymemcache
+pyyaml
+tzdata
+ansible
+access-django-user-admin==1.4.4
+globus-sdk==4.1.0
+
+pytest==9.0.2
+pytest-django==4.11.1
+pytest-mock==3.15.1

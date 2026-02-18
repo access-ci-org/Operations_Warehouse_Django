@@ -21,6 +21,7 @@ from .serializers import *
 from cider.models import *
 from glue2.models import *
 from django.conf import settings
+from resource_v4.process import GlobusProcess
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 import globus_sdk
@@ -931,7 +932,6 @@ class SearchGlobus(APIView):
 
 @api_view(["GET"])
 def compare_warehouse_view(request, *args, **kwargs):
-    from resource_v4.process import GlobusProcess
 
     # Simulate incoming content items from GLUE2 router
     glue2_remote_resources = ApplicationHandle.objects.order_by(

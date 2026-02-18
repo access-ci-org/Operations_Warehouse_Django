@@ -47,8 +47,30 @@ DEBUG = CONF['DEBUG']
 ALLOWED_HOSTS = CONF['ALLOWED_HOSTS']
 
 # Application definition
+INSTALLED_APPS = (
+    'corsheaders',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'drf_spectacular',
+    # For django-allauth
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.cilogon',
+    'django_bootstrap5',
+    'cilogon_tokenauth',
+    'dal',
+    'dal_select2',
+    'access_django_user_admin',
+)
 
-INSTALLED_APPS = [
+INSTALLED_APPS += (
     'django_opensearch_dsl',
     'allocations',
     'cider',
@@ -60,7 +82,7 @@ INSTALLED_APPS = [
     'warehouse_tools',
     'web',
     'integration_views',
-]
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -206,29 +228,6 @@ if SETTINGS_MODE == 'SERVER':
     LOGIN_URL = '/accounts/cilogon/login/'
     LOGIN_REDIRECT_URL = '/'
     SOCIALACCOUNT_QUERY_EMAIL = True
-
-    INSTALLED_APPS += (
-        'corsheaders',
-        'django.contrib.admin',
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'django.contrib.sessions',
-        'django.contrib.messages',
-        'django.contrib.staticfiles',
-        'rest_framework',
-        'drf_spectacular',
-        # For django-allauth
-        'django.contrib.sites',
-        'allauth',
-        'allauth.account',
-        'allauth.socialaccount',
-        'allauth.socialaccount.providers.cilogon',
-        'django_bootstrap5',
-        'cilogon_tokenauth',
-        'dal',
-        'dal_select2',
-        'access_django_user_admin',
-    )
     
     SITE_ID = 1
     
