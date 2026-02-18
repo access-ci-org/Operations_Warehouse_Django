@@ -1,7 +1,14 @@
-v3.72.4 2026-01-27 jlambertson updating-badge-in-progress
+v3.74.1 2026-01-27 jlambertson updating-badge-in-progress
  - applying more clear mapping of in progress badges status
  - removed developer docker code
  - updated README
+
+v3.74.0 2026-02-10 EBB (CTT-768)
+ - Add permissions route to Integration Badges to display user permissions
+
+v3.73.0 2026-02-10 Dinuka
+ - Handling the `resources-full` response for resources that are not enrolled to any roadmap (CTT-852)
+ - Adding the badge status summary to the resource-full endpoint (CTT-852)
 
 v3.72.3 2026-01-15 JP
  - Add missing integration_badges/migrations/0004_alter_badge_task_task_and_more.py
