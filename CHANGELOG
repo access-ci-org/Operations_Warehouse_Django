@@ -1,3 +1,6 @@
+v3.75.0 2026-03-02 Dinuka
+ - Enabling query support on contacts endpoint (CTT-871)
+
 v3.74.0 2026-02-10 EBB (CTT-768)
  - Add permissions route to Integration Badges to display user permissions
 
