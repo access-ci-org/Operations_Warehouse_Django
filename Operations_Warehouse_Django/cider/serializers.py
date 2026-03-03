@@ -15,12 +15,12 @@ class CiderInfrastructure_ACCESSContacts_Serializer( serializers.ModelSerializer
     organization_name = serializers.CharField()
     contact_name = serializers.CharField()
     contact_email = serializers.CharField()
-    contact_type = serializers.CharField()
+    contact_types = serializers.ListField(child=serializers.CharField())
 
     class Meta:
         model = CiderInfrastructure
         fields = ('info_resourceid', 'project_affiliation', 'organization_id', 'organization_name',
-                  'contact_name', 'contact_email', 'contact_type')
+                  'contact_name', 'contact_email', 'contact_types')
 
 
 class CiderInfrastructure_Summary_Serializer(serializers.ModelSerializer):

@@ -115,25 +115,25 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
             if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
                 continue
             for contact in resource.protected_attributes['contacts']:
-                for contact_type in contact['contact_types']:
-                    if param_contact_type is not None and param_contact_type != contact_type:
-                        continue
-                    if param_contact_email is not None and param_contact_email != contact['email']:
-                        continue
+                if param_contact_email is not None and param_contact_email != contact['email']:
+                    continue
 
-                    organization = None
-                    if len(resource.other_attributes["organizations"]) > 0:
-                        organization = resource.other_attributes["organizations"][0]
+                if param_contact_type is not None and param_contact_type not in contact['contact_types']:
+                    continue
 
-                    res.append({
-                        "contact_name": contact["name"],
-                        "contact_email": contact["email"],
-                        "contact_type": contact_type,
-                        "organization_id": None if organization is None else organization["organization_id"],
-                        "organization_name": None if organization is None else organization["organization_name"],
-                        "info_resourceid": resource.info_resourceid,
-                        "project_affiliation": resource.project_affiliation
-                    })
+                organization = None
+                if len(resource.other_attributes["organizations"]) > 0:
+                    organization = resource.other_attributes["organizations"][0]
+
+                res.append({
+                    "contact_name": contact["name"],
+                    "contact_email": contact["email"],
+                    "contact_types": contact['contact_types'],
+                    "organization_id": None if organization is None else organization["organization_id"],
+                    "organization_name": None if organization is None else organization["organization_name"],
+                    "info_resourceid": resource.info_resourceid,
+                    "project_affiliation": resource.project_affiliation
+                })
 
         serializer = self.serializer_class(res, context={'request': request}, many=True)
 
