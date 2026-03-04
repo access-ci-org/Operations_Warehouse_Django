@@ -112,6 +112,10 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
 
         res = []
         for resource in chain(objects1, objects2):
+            organization = None
+            if len(resource.other_attributes["organizations"]) > 0:
+                organization = resource.other_attributes["organizations"][0]
+
             if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
                 continue
             for contact in resource.protected_attributes['contacts']:
@@ -120,10 +124,6 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
 
                 if param_contact_type is not None and param_contact_type not in contact['contact_types']:
                     continue
-
-                organization = None
-                if len(resource.other_attributes["organizations"]) > 0:
-                    organization = resource.other_attributes["organizations"][0]
 
                 res.append({
                     "contact_name": contact["name"],
