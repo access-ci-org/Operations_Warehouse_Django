@@ -1,3 +1,8 @@
+v3.74.1 2026-01-27 jlambertson updating-badge-in-progress
+ - applying more clear mapping of in progress badges status
+ - removed developer docker code
+ - updated README
+
 v3.74.0 2026-02-10 EBB (CTT-768)
  - Add permissions route to Integration Badges to display user permissions
 
