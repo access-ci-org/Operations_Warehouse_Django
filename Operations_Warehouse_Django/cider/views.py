@@ -43,29 +43,101 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     # authentication classes override the defaults, so we need to list them all
     authentication_classes = (BasicAuthentication, CITokenAuthentication, SessionAuthentication,)
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    # renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    renderer_classes = (JSONRenderer,)
     serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
+
+    @extend_schema(
+        responses=CiderInfrastructure_Summary_Serializer,
+        parameters=[
+            OpenApiParameter(
+                name='organization_id',
+                description='Organization ID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='contact_email',
+                description='Contact Email Address',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='contact_type',
+                description='CiDeR Contact Type',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='project_affiliation',
+                description='Project Affiliation',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            )
+        ]
+    )
+
     def get(self, request, format=None, **kwargs):
-        returnformat = request.query_params.get('format' )
-        objects1 = CiderInfrastructure_Active_Filter( type='Compute' )
-        objects2 = CiderInfrastructure_Active_Filter( type='Storage' )
-        all_contacts = {}
+        organization_id = self.request.query_params.get('organization_id')
+        info_resourceid = self.request.query_params.get('info_resourceid')
+        param_contact_email = self.request.query_params.get('contact_email')
+        param_contact_type = self.request.query_params.get('contact_type')
+        project_affiliation = self.request.query_params.get('project_affiliation')
+
+        cider_active_filter_args = {}
+        if project_affiliation is not None:
+            cider_active_filter_args['affiliation'] = project_affiliation
+
+        objects1 = CiderInfrastructure_Active_Filter(type='Compute', **cider_active_filter_args)
+        objects2 = CiderInfrastructure_Active_Filter(type='Storage', **cider_active_filter_args)
+
+        if info_resourceid is not None:
+            objects1 = objects1.filter(info_resourceid=info_resourceid)
+            objects2 = objects2.filter(info_resourceid=info_resourceid)
+
+        if organization_id is not None:
+            objects1 = objects1.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+            objects2 = objects2.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+
+        res = []
         for resource in chain(objects1, objects2):
+            organization = None
+            if len(resource.other_attributes["organizations"]) > 0:
+                organization = resource.other_attributes["organizations"][0]
+
             if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
                 continue
             for contact in resource.protected_attributes['contacts']:
-                for ct in contact['contact_types']:
-                    if ct not in all_contacts:
-                        all_contacts[ct] = set()
-                    all_contacts[ct].add(f"{contact['name']} <{contact['email']}>")
-        sorted_contacts = {}
-        if returnformat == 'html':
-            for key in sorted(all_contacts):
-                sorted_contacts[key] = ', '.join(sorted(all_contacts[key]))
-        else:
-            for key in sorted(all_contacts):
-                sorted_contacts[key] = sorted(all_contacts[key])
-        return MyAPIResponse( { 'results': sorted_contacts }, template_name='contacts.html' )
+                if param_contact_email is not None and param_contact_email != contact['email']:
+                    continue
+
+                if param_contact_type is not None and param_contact_type not in contact['contact_types']:
+                    continue
+
+                res.append({
+                    "contact_name": contact["name"],
+                    "contact_email": contact["email"],
+                    "contact_types": contact['contact_types'],
+                    "organization_id": None if organization is None else organization["organization_id"],
+                    "organization_name": None if organization is None else organization["organization_name"],
+                    "info_resourceid": resource.info_resourceid,
+                    "project_affiliation": resource.project_affiliation
+                })
+
+        serializer = self.serializer_class(res, context={'request': request}, many=True)
+
+        return MyAPIResponse( { 'results': serializer.data } )
     
 class CiderInfrastructure_v1_ACCESSActiveList(GenericAPIView):
     '''
