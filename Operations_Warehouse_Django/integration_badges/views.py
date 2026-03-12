@@ -670,6 +670,132 @@ class Resource_Full_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
+class Resource_Contacts_v1(GenericAPIView):
+    '''
+    ACCESS Active Resource Contacts
+    '''
+    #    permission_classes = (IsAuthenticatedOrReadOnly,)
+    # permission_classes = (IsAuthenticated,)
+    # authentication classes override the defaults, so we need to list them all
+    # authentication_classes = (BasicAuthentication, CITokenAuthentication, SessionAuthentication,)
+    # renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CiderInfrastructure_ACCESSContacts_Serializer
+
+    @extend_schema(
+        responses=CiderInfrastructure_Summary_Serializer,
+        parameters=[
+            OpenApiParameter(
+                name='organization_id',
+                description='Organization ID (s)',
+                type=int,
+                required=False,
+                many=True,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='info_resourceid',
+                description='Info ResourceID (s)',
+                type=str,
+                required=False,
+                many=True,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='contact_email',
+                description='Contact Email Address',
+                type=str,
+                required=False,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='contact_type',
+                description='CiDeR Contact Type (s)',
+                type=str,
+                required=False,
+                many=True,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='roadmap_id',
+                description='Roadmap ID (s)',
+                type=int,
+                required=False,
+                many=True,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name='badge_id',
+                description='Badge ID (s)',
+                type=int,
+                required=False,
+                many=True,
+                location=OpenApiParameter.QUERY,
+            )
+        ]
+    )
+    def get(self, request, format=None, **kwargs):
+        organization_ids = self.request.query_params.getlist('organization_id')
+        info_resourceids = self.request.query_params.getlist('info_resourceid')
+        badge_ids = self.request.query_params.getlist('badge_id')
+        roadmap_ids = self.request.query_params.getlist('roadmap_id')
+        param_contact_email = self.request.query_params.get('contact_email')
+        param_contact_types = self.request.query_params.getlist('contact_type')
+
+        resources = (CiderInfrastructure.objects.filter(badging_filter)
+                     .order_by("other_attributes__organizations__0__organization_name"))
+
+        if len(info_resourceids) > 0:
+            resources = resources.filter(info_resourceid__in=info_resourceids)
+
+        if len(organization_ids) > 0:
+            organization_ids = [int(i) for i in organization_ids]
+            resources = resources.filter(other_attributes__organizations__0__organization_id__in=organization_ids)
+
+        if len(roadmap_ids) > 0:
+            roadmap_ids = [int(i) for i in roadmap_ids]
+            resources = resources.filter(Exists(Resource_Roadmap.objects.filter(
+                info_resourceid=OuterRef("info_resourceid"),
+                roadmap_id__in=roadmap_ids,
+            )))
+
+        if len(badge_ids) > 0:
+            badge_ids = [int(i) for i in badge_ids]
+            resources = resources.filter(Exists(Resource_Badge.objects.filter(
+                info_resourceid=OuterRef("info_resourceid"),
+                badge_id__in=badge_ids,
+            )))
+
+        res = []
+        for resource in resources:
+            organization = None
+            if len(resource.other_attributes["organizations"]) > 0:
+                organization = resource.other_attributes["organizations"][0]
+
+            if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
+                continue
+            for contact in resource.protected_attributes['contacts']:
+                if param_contact_email is not None and param_contact_email != contact['email']:
+                    continue
+
+                # if param_contact_type is not None and param_contact_type not in contact['contact_types']:
+                #     continue
+
+                res.append({
+                    "contact_name": contact["name"],
+                    "contact_email": contact["email"],
+                    "contact_types": contact['contact_types'],
+                    "organization_id": None if organization is None else organization["organization_id"],
+                    "organization_name": None if organization is None else organization["organization_name"],
+                    "info_resourceid": resource.info_resourceid,
+                    "project_affiliation": resource.project_affiliation
+                })
+
+        serializer = self.serializer_class(res, context={'request': request}, many=True)
+
+        return MyAPIResponse({'results': serializer.data})
+
+
 class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     """
     Resource roadmap and roadmap badge enrollments
