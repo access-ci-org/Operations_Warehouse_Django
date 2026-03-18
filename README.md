@@ -8,12 +8,12 @@ This platform aggregates ACCESS integrated infrastructure information and makes 
 
 ## Platform Tools
 
-- Django 5.0
-- Python 3.10
+- Django 5.2.*
+- Python 3.12
 - OAuth 2
-- AWS Aurora PostgreSQL 14.5
+- AWS Aurora PostgreSQL 15.*
 - AWS OpenSearch Elasticsearch 7.10
 
 ## Developer Setup
 
-[Developer Environment Setup](developer/SETUP.md)
+[Operations_Django_Development](https://github.com/access-ci-org/Operations_Django_Development)

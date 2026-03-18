@@ -15,7 +15,7 @@ def is_verified(status):
     """Check if badge status is verified/completed"""
     if not status:
         return False
-    completed_statuses = {'verified', 'tasks-completed', 'complete', 'completed'}
+    completed_statuses = {'verified', 'complete', 'completed'}
     return status.lower().strip() in completed_statuses
 
 @register.filter
@@ -26,7 +26,7 @@ def badge_status_symbol(status):
 
     status_lower = status.lower().strip()
 
-    if status_lower in {'verified', 'tasks-completed', 'complete', 'completed'}:
+    if status_lower in {'verified', 'complete', 'completed'}:
         return '<span class="text-success fs-5">&#x2714;</span>'
     elif status_lower in {'not planned', 'not-planned'}:
         return '-'

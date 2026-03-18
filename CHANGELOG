@@ -4,6 +4,11 @@ v3.75.0 2026-03-18 Dinuka
    contact_name, contact_email, contact_types} (CTT-871)
  - Rename `resources-full` to `resources_full`
 
+v3.74.1 2026-01-27 jlambertson updating-badge-in-progress
+ - applying more clear mapping of in progress badges status
+ - removed developer docker code
+ - updated README
+
 v3.74.0 2026-02-10 EBB (CTT-768)
  - Add permissions route to Integration Badges to display user permissions
 
