@@ -1,3 +1,6 @@
+v3.75.1 2026-03-18 EBB (CTT-799)
+ - Fix bug where badge state was reverted to PLANNED before the badge task state was evaluated for having valid permissions.
+
 v3.75.0 2026-03-03 Dinuka
  - Enabling query support on contacts endpoint (CTT-871)
  - Changed the response to an array of {info_resourceid, project_affiliation, organization_id, organization_name,
