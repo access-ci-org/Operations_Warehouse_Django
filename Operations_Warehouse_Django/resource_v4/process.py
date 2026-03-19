@@ -12,6 +12,7 @@ from globus_sdk.scopes import SearchScopes
 
 logg2 = logging.getLogger("warehouse.logger")
 
+
 class GlobusProcess():
     def __init__(self, *args, **kwargs):
         self.app = globus_sdk.ClientApp(
@@ -28,6 +29,9 @@ class GlobusProcess():
         # Get the authorization header for the Search PUT requests
         # This is for the update_by_subject method which uses the
         # Search API directly via requests.
+
+        # The update_by_subject method is not currently used, but may 
+        # be useful for future reference.
         authorizer = self.app.get_authorizer("search.api.globus.org")
         self.authorization_header = authorizer.get_authorization_header()
 
@@ -93,6 +97,8 @@ class GlobusProcess():
         logg2.info(f"Successfully deleted {len(local_ids)} items")
         return {}
 
+    # Function is not currently used, but may be useful for
+    # future reference for future reference.
     def update_by_subject(self, gmeta_list):
         headers = {
             "Authorization": self.authorization_header,

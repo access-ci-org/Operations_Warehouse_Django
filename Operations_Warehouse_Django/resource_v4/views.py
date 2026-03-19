@@ -1024,7 +1024,7 @@ def compare_warehouse_view(request, *args, **kwargs):
                     [{"error": str(err)}],
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        globus_process.update_by_subject(gmeta_list=gmeta_list)
+        globus_process.ingest(gmeta_list=gmeta_list)
 
     logg2.info(payload)
     return Response([{
