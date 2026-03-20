@@ -1799,7 +1799,7 @@ class User_Roles_v1(GenericAPIView):
             permissionlist.append(perm.codename)
             # idlist.append(perm.id)
 
-        # print(permissionlist)
+        # print(f"permissionlist is {permissionlist}")
         # print(idlist)
 
         # Reformat for presentation
@@ -1833,9 +1833,11 @@ class User_Roles_v1(GenericAPIView):
                             cidergroup = CiderGroups.objects.filter(info_groupid=info_groupid).first()
                         except Exception as e:
                             print(f"No CiderGroup object found for group {info_groupid}")
-                        if isinstance(cidergroup.info_resourceids, list):
+                        if cidergroup is None:
+                            print(f"info_groupid {info_groupid} has no cidergroup object")
+                        if cidergroup is not None and isinstance(cidergroup.info_resourceids, list):
                             resource_ids_list.extend(cidergroup.info_resourceids)
-                        print(f"{resource_ids_list}")
+                        # print(f"{resource_ids_list}")
                     results.append({"role": role,  "info_groupids": permsdict[role]["info_groupids"], "info_resourceids": resource_ids_list, "permissions": permsdict[role]["permissions"]})
         
             else:
