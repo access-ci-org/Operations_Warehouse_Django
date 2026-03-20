@@ -1824,7 +1824,19 @@ class User_Permissions_v1(GenericAPIView):
         for role in permsdict.keys():
             if isinstance(permsdict[role], dict):
                 if "info_groupids" in permsdict[role]:
-                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+                    #results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+                    #Also create a info_resourceids list
+                    resource_ids_list = []
+                    for info_groupid in permsdict[role]["info_groupids"]:
+                        try:
+                            cidergroup = CiderGroups.objects.filter(info_groupid=info_groupid).first()
+                        except Exception as e:
+                            print(f"No CiderGroup object found for group {info_groupid}")
+                        if isinstance(cidergroup.info_resourceids, list):
+                            resource_ids_list.extend(cidergroup.info_resourceids)
+                        print(f"{resource_ids_list}")
+                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"], "info_resourceids": resource_ids_list})
+        
             else:
                 results.append({"permission": role})
 
