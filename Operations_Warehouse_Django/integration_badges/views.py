@@ -1765,9 +1765,9 @@ def get_image_content_file_from_base64(base64_image_string, file_name):
         raise ValueError(f"Error processing image data: {str(e)}")
 
 
-class User_Permissions_v1(GenericAPIView):
+class User_Roles_v1(GenericAPIView):
     """
-    All permissions held by the requesting user
+    All roles (permissions) held by the requesting user
     """
 
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
@@ -1813,13 +1813,14 @@ class User_Permissions_v1(GenericAPIView):
             if parsedperm[2]:
                 # This is a resource specific permission
                 if not parsedperm[0] in permsdict:
-                    groupid_dict = {"info_groupids": [parsedperm[2]]}
+                    groupid_dict = {"info_groupids": [parsedperm[2]], "permissions": [rawperm]}
                     permsdict[parsedperm[0]] = groupid_dict
                 else:
                     permsdict[parsedperm[0]]["info_groupids"].append(parsedperm[2])
+                    permsdict[parsedperm[0]]["permissions"].append(rawperm)
             else:
                 # This is a non-resource specific permission
-                permsdict[parsedperm[0]] = True
+                permsdict[parsedperm[0]] = rawperm
         #convert permsdict into a list of permissions dicts by role
         for role in permsdict.keys():
             if isinstance(permsdict[role], dict):
@@ -1835,9 +1836,12 @@ class User_Permissions_v1(GenericAPIView):
                         if isinstance(cidergroup.info_resourceids, list):
                             resource_ids_list.extend(cidergroup.info_resourceids)
                         print(f"{resource_ids_list}")
-                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"], "info_resourceids": resource_ids_list})
+                    results.append({"role": role,  "info_groupids": permsdict[role]["info_groupids"], "info_resourceids": resource_ids_list, "permissions": permsdict[role]["permissions"]})
         
             else:
-                results.append({"permission": role})
+                # results.append({"role": role,"permissions": permsdict[role]})
+                # Not really worth putting the permission codename in for these
+                # but if we change our minds, use the commented out line above
+                results.append({"role": role})
 
-        return MyAPIResponse({"results": {"permissions": results}})
+        return MyAPIResponse({"results": {"roles": results}})
