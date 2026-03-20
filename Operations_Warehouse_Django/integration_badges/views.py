@@ -1765,9 +1765,9 @@ def get_image_content_file_from_base64(base64_image_string, file_name):
         raise ValueError(f"Error processing image data: {str(e)}")
 
 
-class User_Permissions_v1(GenericAPIView):
+class User_Roles_v1(GenericAPIView):
     """
-    All permissions held by the requesting user
+    All roles (permissions) held by the requesting user
     """
 
     if DISABLE_PERMISSIONS_FOR_DEBUGGING:
@@ -1799,7 +1799,7 @@ class User_Permissions_v1(GenericAPIView):
             permissionlist.append(perm.codename)
             # idlist.append(perm.id)
 
-        # print(permissionlist)
+        # print(f"permissionlist is {permissionlist}")
         # print(idlist)
 
         # Reformat for presentation
@@ -1813,19 +1813,37 @@ class User_Permissions_v1(GenericAPIView):
             if parsedperm[2]:
                 # This is a resource specific permission
                 if not parsedperm[0] in permsdict:
-                    groupid_dict = {"info_groupids": [parsedperm[2]]}
+                    groupid_dict = {"info_groupids": [parsedperm[2]], "permissions": [rawperm]}
                     permsdict[parsedperm[0]] = groupid_dict
                 else:
                     permsdict[parsedperm[0]]["info_groupids"].append(parsedperm[2])
+                    permsdict[parsedperm[0]]["permissions"].append(rawperm)
             else:
                 # This is a non-resource specific permission
-                permsdict[parsedperm[0]] = True
+                permsdict[parsedperm[0]] = rawperm
         #convert permsdict into a list of permissions dicts by role
         for role in permsdict.keys():
             if isinstance(permsdict[role], dict):
                 if "info_groupids" in permsdict[role]:
-                    results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+                    #results.append({"permission": role,  "info_groupids": permsdict[role]["info_groupids"]})
+                    #Also create a info_resourceids list
+                    resource_ids_list = []
+                    for info_groupid in permsdict[role]["info_groupids"]:
+                        try:
+                            cidergroup = CiderGroups.objects.filter(info_groupid=info_groupid).first()
+                        except Exception as e:
+                            print(f"No CiderGroup object found for group {info_groupid}")
+                        if cidergroup is None:
+                            print(f"info_groupid {info_groupid} has no cidergroup object")
+                        if cidergroup is not None and isinstance(cidergroup.info_resourceids, list):
+                            resource_ids_list.extend(cidergroup.info_resourceids)
+                        # print(f"{resource_ids_list}")
+                    results.append({"role": role,  "info_groupids": permsdict[role]["info_groupids"], "info_resourceids": resource_ids_list, "permissions": permsdict[role]["permissions"]})
+        
             else:
-                results.append({"permission": role})
+                # results.append({"role": role,"permissions": permsdict[role]})
+                # Not really worth putting the permission codename in for these
+                # but if we change our minds, use the commented out line above
+                results.append({"role": role})
 
-        return MyAPIResponse({"results": {"permissions": results}})
+        return MyAPIResponse({"results": {"roles": results}})
