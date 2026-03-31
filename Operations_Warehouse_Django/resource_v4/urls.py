@@ -20,4 +20,6 @@ urlpatterns = [
 
     path(r'v4/compare-warehouse/', compare_warehouse_view, name='compare-warehouse'),
     path(r'v4/populate-resourcev4/', populate_resource_v4_local_view, name='populate-resourcev4-local'),
+
+    path(r'v4/local_globus_search/', SearchGlobusView.as_view(), name='local-globus-search'),
 ]

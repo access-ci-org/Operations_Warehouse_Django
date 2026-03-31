@@ -892,7 +892,7 @@ class Relations_Cache(GenericAPIView):
         return MyAPIResponse(response_obj)
 
 
-class SearchGlobus(APIView):
+class SearchGlobusView(APIView):
     authentication_classes = []
     permission_classes = []
     serializer_class = None
@@ -927,7 +927,7 @@ class SearchGlobus(APIView):
             self.search_endpoint,
             search_query
         )
-        return Response(search)
+        return Response(search.data, content_type="application/json")
 
 
 @api_view(["GET"])
