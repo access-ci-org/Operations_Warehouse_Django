@@ -1,4 +1,4 @@
-v3.76.0 2026-03-20 EBB
+v3.76.0 2026-03-20 EBB (CTT-919)
  - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
  - new endpoint returns a dict of roles for the user
  - roles dict also includes a list of the Django user permission codenames
