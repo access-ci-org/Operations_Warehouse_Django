@@ -929,6 +929,9 @@ class SearchGlobusView(APIView):
         )
         return Response(search.data, content_type="application/json")
 
+    def post(self, request, *args, **kwargs):
+        self.get(request, *args, **kwargs)
+
 
 @api_view(["GET"])
 def compare_warehouse_view(request, *args, **kwargs):
