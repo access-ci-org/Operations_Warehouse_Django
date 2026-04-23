@@ -1,3 +1,6 @@
+v3.76.1 2026-04-23 Dinuka
+ - Remove the badge status transition attached to the task status update endpoint (CTT-912)
+
 v3.76.0 2026-03-20 EBB
  - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
  - new endpoint returns a dict of roles for the user

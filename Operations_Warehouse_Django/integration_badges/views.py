@@ -1187,18 +1187,6 @@ class Resource_Badge_Task_Status_v1(GenericAPIView):
             )
             workflow.save()
 
-            #If the task is required for the badge, the badge is in VERIFIED or TASKS_COMPLETED state, and the task_status update is NOT_COMPLETED or ACTION_NEEDED, the badge needs to revert to PLANNED state.  This is true even if this state change is triggered by an Implementer (who can not normally set Badge state to PLANNED).
-            if badge_task.required and resource_badge.status in [BadgeWorkflowStatus.VERIFIED, BadgeWorkflowStatus.TASKS_COMPLETED] and badge_task_workflow_status in [BadgeTaskWorkflowStatus.ACTION_NEEDED, BadgeTaskWorkflowStatus.NOT_COMPLETED]:
-                workflow = Resource_Badge_Workflow(
-                    info_resourceid=info_resourceid,
-                    roadmap=roadmap,
-                    badge=badge,
-                    status=BadgeWorkflowStatus.PLANNED,
-                    status_updated_by=updated_by,
-                    comment=f"Reopened by the task (taskId={task_id}) '{task.name}'",
-                )
-                workflow.save()
-
             return MyAPIResponse(
                 {
                     "message": "Badge task marked as %s" % badge_task_workflow_status,
