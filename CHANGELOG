@@ -1,12 +1,19 @@
+v3.76.1 2026-04-23 Dinuka
+ - Remove the badge status transition attached to the task status update endpoint (CTT-912)
+
 v3.76.0 2026-03-20 EBB (CTT-919)
  - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
  - new endpoint returns a dict of roles for the user
  - roles dict also includes a list of the Django user permission codenames
 
+v3.75.1 2026-03-18 EBB (CTT-799)
+ - Fix bug where badge state was reverted to PLANNED before the badge task state was evaluated for having valid permissions.
+
 v3.75.0 2026-03-03 Dinuka
  - Enabling query support on contacts endpoint (CTT-871)
  - Changed the response to an array of {info_resourceid, project_affiliation, organization_id, organization_name,
    contact_name, contact_email, contact_types} (CTT-871)
+ - Rename `resources-full` to `resources_full`
 
 v3.74.1 2026-01-27 jlambertson updating-badge-in-progress
  - applying more clear mapping of in progress badges status
