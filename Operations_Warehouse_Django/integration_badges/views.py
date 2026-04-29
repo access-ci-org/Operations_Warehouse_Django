@@ -796,6 +796,24 @@ class Resource_Contacts_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
+class Resource_Contact_Types_v1(GenericAPIView):
+    '''
+    ACCESS Active Resource Contact Types
+    '''
+    renderer_classes = (JSONRenderer,)
+
+
+    def get(self, request, format=None, **kwargs):
+        resources = CiderInfrastructure.objects.filter(badging_filter)
+        res = set([])
+        for resource in resources:
+            if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
+                continue
+            for contact in resource.protected_attributes['contacts']:
+                res = res | set(contact['contact_types'])
+
+        return MyAPIResponse({'results': res})
+
 class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     """
     Resource roadmap and roadmap badge enrollments
