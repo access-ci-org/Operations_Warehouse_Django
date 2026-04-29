@@ -611,7 +611,6 @@ class Organizations_Eligible_List_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
-
 class Resource_Full_v1(GenericAPIView):
     """
     Resource full details, including roadmaps, badges, and badge status
@@ -642,29 +641,45 @@ class Resource_Full_v1(GenericAPIView):
                 type=str,
                 required=False,
                 location=OpenApiParameter.QUERY,
-            )
+            ),
+            OpenApiParameter(
+                name="resource_integration_status",
+                description="Resource Integration Status (s)",
+                type=str,
+                required=False,
+                many=True,
+                enum=ResourceIntegrationStatus,
+                location=OpenApiParameter.QUERY,
+            ),
         ]
     )
     def get(self, request, format=None, **kwargs):
         organization_id = self.request.query_params.get('organization_id')
         info_resourceid = self.request.query_params.get('info_resourceid')
+        resource_integration_statuses = self.request.query_params.getlist('resource_integration_status')
 
         resources = CiderInfrastructure.objects.filter(badging_filter)
 
         if organization_id is not None:
-            resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+            organization_id = int(organization_id)
+            resources = resources.filter(other_attributes__organizations__0__organization_id=organization_id)
 
         if info_resourceid is not None:
             resources = resources.filter(info_resourceid=info_resourceid)
 
-        badge_status_summary_grouped_by_resource = get_badge_status_summary_grouped_by_resource(organization_id, info_resourceid)
+        badge_status_summary_grouped_by_resource = get_badge_status_summary_grouped_by_resource(organization_ids=organization_id, info_resourceids=info_resourceid)
 
         for resource in resources:
             info_resourceid = resource.info_resourceid
+            badge_status_summary = None
             if info_resourceid in badge_status_summary_grouped_by_resource:
-                setattr(resource, "badge_status_summary", badge_status_summary_grouped_by_resource[info_resourceid])
-            else:
-                setattr(resource, "badge_status_summary", None)
+                badge_status_summary = badge_status_summary_grouped_by_resource[info_resourceid]
+
+            setattr(resource, "badge_status_summary", badge_status_summary)
+            setattr(resource, "resource_integration_status", get_resource_integration_status(resource, badge_status_summary))
+
+        if resource_integration_statuses is not None and len(resource_integration_statuses) > 0:
+            resources = [resource for resource in resources if resource.resource_integration_status in resource_integration_statuses]
 
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
