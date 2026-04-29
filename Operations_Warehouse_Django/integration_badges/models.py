@@ -14,6 +14,19 @@ def get_current_username(requestuser):
     else:
         return 'unknown'
 
+class ResourceStatus(models.TextChoices):
+    ANNOUNCEMENT = "coming soon", "Announcement"
+    PRE_PRODUCTION = "pre-production", "Pre-Production"
+    PRODUCTION = "production", "Production"
+    POST_PRODUCTION = "post-production", "Post-Production"
+    RETIRED = "decommissioned", "Retired"
+
+class ResourceIntegrationStatus(models.TextChoices):
+    NEW = "new", "New"
+    IN_PROGRESS = "pre-production", "Pre-Production"
+    PRODUCTION = "production", "Production"
+    POST_PRODUCTION = "post-production", "Post-Production"
+
 class RoadmapBadgeCategory(models.TextChoices):
     REQUIRED = "required", "Required"
     OPTIONAL = "optional", "Optional"
@@ -25,7 +38,6 @@ class BadgeWorkflowStatus(models.TextChoices):
     VERIFICATION_FAILED = "verification-failed", "Verification Failed"
     VERIFIED = "verified", "Verified"
     DEPRECATED = "deprecated", "Depredated"
-
 
 class BadgeTaskWorkflowStatus(models.TextChoices):
     COMPLETED = "completed", "Completed"
