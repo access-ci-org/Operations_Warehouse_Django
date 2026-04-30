@@ -1,3 +1,6 @@
+v3.76.2 2026-04-30 jlambertson
+ - ctt-821 adding clarifying language to pre-production resource_pivot view
+
 v3.76.1 2026-04-23 Dinuka
  - Remove the badge status transition attached to the task status update endpoint (CTT-912)
 
