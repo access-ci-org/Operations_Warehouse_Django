@@ -611,7 +611,6 @@ class Organizations_Eligible_List_v1(GenericAPIView):
         return MyAPIResponse({'results': serializer.data})
 
 
-
 class Resource_Full_v1(GenericAPIView):
     """
     Resource full details, including roadmaps, badges, and badge status
@@ -642,29 +641,45 @@ class Resource_Full_v1(GenericAPIView):
                 type=str,
                 required=False,
                 location=OpenApiParameter.QUERY,
-            )
+            ),
+            OpenApiParameter(
+                name="resource_integration_status",
+                description="Resource Integration Status (s)",
+                type=str,
+                required=False,
+                many=True,
+                enum=ResourceIntegrationStatus,
+                location=OpenApiParameter.QUERY,
+            ),
         ]
     )
     def get(self, request, format=None, **kwargs):
         organization_id = self.request.query_params.get('organization_id')
         info_resourceid = self.request.query_params.get('info_resourceid')
+        resource_integration_statuses = self.request.query_params.getlist('resource_integration_status')
 
         resources = CiderInfrastructure.objects.filter(badging_filter)
 
         if organization_id is not None:
-            resources = resources.filter(other_attributes__organizations__0__organization_id=int(organization_id))
+            organization_id = int(organization_id)
+            resources = resources.filter(other_attributes__organizations__0__organization_id=organization_id)
 
         if info_resourceid is not None:
             resources = resources.filter(info_resourceid=info_resourceid)
 
-        badge_status_summary_grouped_by_resource = get_badge_status_summary_grouped_by_resource(organization_id, info_resourceid)
+        badge_status_summary_grouped_by_resource = get_badge_status_summary_grouped_by_resource(organization_ids=organization_id, info_resourceids=info_resourceid)
 
         for resource in resources:
             info_resourceid = resource.info_resourceid
+            badge_status_summary = None
             if info_resourceid in badge_status_summary_grouped_by_resource:
-                setattr(resource, "badge_status_summary", badge_status_summary_grouped_by_resource[info_resourceid])
-            else:
-                setattr(resource, "badge_status_summary", None)
+                badge_status_summary = badge_status_summary_grouped_by_resource[info_resourceid]
+
+            setattr(resource, "badge_status_summary", badge_status_summary)
+            setattr(resource, "resource_integration_status", get_resource_integration_status(resource, badge_status_summary))
+
+        if resource_integration_statuses is not None and len(resource_integration_statuses) > 0:
+            resources = [resource for resource in resources if resource.resource_integration_status in resource_integration_statuses]
 
         serializer = self.serializer_class(resources, context={'request': request}, many=True)
         return MyAPIResponse({'results': serializer.data})
@@ -717,6 +732,15 @@ class Resource_Contacts_v1(GenericAPIView):
                 location=OpenApiParameter.QUERY,
             ),
             OpenApiParameter(
+                name="resource_integration_status",
+                description="Resource Integration Status (s)",
+                type=str,
+                required=False,
+                many=True,
+                enum=ResourceIntegrationStatus,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
                 name='roadmap_id',
                 description='Roadmap ID (s)',
                 type=int,
@@ -741,6 +765,7 @@ class Resource_Contacts_v1(GenericAPIView):
         roadmap_ids = self.request.query_params.getlist('roadmap_id')
         param_contact_email = self.request.query_params.get('contact_email')
         param_contact_types = self.request.query_params.getlist('contact_type')
+        resource_integration_statuses = self.request.query_params.getlist('resource_integration_status')
 
         resources = (CiderInfrastructure.objects.filter(badging_filter)
                      .order_by("other_attributes__organizations__0__organization_name"))
@@ -766,20 +791,32 @@ class Resource_Contacts_v1(GenericAPIView):
                 badge_id__in=badge_ids,
             )))
 
+        badge_status_summary_grouped_by_resource = get_badge_status_summary_grouped_by_resource(organization_ids, info_resourceids)
+
         res = []
         for resource in resources:
             organization = None
             if len(resource.other_attributes["organizations"]) > 0:
                 organization = resource.other_attributes["organizations"][0]
 
+            if len(resource_integration_statuses) > 0:
+                badge_status_summary = None
+                if resource.info_resourceid in badge_status_summary_grouped_by_resource:
+                    badge_status_summary = badge_status_summary_grouped_by_resource[resource.info_resourceid]
+
+                resource_integration_status = get_resource_integration_status(resource, badge_status_summary)
+                if resource_integration_status not in resource_integration_statuses:
+                    continue
+
             if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
                 continue
+
             for contact in resource.protected_attributes['contacts']:
                 if param_contact_email is not None and param_contact_email != contact['email']:
                     continue
 
-                # if param_contact_type is not None and param_contact_type not in contact['contact_types']:
-                #     continue
+                if len(param_contact_types) > 0 and len(set(param_contact_types) & set(contact['contact_types'])) == 0:
+                    continue
 
                 res.append({
                     "contact_name": contact["name"],
@@ -795,6 +832,24 @@ class Resource_Contacts_v1(GenericAPIView):
 
         return MyAPIResponse({'results': serializer.data})
 
+
+class Resource_Contact_Types_v1(GenericAPIView):
+    '''
+    ACCESS Active Resource Contact Types
+    '''
+    renderer_classes = (JSONRenderer,)
+
+
+    def get(self, request, format=None, **kwargs):
+        resources = CiderInfrastructure.objects.filter(badging_filter)
+        res = set([])
+        for resource in resources:
+            if not resource.protected_attributes or 'contacts' not in resource.protected_attributes:
+                continue
+            for contact in resource.protected_attributes['contacts']:
+                res = res | set(contact['contact_types'])
+
+        return MyAPIResponse({'results': res})
 
 class Resource_Roadmap_Enrollments_v1(GenericAPIView):
     """
@@ -1390,9 +1445,12 @@ class Resource_Roadmap_Badges_Status_Summary_v1(GenericAPIView):
         roadmap_id = self.request.query_params.get('roadmap_id')
         badge_id = self.request.query_params.get('badge_id')
 
+        if organization_id is not None:
+            organization_id = int(organization_id)
 
-        count_by_status_list = get_badge_status_subquery(organization_id, info_resourceid, roadmap_id, badge_id,
-                                                         group_by=[])
+        count_by_status_list = get_badge_status_subquery(
+            organization_ids=organization_id, info_resourceids=info_resourceid, roadmap_ids=roadmap_id,
+            badge_ids=badge_id, group_by=[])
         result = init_badge_status_summary_object(categories=[])
 
         for count_by_status in  count_by_status_list:
@@ -1420,9 +1478,9 @@ def init_badge_status_summary_object(categories=RoadmapBadgeCategory.values):
     return badge_status_summary_obj
 
 
-def get_badge_status_summary_grouped_by_resource(organization_id=None, info_resourceid=None, roadmap_id=None, badge_id=None):
-    count_by_status_list = get_badge_status_subquery(organization_id, info_resourceid, roadmap_id, badge_id,
-                                                    group_by=["info_resourceid", "required"])
+def get_badge_status_summary_grouped_by_resource(organization_ids=None, info_resourceids=None, roadmap_ids=None, badge_ids=None):
+    count_by_status_list = get_badge_status_subquery(
+        organization_ids, info_resourceids, roadmap_ids, badge_ids, group_by=["info_resourceid", "required"])
     result = {}
 
     for count_by_status in count_by_status_list:
@@ -1434,6 +1492,24 @@ def get_badge_status_summary_grouped_by_resource(organization_id=None, info_reso
         append_to_badge_status_summary_object(result[info_resourceid], count_by_status)
 
     return result
+
+
+def get_resource_integration_status(resource, badge_status_summary):
+    try:
+        if badge_status_summary is None:
+            return ResourceIntegrationStatus.NEW
+        elif resource.latest_status in [ResourceStatus.ANNOUNCED, ResourceStatus.PRE_PRODUCTION]:
+            return ResourceIntegrationStatus.IN_PROGRESS
+        elif resource.latest_status == ResourceStatus.PRODUCTION:
+            if badge_status_summary["required"]["verified"] == badge_status_summary["required"]["total"]:
+                return ResourceIntegrationStatus.PRODUCTION
+            else:
+                return ResourceIntegrationStatus.IN_PROGRESS
+        elif resource.latest_status == ResourceStatus.POST_PRODUCTION:
+            return ResourceIntegrationStatus.POST_PRODUCTION
+        return None
+    except Exception as e:
+        return None
 
 
 def append_to_badge_status_summary_object(badge_status_summary_obj, badge_status_subquery_result_item):
@@ -1449,25 +1525,35 @@ def append_to_badge_status_summary_object(badge_status_summary_obj, badge_status
             badge_status_summary_obj[roadmap_badge_category]["total"] += badge_status_subquery_result_item["count"]
 
 
-def get_badge_status_subquery(organization_id, info_resourceid, roadmap_id, badge_id, group_by=["info_resourceid", "required"]):
+def convert_variable_to_not_null_list(variable):
+    if variable is not None and type(variable) is not list:
+        return [variable]
+    return []
+
+
+def get_badge_status_subquery(organization_ids, info_resourceids, roadmap_ids, badge_ids, group_by=["info_resourceid", "required"]):
     resource_subquery = CiderInfrastructure.objects.filter(badging_filter)
     resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
 
-    if organization_id is not None:
+    organization_ids = convert_variable_to_not_null_list(organization_ids)
+    if len(organization_ids) > 0:
         resource_subquery = resource_subquery.filter(
-            other_attributes__organizations__0__organization_id=int(organization_id))
+            other_attributes__organizations__0__organization_id__in=organization_ids)
 
-    if info_resourceid is not None:
-        resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(info_resourceid=info_resourceid)
+    info_resourceids = convert_variable_to_not_null_list(info_resourceids)
+    if len(info_resourceids) > 0:
+        resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(info_resourceid__in=info_resourceids)
 
-    if roadmap_id is not None:
+    roadmap_ids = convert_variable_to_not_null_list(roadmap_ids)
+    if len(roadmap_ids) > 0:
         resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-            roadmap_id=roadmap_id
+            roadmap_id__in=roadmap_ids
         )
 
-    if badge_id is not None:
+    badge_ids = convert_variable_to_not_null_list(badge_ids)
+    if len(badge_ids) > 0:
         resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-            badge_id=badge_id
+            badge_id__in=badge_ids
         )
 
     resource_subquery = resource_subquery.filter(
