@@ -1,4 +1,4 @@
-v3.76.2 2026-04-29 Dinuka
+v3.77.0 2026-04-29 Dinuka
  - Enabling an endpoint to retrive the list of contacts types (CTT-871)
  - Enabling `contact-type` and `resource-integration-status` filters on the contacts endpoint (CTT-871)
  - Enabling the `resource-integration-status` on `resource-full` endpoint (CTT-871)

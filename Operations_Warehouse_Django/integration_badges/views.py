@@ -1498,7 +1498,7 @@ def get_resource_integration_status(resource, badge_status_summary):
     try:
         if badge_status_summary is None:
             return ResourceIntegrationStatus.NEW
-        elif resource.latest_status in [ResourceStatus.ANNOUNCEMENT, ResourceStatus.PRE_PRODUCTION]:
+        elif resource.latest_status in [ResourceStatus.ANNOUNCED, ResourceStatus.PRE_PRODUCTION]:
             return ResourceIntegrationStatus.IN_PROGRESS
         elif resource.latest_status == ResourceStatus.PRODUCTION:
             if badge_status_summary["required"]["verified"] == badge_status_summary["required"]["total"]:

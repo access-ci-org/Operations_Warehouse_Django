@@ -15,7 +15,7 @@ def get_current_username(requestuser):
         return 'unknown'
 
 class ResourceStatus(models.TextChoices):
-    ANNOUNCEMENT = "coming soon", "Announcement"
+    ANNOUNCED = "coming soon", "Announced"
     PRE_PRODUCTION = "pre-production", "Pre-Production"
     PRODUCTION = "production", "Production"
     POST_PRODUCTION = "post-production", "Post-Production"
