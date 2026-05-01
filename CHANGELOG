@@ -1,5 +1,8 @@
 v3.76.1 2026-04-23 Dinuka
  - Remove the badge status transition attached to the task status update endpoint (CTT-912)
+ - Is required by Integration Badges Dashboard app v1.11.11
+   https://github.com/access-ci-org/Operations_WebApp_IntegrationBadges/tree/v1.11.11
+ - Does not support Integration Badges Dashboard app less than v1.11.11
 
 v3.76.0 2026-03-20 EBB (CTT-919)
  - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
