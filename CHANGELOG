@@ -1,8 +1,16 @@
-v3.76.2 2026-04-30 jlambertson
+v3.77.1 2026-04-30 jlambertson
  - ctt-821 adding clarifying language to pre-production resource_pivot view
+
+v3.77.0 2026-04-29 Dinuka
+ - Enabling an endpoint to retrive the list of contacts types (CTT-871)
+ - Enabling `contact-type` and `resource-integration-status` filters on the contacts endpoint (CTT-871)
+ - Enabling the `resource-integration-status` on `resource-full` endpoint (CTT-871)
 
 v3.76.1 2026-04-23 Dinuka
  - Remove the badge status transition attached to the task status update endpoint (CTT-912)
+ - Is required by Integration Badges Dashboard app v1.11.11
+   https://github.com/access-ci-org/Operations_WebApp_IntegrationBadges/tree/v1.11.11
+ - Does not support Integration Badges Dashboard app less than v1.11.11
 
 v3.76.0 2026-03-20 EBB (CTT-919)
  - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
