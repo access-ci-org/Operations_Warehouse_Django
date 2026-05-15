@@ -1660,6 +1660,16 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 location=OpenApiParameter.QUERY,
                 enum=BadgeWorkflowStatus,
             ),
+            OpenApiParameter(
+                name="order_by",
+                description="Order By",
+                type=str,
+                required=False,
+                many=False,
+                enum=["info_resourceid", "badge__name", "roadmap__name", "status", "status_updated_at",
+                      "-info_resourceid", "-badge__name", "-roadmap__name", "-status", "-status_updated_at"],
+                location=OpenApiParameter.QUERY,
+            ),
         ]
     )
     def get(self, request, format=None, **kwargs):
@@ -1668,6 +1678,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         roadmap_id = self.request.query_params.get("roadmap_id")
         badge_id = self.request.query_params.get("badge_id")
         badge_workflow_status = self.request.query_params.get("badge_workflow_status")
+        order_by = self.request.query_params.getlist('order_by')
 
         resource_subquery  = CiderInfrastructure.objects.filter(badging_filter)
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
@@ -1752,6 +1763,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
             )
             .order_by("info_resourceid", "badge__name", "roadmap__name", "-status_updated_at")
         )
+
+        if len(order_by) > 0:
+            result = result.order_by(*order_by)
 
         return MyAPIResponse({"results": result.values()})
 
