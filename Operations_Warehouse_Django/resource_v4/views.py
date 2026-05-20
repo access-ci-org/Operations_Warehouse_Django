@@ -21,7 +21,6 @@ from .serializers import *
 from cider.models import *
 from glue2.models import *
 from django.conf import settings
-from resource_v4.process import GlobusProcess
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
 import globus_sdk
@@ -892,7 +891,7 @@ class Relations_Cache(GenericAPIView):
         return MyAPIResponse(response_obj)
 
 
-class SearchGlobusView(APIView):
+class Resource_GSearch(APIView):
     authentication_classes = []
     permission_classes = []
     serializer_class = None
@@ -922,6 +921,9 @@ class SearchGlobusView(APIView):
                 )
             cleaned_params[query_param[0]] = request.query_params[query_param[0]]
 
+        if request.data:
+            post_params = request.data
+            cleaned_params = {**cleaned_params, **post_params}
         search_query = globus_sdk.SearchQueryV1(**cleaned_params)
         search = self.search_client.post_search(
             self.search_endpoint,
@@ -930,4 +932,4 @@ class SearchGlobusView(APIView):
         return Response(search.data, content_type="application/json")
 
     def post(self, request, *args, **kwargs):
-        self.get(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
