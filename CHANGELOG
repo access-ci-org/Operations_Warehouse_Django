@@ -1,4 +1,4 @@
-v3.77.2 2026-05-15 Dinuka
+v3.78.0 2026-05-15 Dinuka
  - Enabling `order_by` query param for `resource_roadmap_badges` endpoint (CTT-779)
 
 v3.77.1 2026-04-30 jlambertson
