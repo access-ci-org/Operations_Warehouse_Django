@@ -1,6 +1,7 @@
 # Repo specific ignores
 *_customized.conf
 *_customized.sql
+Operations_Warehouse_Django/PROD
 
 
 # Byte-compiled / optimized / DLL files
@@ -140,3 +141,5 @@ dmypy.json
 
 # VS Code
 .vscode/
+
+# miscellaneous
