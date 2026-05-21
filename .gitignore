@@ -143,3 +143,5 @@ dmypy.json
 .vscode/
 
 # miscellaneous
+# Agent instructions (not yet committed to repo)
+AGENTS.md
