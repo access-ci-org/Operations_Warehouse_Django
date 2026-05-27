@@ -1,5 +1,6 @@
 v3.77.1 2026-04-30 jlambertson
  - ctt-821 adding clarifying language to pre-production resource_pivot view
+ - added enhanced visuals to resource pivot view in navigation tabs 
 
 v3.77.0 2026-04-29 Dinuka
  - Enabling an endpoint to retrive the list of contacts types (CTT-871)
