@@ -56,3 +56,16 @@ class ProcessingActivity():
                              )
             obj.save()
             self.errmodel = obj
+
+        if self.model.About = 'ApplicationEnvironment':
+            try:
+                message_dict = json.loads(self.model.ProcessingMessage)
+            except Exception as e:
+                message_dict = {}
+            if 'ApplicationEnvironment.New' in message_dict:
+                metric = ProcessingMetric(Timestamp=self.model.ProcessingEnd,
+                                        About=self.model.About,
+                                        MetricName='ApplicationEnvironment',
+                                        MetricValue=message_dict['ApplicationEnvironment.New']
+                                        ProcessingCode=self.model.ProcessingCode)
+                metric.save()

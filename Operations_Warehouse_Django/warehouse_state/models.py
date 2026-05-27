@@ -57,3 +57,36 @@ class PublisherInfo(models.Model):
     RecentHistory = models.CharField(max_length=1024)
     def __str__(self):
         return str(self.ID)
+
+#
+# A metric generated during processing
+# Unique by: Timestamp, About, MetricName
+#
+class ProcessingMetric(models.Model):
+    ID = models.CharField(primary_key=True, max_length=255)
+    Timestamp = models.DateTimeField(db_index=True)
+    About = models.CharField(db_index=True, max_length=255)
+    MetricName = models.CharField(max_length=32, null=False)
+    MetricValue = models.IntegerField(null=False)
+    ProcessingCode = models.CharField(max_length=64, null=True)
+    def __str__(self):
+        return str(self.ID)
+    
+#
+# An aggregrated metric generated from multiple ProcessingMetrics
+# Unique by: Timestamp, About, MetricName, AggregationType
+# 
+class AggregationMetric(models.Model):
+    ID = models.CharField(primary_key=True, max_length=255)
+    Timestamp = models.DateTimeField(db_index=True)
+    About = models.CharField(db_index=True, max_length=255)
+    MetricName = models.CharField(max_length=32, null=False) 
+    AggregationType = models.CharField(max_length=2, null=False, default="DD")
+    MetricTotal = models.IntegerField(null=False)
+    MetricCount = models.IntegerField(null=False)
+    MetricMinValue = models.IntegerField(null=False)
+    MetricAvgValue = models.FloatField(null=False)
+    MetricMaxValue = models.IntegerField(null=False)
+
+    def __str__(self):
+        return str(self.ID)
