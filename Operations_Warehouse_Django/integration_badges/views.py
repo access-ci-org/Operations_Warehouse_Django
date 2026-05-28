@@ -1501,7 +1501,9 @@ def get_resource_integration_status(resource, badge_status_summary):
         elif resource.latest_status in [ResourceStatus.ANNOUNCED, ResourceStatus.PRE_PRODUCTION]:
             return ResourceIntegrationStatus.IN_PROGRESS
         elif resource.latest_status == ResourceStatus.PRODUCTION:
-            if badge_status_summary["required"]["verified"] == badge_status_summary["required"]["total"]:
+            if (sum([badge_status_summary["required"][BadgeWorkflowStatus.VERIFIED],
+                    badge_status_summary["required"][BadgeWorkflowStatus.EXEMPTED]])
+                    == badge_status_summary["required"]["total"]):
                 return ResourceIntegrationStatus.PRODUCTION
             else:
                 return ResourceIntegrationStatus.IN_PROGRESS
