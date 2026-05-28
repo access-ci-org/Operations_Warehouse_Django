@@ -1677,7 +1677,7 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         info_resourceid = self.request.query_params.get("info_resourceid")
         roadmap_id = self.request.query_params.get("roadmap_id")
         badge_id = self.request.query_params.get("badge_id")
-        badge_workflow_status = self.request.query_params.get("badge_workflow_status")
+        badge_workflow_status = self.request.query_params.getlist("badge_workflow_status")
         order_by = self.request.query_params.getlist('order_by')
 
         resource_subquery  = CiderInfrastructure.objects.filter(badging_filter)
@@ -1701,9 +1701,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 badge_id=badge_id
             )
 
-        if badge_workflow_status is not None:
+        if len(badge_workflow_status) > 0:
             resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-                status=badge_workflow_status
+                status__in=badge_workflow_status
             )
 
         resource_subquery = resource_subquery.filter(
