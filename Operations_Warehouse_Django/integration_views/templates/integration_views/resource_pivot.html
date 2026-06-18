@@ -5,6 +5,12 @@
 
 {% block content %}
 
+<!-- ═══════════════════════════════════════════════════════════
+     SCOPED STYLES
+     Tab nav (.wh-tab-nav), rotated badge headers (.rotated-th),
+     and badge table overrides. Brand colors match style-warehouse.css
+     variables: #1A5B6E (dark), #138597 (medium), #ECF9F8 (light).
+═══════════════════════════════════════════════════════════ -->
 <style>
 .table-responsive {
     overflow: visible !important;
@@ -63,31 +69,88 @@ table.table thead tr {
 table.badge-table tbody td span {
     font-weight: normal !important;
 }
+
+/* Tab navigation */
+.wh-tab-nav {
+    border-bottom: 3px solid #138597;
+    margin-bottom: 1.5rem;
+}
+.wh-tab-nav .nav-tabs {
+    border-bottom: none;
+}
+.wh-tab-nav .nav-link {
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 0.5rem 1.4rem;
+    border: 3px solid #1A5B6E;
+    border-bottom: none;
+    border-radius: 0.375rem 0.375rem 0 0;
+    color: #1A5B6E;
+    background-color: #f0f4f5;
+    margin-right: 0.25rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.wh-tab-nav .nav-link:hover {
+    background-color: #d0e8ec;
+    color: #1A5B6E;
+}
+.wh-tab-nav .nav-link.active {
+    background-color: #138597;
+    border-color: #138597;
+    color: #fff;
+    border-bottom-color: #138597;
+}
+.wh-tab-nav .wh-tab-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1A5B6E;
+    display: block;
+    margin-bottom: 0.75rem;
+}
 </style>
 
 
 <div class="container-fluid px-5">
 
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════════════════════ -->
 <div class="text-center mb-4">
     <h2>Resource Badge Status by Roadmap</h2>
 </div>
 
 
-<ul class="nav nav-tabs justify-content-center mb-4">
-{% for roadmap in roadmaps %}
-    <li class="nav-item">
-        {% if selected_roadmap == roadmap.roadmap_id %}
-        <a class="nav-link active" aria-current="page" href="#">
-        {% else %}
-        <a class="nav-link" href="?roadmap={{ roadmap.roadmap_id }}">
-        {% endif %}
-        {{ roadmap.name }}</a>
-    </li>
-{% endfor %}
-</ul>
+<!-- ═══════════════════════════════════════════════════════════
+     ROADMAP TAB NAVIGATION
+     Context var: roadmaps (list), selected_roadmap (roadmap_id).
+     Active tab links to '#'; inactive tabs pass ?roadmap=<id>.
+     Styling: .wh-tab-nav in scoped styles above.
+═══════════════════════════════════════════════════════════ -->
+<div class="wh-tab-nav text-center">
+    <span class="wh-tab-label">Select a Resource Type to View</span>
+    <ul class="nav nav-tabs flex-wrap justify-content-center">
+    {% for roadmap in roadmaps %}
+        <li class="nav-item">
+            {% if selected_roadmap == roadmap.roadmap_id %}
+            <a class="nav-link active" aria-current="page" href="#">{{ roadmap.name }}</a>
+            {% else %}
+            <a class="nav-link" href="?roadmap={{ roadmap.roadmap_id }}">{{ roadmap.name }}</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+</div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     CONTENT AREA
+     Everything below renders only when a roadmap tab is selected.
+     Falls through to the alert at the bottom if nothing is selected.
+═══════════════════════════════════════════════════════════ -->
 {% if selected_roadmap %}
 
+    <!-- ═══ LEGEND + METRICS TABLE (shown when potential_percentage > 0) ═══ -->
     {% if potential_percentage > 0 %}
     
     <div class="container">
@@ -149,6 +212,14 @@ table.badge-table tbody td span {
     {% endif %}
 
     
+    <!-- ═══════════════════════════════════════════════════════════
+         PIVOT TABLE
+         Rows = resources (pivot_data.items), Cols = badges (badges_list).
+         Badge column headers are rotated -60deg via .rotated-th.
+         Row color: table-warning=pre-production, table-secondary=post-production.
+         Badge cell symbols rendered via pivot_filters template tags.
+         Required badges (*) marked in red; missing required shows ⚠ in gray.
+    ═══════════════════════════════════════════════════════════ -->
     {% if pivot_data %}
         <div class="table-responsive">
             <table class="table table-bordered table-hover table-sm badge-table">
@@ -210,12 +281,14 @@ table.badge-table tbody td span {
             </table>
         </div>
 
+    <!-- ═══ EMPTY STATE: roadmap selected but no pivot data ═══ -->
     {% else %}
         <div class="alert alert-warning">
             <h4><i class="fas fa-exclamation-triangle"></i> No Resources Found</h4>
             <p class="mb-0">No resources are associated with this roadmap or no resources have badge statuses assigned.</p>
         </div>
     {% endif %}
+<!-- ═══ EMPTY STATE: no roadmap tab selected yet ═══ -->
 {% else %}
     <div class="alert alert-info">
         <h4><i class="fas fa-info-circle"></i> No Roadmap Selected</h4>
