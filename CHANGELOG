@@ -1,3 +1,6 @@
+v3.79.2 2026-06-11 jlambertson
+ - updating navigation tabs to match service index nav tabs
+
 v3.79.1 2026-04-30 jlambertson
  - ctt-821 adding clarifying language to pre-production resource_pivot view
  - added enhanced visuals to resource pivot view in navigation tabs 
