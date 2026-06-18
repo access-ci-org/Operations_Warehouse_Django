@@ -1,3 +1,7 @@
+v3.79.0 2026-05-28 Dinuka
+ - Introducing the new statuses related to badge exemptions (CTT-880)
+ - Enabling `badge_workflow_status` param in `resource_roadmap_badges` endpoint to accept multiple values (CTT-880)
+
 v3.78.0 2026-05-15 Dinuka
  - Enabling `order_by` query param for `resource_roadmap_badges` endpoint (CTT-779)
 
