@@ -428,3 +428,7 @@ if SETTINGS_MODE == 'SERVER':
             'cilogon_tokenauth': {'handlers': ['file'], 'level': 'DEBUG'},
         },
     }
+
+GLOBUS_CLIENT_ID = CONF.get('GLOBUS_CLIENT_ID', None)
+GLOBUS_CLIENT_SECRET = CONF.get('GLOBUS_CLIENT_SECRET', None)
+GLOBUS_SEARCH_INDEX_ID = CONF.get('GLOBUS_SEARCH_INDEX_ID', None)

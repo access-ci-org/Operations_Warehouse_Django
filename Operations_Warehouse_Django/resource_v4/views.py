@@ -9,15 +9,21 @@ from django.utils import timezone
 from django.utils.encoding import uri_to_iri
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
+from cider.models import *
+from glue2.models import *
+from django.conf import settings
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+import globus_sdk
 
 import datetime
 from datetime import datetime, timedelta
@@ -883,3 +889,44 @@ class Relations_Cache(GenericAPIView):
         count = ResourceV4Index.Cache_Lookup_Relations()
         response_obj = {'cached': count, 'seconds': (datetime.now(timezone.utc) - start_utc).total_seconds()}
         return MyAPIResponse(response_obj)
+
+
+class Resource_GSearch(APIView):
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = None
+
+    def __init__(self, *args, **kwargs):
+        self.allowed_params = ['q', 'filter', 'fields', 'sort_by', 'limit', 'offset']
+        self.app = globus_sdk.ClientApp(
+            "ACCESS-CI Operations Warehouse Globus Service Client",
+            client_id=settings.GLOBUS_CLIENT_ID,
+            client_secret=settings.GLOBUS_CLIENT_SECRET
+        )
+        self.search_client = globus_sdk.SearchClient(app=self.app)
+        self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
+        super().__init__(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Perform a quick query on the Globus search endpoint
+        cleaned_params = {}
+        if "q" not in request.query_params.lists():
+            cleaned_params["q"] = "*"
+
+        for query_param in request.query_params.lists():
+            if query_param[0] not in self.allowed_params:
+                return Response(
+                    {"error": f"Invalid query parameter: {query_param[0]}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            cleaned_params[query_param[0]] = request.query_params[query_param[0]]
+
+        if request.data:
+            post_params = request.data
+            cleaned_params = {**cleaned_params, **post_params}
+        search_query = globus_sdk.SearchQueryV1(**cleaned_params)
+        search = self.search_client.post_search(
+            self.search_endpoint,
+            search_query
+        )
+        return Response(search.data, content_type="application/json")
