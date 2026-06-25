@@ -930,6 +930,3 @@ class Resource_GSearch(APIView):
             search_query
         )
         return Response(search.data, content_type="application/json")
-
-    def post(self, request, *args, **kwargs):
-        return self.get(request, *args, **kwargs)
