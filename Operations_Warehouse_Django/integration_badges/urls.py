@@ -41,10 +41,16 @@ urlpatterns = [
      path(r'v1/resources/',
           Resources_Eligible_List_v1.as_view(), name='resources-eligible-list-v1'),
 
+     path(r'v1/resource_contacts/',
+          Resource_Contacts_v1.as_view(), name='resource-contacts-list-v1'),
+
+     path(r'v1/resource_contact_types/',
+          Resource_Contact_Types_v1.as_view(), name='resource-contact-types-list-v1'),
+
      path(r'v1/organizations/',
           Organizations_Eligible_List_v1.as_view(), name='organizations-eligible-list-v1'),
 
-     path(r'v1/resources-full/',
+     path(r'v1/resources_full/',
           Resource_Full_v1.as_view(), name='resource-id-full-v1'),
 
      path(r'v1/resource/<str:info_resourceid>/roadmap/<str:roadmap_id>/enrollments/',
@@ -70,4 +76,8 @@ urlpatterns = [
 
      path(r'v1/files/<str:file_id>/',
           DatabaseFile_v1.as_view(), name='database-file-id-v1'),
+
+     path(r'v1/roles/',
+          User_Roles_v1.as_view(), name='user-roles-v1'),
+
 ]

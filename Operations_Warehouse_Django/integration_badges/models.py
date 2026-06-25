@@ -14,6 +14,22 @@ def get_current_username(requestuser):
     else:
         return 'unknown'
 
+class ResourceStatus(models.TextChoices):
+    ANNOUNCED = "coming soon", "Announced"
+    PRE_PRODUCTION = "pre-production", "Pre-Production"
+    PRODUCTION = "production", "Production"
+    POST_PRODUCTION = "post-production", "Post-Production"
+    RETIRED = "decommissioned", "Retired"
+
+class ResourceIntegrationStatus(models.TextChoices):
+    NEW = "new", "New"
+    IN_PROGRESS = "pre-production", "Pre-Production"
+    PRODUCTION = "production", "Production"
+    POST_PRODUCTION = "post-production", "Post-Production"
+
+class RoadmapBadgeCategory(models.TextChoices):
+    REQUIRED = "required", "Required"
+    OPTIONAL = "optional", "Optional"
 
 class BadgeWorkflowStatus(models.TextChoices):
     NOT_PLANNED = "not-planned", "Not Planned"
@@ -22,12 +38,16 @@ class BadgeWorkflowStatus(models.TextChoices):
     VERIFICATION_FAILED = "verification-failed", "Verification Failed"
     VERIFIED = "verified", "Verified"
     DEPRECATED = "deprecated", "Depredated"
+    EXEMPTION_REQUESTED = "exemption-requested", "Exemption Requested"
+    EXEMPTED = "exempted", "Exempted"
+    EXEMPTION_REJECTED = "exemption-rejected", "Exemption Rejected"
 
 
 class BadgeTaskWorkflowStatus(models.TextChoices):
     COMPLETED = "completed", "Completed"
     NOT_COMPLETED = "not-completed", "Not Completed"
     ACTION_NEEDED = "action-needed", "Action Needed"
+    NOT_APPLICABLE = "not-applicable", "Not Applicable"
 
 
 class DatabaseFile(models.Model):
@@ -152,6 +172,13 @@ class Roadmap_Badge(models.Model):
 
     class Meta:
         unique_together = ('roadmap', 'badge',)
+
+    @property
+    def roadmap_badge_category(self):
+        if self.required:
+            return RoadmapBadgeCategory.REQUIRED
+        else:
+            return RoadmapBadgeCategory.OPTIONAL
 
 
 class Badge_Task(models.Model):

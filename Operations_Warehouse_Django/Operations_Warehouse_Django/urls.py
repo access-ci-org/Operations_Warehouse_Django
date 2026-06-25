@@ -19,13 +19,14 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from access_django_user_admin import views
-
+from .views import Debug_Dump
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/docs/') ),
     path('accounts/', include('allauth.urls') ),
     path('admin/', admin.site.urls),
     path('docs/', include('web.urls') ),
+    path('dump.html', Debug_Dump.as_view(), name='debug-dump'),
 #
     path('wh2/state/', include('warehouse_state.urls')),
     path('wh2/allocations/', include('allocations.urls') ),

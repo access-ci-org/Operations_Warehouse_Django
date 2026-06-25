@@ -1,3 +1,76 @@
+v3.79.1 2026-04-30 jlambertson
+ - ctt-821 adding clarifying language to pre-production resource_pivot view
+ - added enhanced visuals to resource pivot view in navigation tabs 
+
+v3.79.0 2026-05-28 Dinuka
+ - Introducing the new statuses related to badge exemptions (CTT-880)
+ - Enabling `badge_workflow_status` param in `resource_roadmap_badges` endpoint to accept multiple values (CTT-880)
+
+v3.78.0 2026-05-15 Dinuka
+ - Enabling `order_by` query param for `resource_roadmap_badges` endpoint (CTT-779)
+
+v3.77.0 2026-04-29 Dinuka
+ - Enabling an endpoint to retrive the list of contacts types (CTT-871)
+ - Enabling `contact-type` and `resource-integration-status` filters on the contacts endpoint (CTT-871)
+ - Enabling the `resource-integration-status` on `resource-full` endpoint (CTT-871)
+
+v3.76.1 2026-04-23 Dinuka
+ - Remove the badge status transition attached to the task status update endpoint (CTT-912)
+ - Is required by Integration Badges Dashboard app v1.11.11
+   https://github.com/access-ci-org/Operations_WebApp_IntegrationBadges/tree/v1.11.11
+ - Does not support Integration Badges Dashboard app less than v1.11.11
+
+v3.76.0 2026-03-20 EBB (CTT-919)
+ - Change integration_badges/v1/permissions/ to integration_badges/v1/roles/
+ - new endpoint returns a dict of roles for the user
+ - roles dict also includes a list of the Django user permission codenames
+
+v3.75.1 2026-03-18 EBB (CTT-799)
+ - Fix bug where badge state was reverted to PLANNED before the badge task state was evaluated for having valid permissions.
+
+v3.75.0 2026-03-03 Dinuka
+ - Enabling query support on contacts endpoint (CTT-871)
+ - Changed the response to an array of {info_resourceid, project_affiliation, organization_id, organization_name,
+   contact_name, contact_email, contact_types} (CTT-871)
+ - Rename `resources-full` to `resources_full`
+
+v3.74.1 2026-01-27 jlambertson updating-badge-in-progress
+ - applying more clear mapping of in progress badges status
+ - removed developer docker code
+ - updated README
+
+v3.74.0 2026-02-10 EBB (CTT-768)
+ - Add permissions route to Integration Badges to display user permissions
+
+v3.73.0 2026-02-10 Dinuka
+ - Handling the `resources-full` response for resources that are not enrolled to any roadmap (CTT-852)
+ - Adding the badge status summary to the resource-full endpoint (CTT-852)
+
+v3.72.3 2026-01-15 JP
+ - Add missing integration_badges/migrations/0004_alter_badge_task_task_and_more.py
+
+v3.72.2 2026-01-12 jlambertson (ctt-844)
+ - updated for better badge status handling
+ - updated settings.py and signals.py to work with newer versions of django allauth
+
+v3.72.1 2025-01-12 EBB 
+  - Added BasicAuthentication to the authentication classes for Contacts
+
+v3.72.0 2025-12-19 JP (CTT-794)
+  - Django upgrade to 5.2.*
+  - allauth config changes, black formatter changes
+  - Remove deprecated and unused import sync_user_email_addresses in signals.py
+  - Introduce dump.html for debuggin and requiring authentication
+  - Rewrite web/index.html to improve clarity and remove outdated information
+  - Add new pyproject.toml to start migrating away from maintaining it in infrastructure ansible
+
+v3.71.2 2026-01-06 Dinuka
+  - Enabling "Not Applicable" status for optional tasks (CTT-826)
+
+v3.71.1 2025-12-10 Dinuka
+  - Adding the `organization_id` query to the resource roadmap badges endpoint (CTT-814)
+  - Change the ordering of resource roadmap badges endpoint to resource id, badge, roadmap (CTT-779)
+
 v3.71.0 2025-12-01 jlambertson (ctt-759)
   - updating views to better handle required badges
   - updating aesthetics in integration_views

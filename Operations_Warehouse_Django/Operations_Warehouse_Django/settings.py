@@ -26,7 +26,11 @@ if 'APP_CONFIG' not in os.environ:
     sys.exit(1)
 try:
     with open(os.environ['APP_CONFIG'], 'r') as file:
+<<<<<<< HEAD
         conf = file.read() 
+=======
+        conf = file.read()
+>>>>>>> 923a4377303762071fcd47f443cf7c5ce9cf0bc1
     CONF = json.loads(conf)
 except (ValueError, IOError) as e:
     print('Failed to load APP_CONFIG={}'.format(os.environ['APP_CONFIG']))

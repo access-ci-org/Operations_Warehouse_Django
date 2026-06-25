@@ -91,7 +91,7 @@ class RoadmapResourceBadgesView(TemplateView):
         try:
             return self.call_integration_badges_views(view_class, **(params or {}))
         except Exception as e:
-            print(f"Error fetching {endpoint}: {e}")
+            logger.error("Error fetching %s: %s", endpoint, e)
             return []
 
 
@@ -196,9 +196,15 @@ class RoadmapResourceBadgesView(TemplateView):
             badge_statuses = {}
             for rb in resource_badges:
                 badge_id = rb.get('badge_id')
-                # Validation fire
                 if badge_id is not None:
-                    badge_statuses[str(badge_id)] = rb.get('status')
+                    raw_status = rb.get('status')
+                    status_norm = (raw_status or '').strip().lower()
+                    # Treat 'planned' as in-progress for display purposes
+                    if status_norm == 'planned':
+                        display_status = 'in progress'
+                    else:
+                        display_status = raw_status
+                    badge_statuses[str(badge_id)] = display_status
 
 
             latest_status_begin_str = resource_info.get('latest_status_begin')
@@ -411,15 +417,30 @@ class RoadmapResourceBadgesView(TemplateView):
         completed_count = 0
         in_progress_count = 0
 
-        completed_statuses = {'verified'}   
+        # canonical completed statuses
+        completed_statuses = {'verified'}
+        # statuses we don't want to count as in-progress when blank or explicitly 'not planned'
         excluded_statuses = {'not planned', 'not-planned', ''}
+
+        # optional statuses that should be counted as in-progress for OPTIONAL badges
+        optional_in_progress_statuses = {
+            'planned', 'tasks-completed', 'tasks_completed', 'tasks completed',
+            'verification-failed', 'verification_failed', 'verification failed'
+        }
 
         # Get required badge IDs for this roadmap
         required_badge_ids = {
-            str(badge.get('badge_id')) 
-            for badge in roadmap_badges_data 
+            str(badge.get('badge_id'))
+            for badge in roadmap_badges_data
             if badge.get('required', False) and badge.get('badge_id') is not None
         }
+
+        # All roadmap badge ids (for deriving optional set)
+        all_roadmap_badge_ids = {
+            str(b.get('badge_id')) for b in roadmap_badges_data if b.get('badge_id') is not None
+        }
+
+        optional_badge_ids = all_roadmap_badge_ids - required_badge_ids
 
         # Get resource IDs in pivot_data
         pivot_resource_ids = set(pivot_data.keys())
@@ -429,13 +450,27 @@ class RoadmapResourceBadgesView(TemplateView):
             if (badge_record.get('roadmap_id') == selected_roadmap_int and
                 str(badge_record.get('info_resourceid')) in pivot_resource_ids):
 
-                status = badge_record.get('status', '').lower().strip()
+                status = (badge_record.get('status') or '').lower().strip()
+                badge_id_val = badge_record.get('badge_id')
+                if badge_id_val is None:
+                    continue
+                badge_id_str = str(badge_id_val)
 
                 if status in completed_statuses:
                     completed_count += 1
-                elif status and status not in excluded_statuses:
-                    in_progress_count += 1
-        
+                    continue
+
+                # Required badges: count as in-progress for any state besides verified and deprecated
+                if badge_id_str in required_badge_ids:
+                    if status not in completed_statuses and status != 'deprecated' and status not in excluded_statuses:
+                        in_progress_count += 1
+                    continue
+
+                # Optional badges: only specific statuses count as in-progress
+                if badge_id_str in optional_badge_ids:
+                    if status in optional_in_progress_statuses:
+                        in_progress_count += 1
+
         # For pre-production resources, count missing required badges as in-progress
         for resource_id, resource_data in pivot_data.items():
             existing_badge_ids = set(resource_data.get('badge_statuses', {}).keys())
@@ -499,6 +534,7 @@ class RoadmapResourceBadgesView(TemplateView):
                 resource_roadmap_badges_data = self.fetch_api_data('resource_roadmap_badges', {'roadmap_id': roadmap_int})
             except (ValueError, TypeError):
                 pass
+
 
         # Build lookups
         badge_lookup, resource_lookup = self.build_lookups(badges_data, resources_data)
@@ -608,7 +644,7 @@ class RoadmapResourceBadgesView(TemplateView):
 
         # Sort badges list
         badges_list = sorted(list(seen_badges.values()), 
-                key=lambda x: (not x['required'], x['badge']['name']))
+            key=lambda x: (not x['required'], x['badge']['name']))
 
         # Update context
         context.update({
