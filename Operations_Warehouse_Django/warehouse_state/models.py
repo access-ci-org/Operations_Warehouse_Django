@@ -60,33 +60,69 @@ class PublisherInfo(models.Model):
 
 #
 # A metric generated during processing
-# Unique by: Timestamp, About, MetricName
+# ProcessingTimestamp is timezone aware
+# 
+# Example
+#
+#   ProcessingID = router_resource.py:Write_Glue2_Executable_Software:...
+#   ProcessingTimestamp = 2026-06-03T13:30:00Z
+#   About = bridges.psc.xsede.org
+#   MetricName = ApplicationEnvironment
+#   MetricValue = 238
 #
 class ProcessingMetric(models.Model):
-    ID = models.CharField(primary_key=True, max_length=255)
-    Timestamp = models.DateTimeField(db_index=True)
-    About = models.CharField(db_index=True, max_length=255)
-    MetricName = models.CharField(max_length=32, null=False)
+    id = models.BigAutoField(primary_key=True)
+    ProcessingID = models.CharField(db_index=True, null=False, max_length=255)
+    ProcessingTimestamp = models.DateTimeField(db_index=True, null=False)
+    ProcessingError = models.CharField(max_length=64, null=True)
+    About = models.CharField(db_index=True, max_length=255, null=False)
+    MetricName = models.CharField(db_index=True, max_length=32, null=False)
     MetricValue = models.IntegerField(null=False)
-    ProcessingCode = models.CharField(max_length=64, null=True)
     def __str__(self):
-        return str(self.ID)
+        return str(self.id)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ProcessingID', 'ProcessingTimestamp', 'About', 'MetricName'], 
+                name='unique_processing_metric'
+            )
+        ]
     
 #
-# An aggregrated metric generated from multiple ProcessingMetrics
-# Unique by: Timestamp, About, MetricName, AggregationType
+# An aggregrated metric generated from multiple ProcessingMetric runs
+# AggregationDate is naive and in Central timezone
+# MetricCount includes metrics with errors if any of the user visible entries were updated
+#
+# Example
+#   About = bridges.psc.xsede.org
+#   MetricName = ApplicationEnvironment
+#   AggregationType = Day
+#   AggregationDate = 2026-06-03
+#   MetricCount = 10
+#   ErrorCount = 0
+#   MetricValueSum = 2380
+#   MetricMinValue = 10
+#   MetricAvgValue = 238
+#   MetricMaxValue = 476
 # 
-class AggregationMetric(models.Model):
-    ID = models.CharField(primary_key=True, max_length=255)
-    Timestamp = models.DateTimeField(db_index=True)
+class MetricAggregation(models.Model):
+    id = models.BigAutoField(primary_key=True)
     About = models.CharField(db_index=True, max_length=255)
-    MetricName = models.CharField(max_length=32, null=False) 
-    AggregationType = models.CharField(max_length=2, null=False, default="DD")
-    MetricTotal = models.IntegerField(null=False)
+    MetricName = models.CharField(db_index=True, max_length=32, null=False) 
+    AggregationType = models.CharField(max_length=8, null=False, default='Day')
+    AggregationDate = models.DateField(db_index=True, null=False)
     MetricCount = models.IntegerField(null=False)
+    MetricValueSum = models.IntegerField(null=False)
     MetricMinValue = models.IntegerField(null=False)
     MetricAvgValue = models.FloatField(null=False)
     MetricMaxValue = models.IntegerField(null=False)
-
+    ErrorCount = models.IntegerField(null=False, default=0)
     def __str__(self):
-        return str(self.ID)
+        return str(self.id)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['About', 'MetricName', 'AggregationType', 'AggregationDate'], 
+                name='unique_metric_aggregation'
+            )
+        ]

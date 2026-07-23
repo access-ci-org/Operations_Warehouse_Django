@@ -15,4 +15,8 @@ urlpatterns = [
     path('v1/publisherinfo/', PublisherInfo_DbList.as_view(), name='publisherinfo-dblist'),
     path('v1/publisherinfo/id/<str:id>/', PublisherInfo_Detail.as_view(), name='publisherinfo-detail'),
     path('v1/publisherinfo/resourceid/<str:resourceid>/', PublisherInfo_DbList.as_view(), name='publisherinfo-dblist-byresourceid'),
+    path('v1/metrics/', ProcessingMetric_DbList.as_view(), name='processingmetric-dblist'),
+    path('v1/metrics/id/<str:id>/', ProcessingMetric_Detail.as_view(), name='processingmetric-detail'),
+    path('v1/metricaggregation/', AggregatedMetric_DbList.as_view(), name='aggregatedmetric-dblist'),
+    path('v1/metricaggregation/id/<str:id>/', AggregatedMetric_Detail.as_view(), name='aggregatedmetric-detail'),
 ]

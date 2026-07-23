@@ -140,3 +140,4 @@ dmypy.json
 
 # VS Code
 .vscode/
+uv.lock

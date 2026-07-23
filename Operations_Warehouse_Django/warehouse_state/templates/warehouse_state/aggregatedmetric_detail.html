@@ -1,0 +1,22 @@
+{% extends "base_detail.html" %}
+{% block title %}Aggregated Metric{% endblock %}
+{% block content %}
+
+<h1 align="center">Aggregated Metric</h1>
+
+{% for record in record_list %}
+<table id="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr><th>About</th><td>{{ record.About }}</td></tr>
+    <tr><th>MetricName</th><td>{{ record.MetricName }}</td></tr>
+    <tr><th>SummaryType</th><td>{{ record.SummaryType }}</td></tr>
+    <tr><th>SummaryDate</th><td>{{ record.SummaryDate }}</td></tr>
+    <tr><th>MetricCount</th><td>{{ record.MetricCount }}</td></tr>
+    <tr><th>MetricValueSum</th><td>{{ record.MetricValueSum }}</td></tr>
+    <tr><th>MetricMinValue</th><td>{{ record.MetricMinValue }}</td></tr>
+    <tr><th>MetricAvgValue</th><td>{{ record.MetricAvgValue }}</td></tr>
+    <tr><th>MetricMaxValue</th><td>{{ record.MetricMaxValue }}</td></tr>
+    <tr><th>ErrorCount</th><td>{{ record.ErrorCount }}</td></tr>
+</table>
+{% endfor %}
+
+{% endblock %}

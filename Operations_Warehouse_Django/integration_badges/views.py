@@ -24,12 +24,9 @@ from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-import logging
 
 from .models import Resource_Badge_Workflow
 from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
-
-log = logging.getLogger(__name__)
 
 badging_types = (
     "Compute",

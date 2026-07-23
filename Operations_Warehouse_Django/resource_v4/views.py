@@ -25,7 +25,7 @@ import pytz
 Central = pytz.timezone("US/Central")
 UTC = pytz.timezone("UTC")
 import logging
-logg2 = logging.getLogger('warehouse.logger')
+logg2 = logging.getLogger(f'access-ci.{__name__}')
 
 class Catalog_Search(ListAPIView):
     '''
