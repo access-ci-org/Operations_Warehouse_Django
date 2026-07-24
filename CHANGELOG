@@ -1,4 +1,4 @@
-v3.79.1 2026-04-30 Dinuka
+v3.79.2 2026-04-30 Dinuka
  -  Fix the `resource_roadmap_badge_tasks` endpoint to handle the incomplete tasks (CTT-1052)
 
 v3.79.1 2026-04-30 jlambertson
