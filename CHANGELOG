@@ -1,3 +1,6 @@
+v3.79.3 2026-06-11 jlambertson
+ - updating navigation tabs to match service index nav tabs
+
 v3.79.2 2026-04-30 Dinuka
  -  Fix the `resource_roadmap_badge_tasks` endpoint to handle the incomplete tasks (CTT-1052)
 
