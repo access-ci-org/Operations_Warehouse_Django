@@ -17,8 +17,10 @@
 {{ block.super }}
 {% endblock %}
 
-<div class="container-fluid mb-3">
-    <ul class="nav nav-tabs">
+<nav class="container-fluid mb-3" aria-label="Warehouse navigation">
+    <div class="wh-tab-nav text-center">
+
+        <ul class="nav nav-tabs flex-wrap justify-content-center">
         <li class="nav-item">
         {% if page == 'index' %}<a class="nav-link active" aria-current="page" href="#">
         {% else %}<a class="nav-link" href="/">
@@ -69,8 +71,9 @@
             {% endif %}
         {% endif %}
         </li>
-    </ul>
-</div>
+        </ul>
+    </div>
+</nav>
 
 {# Display django.contrib.messages as Bootstrap alerts #}
 {% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
