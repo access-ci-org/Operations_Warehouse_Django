@@ -20,19 +20,19 @@ class ProcessingStatus_DbList(ListAPIView):
     @extend_schema(parameters=[
             OpenApiParameter('about', str, OpenApiParameter.QUERY),
             OpenApiParameter('topic', str, OpenApiParameter.QUERY),
-            OpenApiParameter('page', int, OpenApiParameter.QUERY),
-            OpenApiParameter('page_size', int, OpenApiParameter.QUERY),
             OpenApiParameter('sort', str, OpenApiParameter.QUERY),
         ])
     def get(self, request, format=None, **kwargs):
-        if 'about' in self.kwargs:
+        about = request.GET.get('about')
+        topic = request.GET.get('topic')
+        if about:
             try:
-                objects = ProcessingStatus.objects.filter(About__exact=uri_to_iri(self.kwargs['about']))
+                objects = ProcessingStatus.objects.filter(About__exact=uri_to_iri(about))
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified about not found')
-        elif 'topic' in self.kwargs:
+        elif topic:
             try:
-                objects = ProcessingStatus.objects.filter(Topic__exact=uri_to_iri(self.kwargs['topic']))
+                objects = ProcessingStatus.objects.filter(Topic__exact=uri_to_iri(topic))
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified topic not found')
         else:
@@ -40,14 +40,13 @@ class ProcessingStatus_DbList(ListAPIView):
                 objects = ProcessingStatus.objects.all()
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='No objects found')
-        try:
-            sort_by = request.GET.get('sort')
+        sort_by = request.GET.get('sort')
+        if sort_by:
             objects_sorted = objects.order_by(sort_by)
-        except:
+        else:
             objects_sorted = objects
         serializer = ProcessingStatus_DetailURL_DbSerializer(objects_sorted, context={'request': request}, many=True)
         return MyAPIResponse({'record_list': serializer.data}, template_name='warehouse_state/list.html')
-
 
 class ProcessingMetric_DbList(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -57,22 +56,22 @@ class ProcessingMetric_DbList(ListAPIView):
     @extend_schema(parameters=[
         OpenApiParameter('about', str, OpenApiParameter.QUERY),
         OpenApiParameter('processingid', str, OpenApiParameter.QUERY),
-        OpenApiParameter('page', int, OpenApiParameter.QUERY),
-        OpenApiParameter('page_size', int, OpenApiParameter.QUERY),
         OpenApiParameter('sort', str, OpenApiParameter.QUERY),
     ])
     def get(self, request, format=None, **kwargs):
-        if 'about' in self.kwargs:
+        about = request.GET.get('about')
+        processingid = request.GET.get('processingid')
+        if about:
             try:
                 objects = ProcessingMetric.objects.filter(
-                    About__exact=uri_to_iri(self.kwargs['about'])
+                    About__exact=uri_to_iri(about)
                 )
             except ProcessingMetric.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified about not found')
-        elif 'processingid' in self.kwargs:
+        elif processingid:
             try:
                 objects = ProcessingMetric.objects.filter(
-                    ProcessingID__exact=self.kwargs['processingid']
+                    ProcessingID__exact=processingid
                 )
             except ProcessingMetric.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified processingid not found')
@@ -98,33 +97,26 @@ class ProcessingMetric_DbList(ListAPIView):
             template_name='warehouse_state/processingmetric_list.html',
         )
 
-
 class ProcessingMetric_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = ProcessingMetric_DbSerializer
-
-    @extend_schema(parameters=[
-        OpenApiParameter('id', str, OpenApiParameter.QUERY),
-    ])
     def get(self, request, format=None, **kwargs):
-        if 'id' in self.kwargs:
+        id = kwargs.get('id')
+        if id:
             try:
-                object = ProcessingMetric.objects.get(pk=self.kwargs['id'])
+                object = ProcessingMetric.objects.get(pk=uri_to_iri(id))
             except ProcessingMetric.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified id not found')
         else:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Not found')
-
         if request.accepted_renderer.format == 'html':
             return MyAPIResponse(
                 {'record_list': [object]},
                 template_name='warehouse_state/processingmetric_detail.html',
             )
-
         serializer = ProcessingMetric_DbSerializer(object)
         return MyAPIResponse({'record_list': [serializer.data]})
-
 
 class AggregatedMetric_DbList(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -139,14 +131,16 @@ class AggregatedMetric_DbList(ListAPIView):
         OpenApiParameter('sort', str, OpenApiParameter.QUERY),
     ])
     def get(self, request, format=None, **kwargs):
-        if 'about' in self.kwargs:
+        about = request.GET.get('about')
+        metricname = request.GET.get('metricname')
+        if about:
             try:
-                objects = MetricAggregation.objects.filter(About__exact=uri_to_iri(self.kwargs['about']))
+                objects = MetricAggregation.objects.filter(About__exact=uri_to_iri(about))
             except MetricAggregation.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified about not found')
-        elif 'metricname' in self.kwargs:
+        elif metricname:
             try:
-                objects = MetricAggregation.objects.filter(MetricName__exact=self.kwargs['metricname'])
+                objects = MetricAggregation.objects.filter(MetricName__exact=uri_to_iri(metricname))
             except MetricAggregation.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified metricname not found')
         else:
@@ -176,14 +170,11 @@ class AggregatedMetric_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = MetricAggregation_DbSerializer
-
-    @extend_schema(parameters=[
-        OpenApiParameter('id', str, OpenApiParameter.QUERY),
-    ])
     def get(self, request, format=None, **kwargs):
-        if 'id' in self.kwargs:
+        id = kwargs.get('id')
+        if id:
             try:
-                object = MetricAggregation.objects.get(pk=self.kwargs['id'])
+                object = MetricAggregation.objects.get(pk=uri_to_iri(id))
             except MetricAggregation.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified id not found')
         else:
@@ -205,18 +196,18 @@ class ProcessingStatus_LatestList(ListAPIView):
     @extend_schema(parameters=[
             OpenApiParameter('about', str, OpenApiParameter.QUERY),
             OpenApiParameter('topic', str, OpenApiParameter.QUERY),
-            OpenApiParameter('page', int, OpenApiParameter.QUERY),
-            OpenApiParameter('page_size', int, OpenApiParameter.QUERY)
         ])
     def get(self, request, format=None, **kwargs):
-        if 'about' in self.kwargs:
+        about = request.GET.get('about')
+        topic = request.GET.get('topic')
+        if about:
             try:
-                object = ProcessingStatus.objects.filter(About__exact=uri_to_iri(self.kwargs['about'])).latest('ProcessingStart')
+                object = ProcessingStatus.objects.filter(About__exact=uri_to_iri(about)).latest('ProcessingStart')
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified about not found')
-        elif 'topic' in self.kwargs:
+        elif topic:
             try:
-                object = ProcessingStatus.objects.filter(Topic__exact=uri_to_iri(self.kwargs['topic'])).latest('ProcessingStart')
+                object = ProcessingStatus.objects.filter(Topic__exact=uri_to_iri(topic)).latest('ProcessingStart')
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified topic not found')
         else:
@@ -228,13 +219,11 @@ class ProcessingStatus_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = ProcessingStatus_DetailURL_DbSerializer
-    @extend_schema(parameters=[
-            OpenApiParameter('id', str, OpenApiParameter.QUERY),
-        ])
     def get(self, request, format=None, **kwargs):
-        if 'id' in self.kwargs:
+        id = kwargs.get('id')
+        if id:
             try: #uri_to_iri(
-                object = ProcessingStatus.objects.get(pk=self.kwargs['id'])
+                object = ProcessingStatus.objects.get(pk=uri_to_iri(id))
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified id not found')
         else:
@@ -249,12 +238,14 @@ class PublisherInfo_DbList(ListAPIView):
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = PublisherInfo_DetailURL_DbSerializer
     @extend_schema(parameters=[
-            OpenApiParameter('resourceid', str, OpenApiParameter.QUERY),
-        ])
+        OpenApiParameter('resourceid', str, OpenApiParameter.QUERY),
+        OpenApiParameter('sort', str, OpenApiParameter.QUERY),
+    ])
     def get(self, request, format=None, **kwargs):
-        if 'resourceid' in self.kwargs:
+        resourceid = request.GET.get('resourceid')
+        if resourceid:
             try:
-                objects = PublisherInfo.objects.filter(ResourceID__exact=uri_to_iri(self.kwargs['resourceid']))
+                objects = PublisherInfo.objects.filter(ResourceID__exact=uri_to_iri(resourceid))
             except PublisherInfo.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified ResourceID not found')
         else:
@@ -267,7 +258,6 @@ class PublisherInfo_DbList(ListAPIView):
             objects_sorted = objects.order_by(sort_by)
         except:
             objects_sorted = objects
-
         serializer = PublisherInfo_DetailURL_DbSerializer(objects_sorted, context={'request': request}, many=True)
         return MyAPIResponse({'record_list': serializer.data}, template_name='warehouse_state/publisher_list.html')
 
@@ -276,9 +266,10 @@ class PublisherInfo_Detail(GenericAPIView):
     renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = PublisherInfo_DetailURL_DbSerializer
     def get(self, request, format=None, **kwargs):
-        if 'id' in self.kwargs:
+        id = kwargs.get('id')
+        if id:
             try:
-                object = PublisherInfo.objects.get(pk=uri_to_iri(self.kwargs['id']))
+                object = PublisherInfo.objects.get(pk=uri_to_iri(id))
             except PublisherInfo.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='ID parameter is not valid')
         else:

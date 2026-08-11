@@ -1,3 +1,6 @@
+v3.80.rc2 2026-08-11 JP
+ - CTT-974 Fix a bunch of warehouse_state/views.py arg and parameter problems
+
 v3.80.rc1 2026-07-23 JP
  - CTT-974 new warehouse state ProcessingMetric and MetricAggregation models, views, urls, ..
  - CTT-974 process.py ApplicationEnvironment metric processing when new config METRICS_MODE=ENABLE
