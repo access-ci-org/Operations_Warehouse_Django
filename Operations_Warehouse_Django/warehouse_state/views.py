@@ -15,16 +15,16 @@ from warehouse_tools.responses import MyAPIResponse
 # Create your views here.
 class ProcessingStatus_DbList(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
+    renderer_classes = (JSONRenderer, TemplateHTMLRenderer,)
     serializer_class = ProcessingStatus_DetailURL_DbSerializer
+    template_name = 'warehouse_state/list.html'
     @extend_schema(parameters=[
             OpenApiParameter('about', str, OpenApiParameter.QUERY),
             OpenApiParameter('topic', str, OpenApiParameter.QUERY),
-            OpenApiParameter('sort', str, OpenApiParameter.QUERY),
         ])
     def get(self, request, format=None, **kwargs):
-        about = request.GET.get('about')
-        topic = request.GET.get('topic')
+        about = kwargs.get('about', request.GET.get('about'))
+        topic = kwargs.get('topic', request.GET.get('topic'))
         if about:
             try:
                 objects = ProcessingStatus.objects.filter(About__exact=uri_to_iri(about))
@@ -56,11 +56,10 @@ class ProcessingMetric_DbList(ListAPIView):
     @extend_schema(parameters=[
         OpenApiParameter('about', str, OpenApiParameter.QUERY),
         OpenApiParameter('processingid', str, OpenApiParameter.QUERY),
-        OpenApiParameter('sort', str, OpenApiParameter.QUERY),
     ])
     def get(self, request, format=None, **kwargs):
-        about = request.GET.get('about')
-        processingid = request.GET.get('processingid')
+        about = kwargs.get('about', request.GET.get('about'))
+        processingid = kwargs.get('processingid', request.GET.get('processingid'))
         if about:
             try:
                 objects = ProcessingMetric.objects.filter(
@@ -126,13 +125,10 @@ class AggregatedMetric_DbList(ListAPIView):
     @extend_schema(parameters=[
         OpenApiParameter('about', str, OpenApiParameter.QUERY),
         OpenApiParameter('metricname', str, OpenApiParameter.QUERY),
-        OpenApiParameter('page', int, OpenApiParameter.QUERY),
-        OpenApiParameter('page_size', int, OpenApiParameter.QUERY),
-        OpenApiParameter('sort', str, OpenApiParameter.QUERY),
     ])
     def get(self, request, format=None, **kwargs):
-        about = request.GET.get('about')
-        metricname = request.GET.get('metricname')
+        about = kwargs.get('about', request.GET.get('about'))
+        metricname = kwargs.get('metricname', request.GET.get('metricname'))
         if about:
             try:
                 objects = MetricAggregation.objects.filter(About__exact=uri_to_iri(about))
@@ -198,8 +194,8 @@ class ProcessingStatus_LatestList(ListAPIView):
             OpenApiParameter('topic', str, OpenApiParameter.QUERY),
         ])
     def get(self, request, format=None, **kwargs):
-        about = request.GET.get('about')
-        topic = request.GET.get('topic')
+        about = kwargs.get('about', request.GET.get('about'))
+        topic = kwargs.get('topic', request.GET.get('topic'))        
         if about:
             try:
                 object = ProcessingStatus.objects.filter(About__exact=uri_to_iri(about)).latest('ProcessingStart')
@@ -239,10 +235,9 @@ class PublisherInfo_DbList(ListAPIView):
     serializer_class = PublisherInfo_DetailURL_DbSerializer
     @extend_schema(parameters=[
         OpenApiParameter('resourceid', str, OpenApiParameter.QUERY),
-        OpenApiParameter('sort', str, OpenApiParameter.QUERY),
     ])
     def get(self, request, format=None, **kwargs):
-        resourceid = request.GET.get('resourceid')
+        resourceid = kwargs.get('resourceidc', request.GET.get('resourceid'))   
         if resourceid:
             try:
                 objects = PublisherInfo.objects.filter(ResourceID__exact=uri_to_iri(resourceid))

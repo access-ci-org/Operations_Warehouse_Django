@@ -1,3 +1,6 @@
+v3.80.rc3 2026-08-12 JP
+ - CTT-974 Cleanup warehouse_state/views handling of arguments and parameters
+
 v3.80.rc2 2026-08-11 JP
  - CTT-974 Fix a bunch of warehouse_state/views.py arg and parameter problems
 
