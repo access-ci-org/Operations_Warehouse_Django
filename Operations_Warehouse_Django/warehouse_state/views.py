@@ -209,7 +209,7 @@ class ProcessingStatus_LatestList(ListAPIView):
         else:
             raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Not found')
         serializer = ProcessingStatus_DbSerializer(object)
-        return MyAPIResponse({'record_list': [serializer.data]}, template_name='warehouse_state/detail.html')
+        return MyAPIResponse({'record_list': [serializer.data]}, template_name='warehouse_state/list.html')
 
 class ProcessingStatus_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)

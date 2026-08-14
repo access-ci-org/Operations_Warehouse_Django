@@ -1,3 +1,6 @@
+v3.80.rc4 2026-08-14 JP
+ - CTT-974 Fix incorrect html templage, add id pk to detail html templates
+
 v3.80.rc3 2026-08-12 JP
  - CTT-974 Cleanup warehouse_state/views handling of arguments and parameters
 
