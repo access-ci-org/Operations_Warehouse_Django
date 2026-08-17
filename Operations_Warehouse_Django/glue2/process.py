@@ -12,7 +12,7 @@ from warehouse_state.process import ProcessingActivity
 from warehouse_tools.exceptions import ProcessingException
 
 import logging
-logg2 = logging.getLogger('warehouse.logger')
+logg2 = logging.getLogger(f'access-ci.{__name__}')
 
 Handled_Models = ('ApplicationEnvironment', 'ApplicationHandle', \
                   'AbstractService', 'Endpoint',
@@ -234,6 +234,11 @@ class glue2_new_document():
                 logg2.warning('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)))
 #                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
 #                                          status=status.HTTP_400_BAD_REQUEST)
+
+        # Skip delete current if new was empty, new failsafe as of 7-22-2026 JP and Eric
+        if len(self.new[me]) == 0:
+            logg2.warning(f'New {me} list is empty from {self.resourceid}, SKIPPING delete current')
+            return
 
         # Delete old entries
         for ID in self.cur[me]:
@@ -980,7 +985,7 @@ class glue2_new_document():
 
         end = datetime.utcnow()
         self.stats['ProcessingSeconds'] = (end - start).total_seconds()
-        logg2.info(StatsSummary(self.stats))
+        logg2.debug(StatsSummary(self.stats))
         return(self.stats)
 
 class glue2_process_raw_ipf():
@@ -1014,12 +1019,21 @@ class glue2_process_raw_ipf():
                 logg2.error(msg)
                 pa.FinishActivity('1', msg)
                 return (False, msg)
-        
+
+        try:
+            PublisherInfo = jsondata['PublisherInfo']
+            if isinstance(PublisherInfo, list):
+                PublishedTimestamp = parse_datetime(PublisherInfo[0]['CreationTime'])
+            else:
+                PublisherTimestamp = parse_datetime(PublisherInfo['CreationTime'])
+        except:
+            PublishedTimestamp = None
+
         model = None
         try:
             model = EntityHistory(DocumentType=doctype, ResourceID=resourceid, ReceivedTime=ts, EntityJSON=jsondata)
             model.save()
-            logg2.info('New GLUE2 EntityHistory.ID={} (DocType={}, ResourceID={})'.format(model.ID, model.DocumentType, model.ResourceID))
+            logg2.debug('New GLUE2 EntityHistory.ID={} (DocType={}, ResourceID={})'.format(model.ID, model.DocumentType, model.ResourceID))
             self.EntityHistory_ID = model.ID
         except (ValidationError) as e:
             msg = 'Exception on GLUE2 EntityHistory (DocType={}, ResourceID={}): {}'.format(model.DocumentType, model.ResourceID, e.error_list)
@@ -1036,7 +1050,7 @@ class glue2_process_raw_ipf():
         except (ValidationError, ProcessingException) as e:
             pa.FinishActivity(False, e.response)
             return (False, e.response)
-        pa.FinishActivity(True, response)
+        pa.FinishActivity(True, response, PublishedTimestamp=PublishedTimestamp)
 
         if doctype == 'glue2.compute' and g2doc.ServiceSource == 'services':
             pa_id2 = '{}:{}'.format('glue2.services', resourceid)
