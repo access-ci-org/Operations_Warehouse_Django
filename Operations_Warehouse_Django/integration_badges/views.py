@@ -29,7 +29,7 @@ import logging
 from .models import Resource_Badge_Workflow
 from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(f'access-ci.{__name__}')
 
 badging_types = (
     "Compute",

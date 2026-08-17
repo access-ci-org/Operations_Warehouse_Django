@@ -1,7 +1,6 @@
 # Repo specific ignores
 *_customized.conf
 *_customized.sql
-Operations_Warehouse_Django/PROD
 
 
 # Byte-compiled / optimized / DLL files
@@ -145,3 +144,5 @@ dmypy.json
 # miscellaneous
 # Agent instructions (not yet committed to repo)
 AGENTS.md
+
+uv.lock

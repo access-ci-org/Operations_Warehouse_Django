@@ -1,8 +1,14 @@
 from datetime import datetime, timezone, timedelta, tzinfo
 import json
+import logging
 import socket
 
+from django.db import DataError, IntegrityError
+from django.conf import settings
+
 from warehouse_state.models import *
+
+logg2 = logging.getLogger(f'access-ci.{__name__}')
 
 class ProcessingActivity():
     '''
@@ -29,7 +35,7 @@ class ProcessingActivity():
         obj.save()
         self.model = obj
 
-    def FinishActivity(self, Code, Message):
+    def FinishActivity(self, Code, Message, PublishedTimestamp=None):
         self.model.ProcessingEnd=datetime.now(timezone.utc)
         if Code is False:
             self.model.ProcessingCode='1'
@@ -56,3 +62,22 @@ class ProcessingActivity():
                              )
             obj.save()
             self.errmodel = obj
+
+        conf = getattr(settings, 'CONF', {}) or {}
+        metrics_mode = conf.get('METRICS_MODE', 'DISABLED')
+        if metrics_mode == 'ENABLE' and self.model.Topic == 'glue2.applications' and PublishedTimestamp:
+            if 'ApplicationEnvironment.New' in Message:
+                try:
+                    metric = ProcessingMetric(
+                        ProcessingID=self.model.ID,
+                        ProcessingTimestamp=PublishedTimestamp,
+                        ProcessingError=self.model.ProcessingCode,
+                        About=self.model.About,
+                        MetricName='ApplicationEnvironment',
+                        MetricValue=Message['ApplicationEnvironment.New'],
+                    )
+                    metric.save()
+                except (DataError, IntegrityError) as e:
+                    msg = 'Exception on ProcessingMetric (MetricName={}, ResourceID={}, Published={}): {}'.format('ApplicationEnvironment', self.model.About, PublishedTimestamp, e)
+                    logg2.error(msg)
+                    pass
