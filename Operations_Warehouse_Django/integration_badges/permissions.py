@@ -70,7 +70,6 @@ class IsCoordinator(IsBadgeRole):
         super().__init__(rolename)
         self.rolename = 'coordinator'
 
-
 class IsStaffRole(permissions.BasePermission):
     """This is a base class that implements the logic for authz for Staff Roles"""
     def __init__(self, rolename=''):
@@ -106,3 +105,66 @@ class IsBadgeMaintainer(IsStaffRole):
     def __init__(self, rolename='badge.maintainer'):
         super().__init__(rolename)
         self.rolename = 'badge.maintainer'
+
+
+class IsBadgesStaff(permissions.BasePermission):
+    """This authorizes authenticated users who hold _any_ role in the Integration Badges model""
+
+    def has_permission(self, request, view):
+        badge_staff_roles = ["implementer", "coordinator", "concierge", "roadmap.maintiner", "badge.maintainer"]
+        if request.user.is_authenticated:
+            #print(f'User {request.user.username} is authenticated')
+            #print(f'User permissions {request.user.get_all_permissions()}')
+            allperms=user.get_all_permissions()
+            matching_perms = [r for r in badge_staff_roles if any(word in r for word in allperms)]
+            
+            #request.user.has_perm('cider.'+self.rolename+'_'+info_groupid)
+        else:
+            return False
+
+        info_resourceid = request.parser_context["kwargs"]['info_resourceid']
+        resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
+        info_resourceid = resource.info_resourceid
+        try:
+            cidergroup = CiderGroups.objects.filter(info_resourceids__contains=[info_resourceid]).first()
+        except Exception:
+            return False
+        if not cidergroup:
+            raise (ResourceIDError(
+                       f"{info_resourceid} not found in any CiderGroup"))
+            return False
+        else:
+            info_groupid = cidergroup.info_groupid
+        # Do we want different perms here for read only?
+        # Read permissions are allowed to any request.
+        #if request.method in ['GET', 'HEAD', 'OPTIONS']:
+        #if request.method in ['HEAD', 'OPTIONS']:
+        #    return True
+
+        # Write permissions are only allowed to the owner.
+        if request.user.is_authenticated:
+            #print(f'User {request.user.username} is authenticated')
+
+
+class IsAccessStaff(IsStaffRole):
+    """This authorizes authenticated users who belong to the group:"""
+    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    def __init__(self, rolename=''):
+        super().__init__(rolename)
+        self.rolename = 'all.staff_access-ci.org'
+
+
+class IsAccessProjectStaff(IsStaffRole):
+    """This authorizes authenticated users who belong to the group:"""
+    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    def __init__(self, rolename=''):
+        super().__init__(rolename)
+        self.rolename = 'project.staff_access-ci.org'
+
+
+class IsAccessRPStaff(IsStaffRole):
+    """This authorizes authenticated users who belong to the group:"""
+    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    def __init__(self, rolename=''):
+        super().__init__(rolename)
+        self.rolename = 'rp.staff_access-ci.org'
