@@ -418,13 +418,8 @@ if SETTINGS_MODE == 'SERVER':
             }
         },
         'loggers': {
-            'django': {'handlers': ['file'], 'level': 'WARNING'},
-            'django.server': {
-                'handlers': ['file'],
-                #            'propagate': True,
-                'level': 'DEBUG',
-            },
-            'services': {'handlers': ['file'], 'level': 'DEBUG'},
+            # Catch logs from all access-ci.* components
+            'access-ci': {'handlers': ['file'], 'level': 'DEBUG'},
             'cilogon_tokenauth': {'handlers': ['file'], 'level': 'DEBUG'},
-        },
+        }
     }

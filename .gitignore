@@ -140,3 +140,9 @@ dmypy.json
 
 # VS Code
 .vscode/
+
+# miscellaneous
+# Agent instructions (not yet committed to repo)
+AGENTS.md
+
+uv.lock

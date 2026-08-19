@@ -38,6 +38,10 @@ class BadgeWorkflowStatus(models.TextChoices):
     VERIFICATION_FAILED = "verification-failed", "Verification Failed"
     VERIFIED = "verified", "Verified"
     DEPRECATED = "deprecated", "Depredated"
+    EXEMPTION_REQUESTED = "exemption-requested", "Exemption Requested"
+    EXEMPTED = "exempted", "Exempted"
+    EXEMPTION_REJECTED = "exemption-rejected", "Exemption Rejected"
+
 
 class BadgeTaskWorkflowStatus(models.TextChoices):
     COMPLETED = "completed", "Completed"

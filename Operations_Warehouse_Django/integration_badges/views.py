@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Q
-from django.db.models import Subquery, OuterRef, Exists, Max, Count
+from django.db.models import Subquery, OuterRef, Exists, Max, Count, F
 from django.contrib.auth.models import Permission
 from itertools import chain
 
@@ -29,7 +29,7 @@ import logging
 from .models import Resource_Badge_Workflow
 from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(f'access-ci.{__name__}')
 
 badging_types = (
     "Compute",
@@ -1501,7 +1501,9 @@ def get_resource_integration_status(resource, badge_status_summary):
         elif resource.latest_status in [ResourceStatus.ANNOUNCED, ResourceStatus.PRE_PRODUCTION]:
             return ResourceIntegrationStatus.IN_PROGRESS
         elif resource.latest_status == ResourceStatus.PRODUCTION:
-            if badge_status_summary["required"]["verified"] == badge_status_summary["required"]["total"]:
+            if (sum([badge_status_summary["required"][BadgeWorkflowStatus.VERIFIED],
+                    badge_status_summary["required"][BadgeWorkflowStatus.EXEMPTED]])
+                    == badge_status_summary["required"]["total"]):
                 return ResourceIntegrationStatus.PRODUCTION
             else:
                 return ResourceIntegrationStatus.IN_PROGRESS
@@ -1660,6 +1662,16 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 location=OpenApiParameter.QUERY,
                 enum=BadgeWorkflowStatus,
             ),
+            OpenApiParameter(
+                name="order_by",
+                description="Order By",
+                type=str,
+                required=False,
+                many=False,
+                enum=["info_resourceid", "badge__name", "roadmap__name", "status", "status_updated_at",
+                      "-info_resourceid", "-badge__name", "-roadmap__name", "-status", "-status_updated_at"],
+                location=OpenApiParameter.QUERY,
+            ),
         ]
     )
     def get(self, request, format=None, **kwargs):
@@ -1667,7 +1679,8 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
         info_resourceid = self.request.query_params.get("info_resourceid")
         roadmap_id = self.request.query_params.get("roadmap_id")
         badge_id = self.request.query_params.get("badge_id")
-        badge_workflow_status = self.request.query_params.get("badge_workflow_status")
+        badge_workflow_status = self.request.query_params.getlist("badge_workflow_status")
+        order_by = self.request.query_params.getlist('order_by')
 
         resource_subquery  = CiderInfrastructure.objects.filter(badging_filter)
         resource_badge_workflow_subquery = Resource_Badge_Workflow.objects
@@ -1690,9 +1703,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
                 badge_id=badge_id
             )
 
-        if badge_workflow_status is not None:
+        if len(badge_workflow_status) > 0:
             resource_badge_workflow_subquery = resource_badge_workflow_subquery.filter(
-                status=badge_workflow_status
+                status__in=badge_workflow_status
             )
 
         resource_subquery = resource_subquery.filter(
@@ -1752,6 +1765,9 @@ class Resource_Roadmap_Badges_Status_v1(GenericAPIView):
             )
             .order_by("info_resourceid", "badge__name", "roadmap__name", "-status_updated_at")
         )
+
+        if len(order_by) > 0:
+            result = result.order_by(*order_by)
 
         return MyAPIResponse({"results": result.values()})
 
@@ -1821,73 +1837,56 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
             "badge_task_workflow_status"
         )
 
-        resource_badge_task_workflow_subquery = Resource_Badge_Task_Workflow.objects
+        max_status_updated_at = Resource_Badge_Task_Workflow.objects.filter(
+            info_resourceid=OuterRef('info_resourceid'),
+            roadmap_id=OuterRef('roadmap_id'),
+            badge_id=OuterRef('badge_id'),
+            task_id=OuterRef('task_id')
+        ).values('info_resourceid', 'roadmap_id', 'badge_id', 'task_id').annotate(
+            max_status_updated_at=Max('status_updated_at')
+        ).values('max_status_updated_at')
 
-        if info_resourceid is not None:
-            resource_badge_task_workflow_subquery = (
-                resource_badge_task_workflow_subquery.filter(
-                    info_resourceid=info_resourceid
-                )
-            )
+        task_workflow_status_subquery = Resource_Badge_Task_Workflow.objects.filter(
+            info_resourceid=OuterRef('info_resourceid'),
+            roadmap_id=OuterRef('roadmap_id'),
+            badge_id=OuterRef('badge_id'),
+            task_id=OuterRef('task_id'),
+            status_updated_at=Subquery(max_status_updated_at)
+        )
 
-        if roadmap_id is not None:
-            resource_badge_task_workflow_subquery = (
-                resource_badge_task_workflow_subquery.filter(roadmap_id=roadmap_id)
-            )
-
-        if badge_id is not None:
-            resource_badge_task_workflow_subquery = (
-                resource_badge_task_workflow_subquery.filter(badge_id=badge_id)
-            )
-
-        if task_id is not None:
-            resource_badge_task_workflow_subquery = (
-                resource_badge_task_workflow_subquery.filter(task_id=task_id)
-            )
-
-        if badge_task_workflow_status is not None:
-            resource_badge_task_workflow_subquery = (
-                resource_badge_task_workflow_subquery.filter(
-                    status=badge_task_workflow_status
-                )
-            )
-
-        result = resource_badge_task_workflow_subquery.filter(
-            # Making sure the badge is a part of the roadmap
-            Exists(
-                Roadmap_Badge.objects.filter(
-                    roadmap_id=OuterRef("roadmap_id"), badge_id=OuterRef("badge_id")
-                )
-            ),
-            # Making sure the task is a part of the badge
+        base_query = Resource_Badge.objects.filter(
             Exists(
                 Badge_Task.objects.filter(
-                    badge_id=OuterRef("badge_id"), task_id=OuterRef("task_id")
+                    badge_id=OuterRef('badge_id')
                 )
             ),
-            # Making sure the resource is enrolled to the roadmap badge
-            Exists(
-                Resource_Badge.objects.filter(
-                    info_resourceid=OuterRef("info_resourceid"),
-                    roadmap_id=OuterRef("roadmap_id"),
-                    badge_id=OuterRef("badge_id"),
-                )
-            ),
-            # Filtering the workflow entries with the latest time stamp
-            status_updated_at=Subquery(
-                Resource_Badge_Task_Workflow.objects.filter(
-                    info_resourceid=OuterRef("info_resourceid"),
-                    roadmap_id=OuterRef("roadmap_id"),
-                    badge_id=OuterRef("badge_id"),
-                    task_id=OuterRef("task_id"),
-                )
-                .values("info_resourceid", "roadmap_id", "badge_id", "task_id")
-                .annotate(max_status_updated_at=Max("status_updated_at"))
-                .values("max_status_updated_at")
-            ),
-        ).order_by(
-            "-status_updated_at", "info_resourceid", "roadmap_id", "badge_id", "task_id"
+        ).values(
+            'info_resourceid',
+            'roadmap_id',
+            'badge_id',
+            task_id=F('badge__badge_tasks__task_id')
         )
+
+        if info_resourceid is not None:
+            base_query = base_query.filter(info_resourceid=info_resourceid)
+        if roadmap_id is not None:
+            base_query = base_query.filter(roadmap_id=roadmap_id)
+        if badge_id is not None:
+            base_query = base_query.filter(badge_id=badge_id)
+        if task_id is not None:
+            base_query = base_query.filter(task_id=task_id)
+
+        result = base_query.annotate(
+            status=Subquery(task_workflow_status_subquery.values('status')[:1]),
+            status_updated_at=Subquery(task_workflow_status_subquery.values('status_updated_at')[:1]),
+            status_updated_by=Subquery(task_workflow_status_subquery.values('status_updated_by')[:1]),
+            comment=Subquery(task_workflow_status_subquery.values('comment')[:1])
+        )
+
+        if badge_task_workflow_status is not None:
+            result = result.filter(status=badge_task_workflow_status)
+
+        result = result.order_by("-status_updated_at", "info_resourceid", "roadmap_id", "badge_id", "task_id")
 
         return MyAPIResponse({"results": result.values()})
 
