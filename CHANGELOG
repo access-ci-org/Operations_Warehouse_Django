@@ -1,3 +1,8 @@
+v3.81 2026-08-24 JP
+ - CTT-390 New ScrubApplication function to cleanup ApplicationEnnvironment and ApplicationHandle entries
+ - CTT-390 New ScrubApplication function substitutes IDs with limited length digest based values
+ - Convert format() and % string formatting to new and more efficient f-strings
+
 v3.80 2026-08-14 JP
  - CTT-974 Fix incorrect html templage, add id pk to detail html templates
  - CTT-974 Cleanup warehouse_state/views handling of arguments and parameters

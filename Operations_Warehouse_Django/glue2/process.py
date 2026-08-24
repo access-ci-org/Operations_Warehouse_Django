@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta, tzinfo
+from hashlib import blake2s
 from django.db import DataError, IntegrityError
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_datetime
@@ -34,15 +35,14 @@ class StatsTracker():
         self.ServiceSource = ''
         self.ProcessingSeconds = 0
         for model in Handled_models:
-            self.stats['%s.Updates' % model] = 0
-            self.stats['%s.Deletes' % model] = 0
-            self.stats['%s.ToCache' % model] = 0
+            self.stats[f'{model}.Updates'] = 0
+            self.stats[f'{model}.Deletes'] = 0
+            self.stats[f'{model}.ToCache'] = 0
     def __str__(self):
-        out = 'Processed %s in %s/sec:' % (self.Label, str(self.ProcessingSeconds))
+        out = f'Processed {self.Label} in {str(self.ProcessingSeconds)}/sec:'
         for i in Handled_Models:
-            if '%s.New' % i in self.stats and self.stats['%s.New' % i] > 0:
-                out += ' %s %s->%s (%s/up, %s/del, %s/cache)' % \
-                    (i, self.stats['%s.Current' % i], self.stats['%s.New' % i], self.stats['%s.Updates' % i], self.stats['%s.Deletes' % i], self.stats['%s.ToCache' % i])
+            if f'{i}.New' in self.stats and self.stats[f'{i}.New'] > 0:
+                out += f" {i} {self.stats[f'{i}.Current']}->{self.stats[f'{i}.New']} ({self.stats[f'{i}.Updates']}/up, {self.stats[f'{i}.Deletes']}/del, {self.stats[f'{i}.ToCache']}/cache)"
         return(out)
     def HasApplication(self):
         return('ApplicationEnvironment.New' in self.stats or \
@@ -63,14 +63,14 @@ class StatsTracker():
             self.stats[key] += increment
 
 def StatsSummary(stats):
-    out = 'Processed %s in %s/sec:' % (stats['Label'], str(stats['ProcessingSeconds']))
+    out = f"Processed {stats['Label']} in {stats['ProcessingSeconds']!s}/sec:"
     for i in Handled_Models:
-        if '%s.New' % i in stats and stats['%s.New' % i] > 0:
-            out += ' %s %s->%s (%s/up' % (i, stats['%s.Current' % i], stats['%s.New' % i], stats['%s.Updates' % i])
-            if '%s.Deletes' % i in stats and stats['%s.Deletes' % i] > 0:
-                out += ', %s/del' % stats['%s.Deletes' % i]
-            if '%s.ToCache' % i in stats and stats['%s.ToCache' % i] > 0:
-                out += ', %s/cache' % stats['%s.ToCache' % i]
+        if f'{i}.New' in stats and stats[f'{i}.New'] > 0:
+            out += f" {i} {stats[f'{i}.Current']}->{stats[f'{i}.New']} ({stats[f'{i}.Updates']}/up"
+            if f'{i}.Deletes' in stats and stats[f'{i}.Deletes'] > 0:
+                out += f", {stats[f'{i}.Deletes']}/del"
+            if f'{i}.ToCache' in stats and stats[f'{i}.ToCache'] > 0:
+                out += f", {stats[f'{i}.ToCache']}/cache"
             out += ')'
     return(out)
 
@@ -106,6 +106,9 @@ def get_Validity(obj):
         val = None
     return val
 
+def our_Digest(text: str) -> str:
+    return(blake2s(text.encode('utf-8'), digest_size=16).digest().hex())
+
 # Create your models here.
 class glue2_new_document():
     def __init__(self, DocType, ResourceID, ReceivedTime, Label, Application, HistoryID=None):
@@ -121,32 +124,99 @@ class glue2_new_document():
         for model in Handled_Models:
             self.new[model] = {}
             self.cur[model] = {}
-            self.stats['{}.Updates'.format(model)] = 0
-            self.stats['{}.Deletes'.format(model)] = 0
-            self.stats['{}.ToCache'.format(model)] = 0
+            self.stats[f'{model}.Updates'] = 0
+            self.stats[f'{model}.Deletes'] = 0
+            self.stats[f'{model}.ToCache'] = 0
         self.newAbsServType = {}
 
     def LoadNewEntityInstance(self, model, obj):
         if type(obj) is not list:
-            logg2.error('New entity %s doesn\'t contain a list' % model)
+            logg2.error(f'New entity {model} doesn\'t contain a list')
 #            raise ValidationError('New entity %s doesn\'t contain a list' % model)
             return
         for item in obj:
             self.new[model][item['ID']] = item
-        self.stats['{}.New'.format(model)] = len(self.new[model])
-        self.stats['{}.Current'.format(model)] = 0
+        self.stats[f'{model}.New'] = len(self.new[model])
+        self.stats[f'{model}.Current'] = 0
 
 
 ###############################################################################################
 # Application handling
 ###############################################################################################
+    def ScrubApplication(self):
+        # Scrub ApplicationEnvironment items, while tracking previous->new ID substitutions
+        me = 'ApplicationEnvironment'
+        myList = self.new[me]
+        # Extract ID prefix for new IDs
+        firstID = next(iter(myList)) # an item
+        before, match, after = firstID.partition(f':{me}:')
+        IDprefix = f'{before}:{me}:{self.resourceid}'
+        self.envIDsub = {} # ID substitutions
+        for IID in list(myList.keys()): # Safe to add, update, delete entries
+            item = myList[IID]
+            item['AppName'] = item['AppName'].strip()
+            item['AppVersion'] = item['AppVersion'].strip()
+            item['Name'] = f'{item["AppName"]}-{item["AppVersion"]}'
+            item['Description'] = item['Description'].strip()
+            hex_digest = our_Digest(item['Name'])
+            newIID = f'{IDprefix}:{hex_digest}'
+            if IID != newIID:   # We have a new item ID (someday IPF will publish new IDs)
+                self.envIDsub[IID] = newIID
+                item['ID'] = newIID
+                myList[newIID] = item
+                del myList[IID]
+
+        # Scrub ApplicationHandle items, while tracking previous->new ID substitutions
+        # Replaces Associations to substituted ApplicationEnvironment IDs
+        me = 'ApplicationHandle'
+        myList = self.new[me]
+        # Extract ID prefix for new IDs
+        firstID = next(iter(myList)) # an item
+        before, match, after = firstID.partition(f':{me}:')
+        IDprefix = f'{before}:{me}:{self.resourceid}'
+        self.hanIDsub = {} # ID substitutions
+        for IID in list(myList.keys()): # So we an safely add, update, delete entries
+            item = myList[IID]
+            item['Value'] = '/'.join(item.strip() for item in item['Value'].split('/'))
+            item['Name'] = '-'.join(item.strip() for item in item['Name'].split('-', 1))  
+            hex_digest = our_Digest(f"{item['Type']}:{item['Value']}")
+            newIID = f'{IDprefix}:{hex_digest}'
+            old_assoc = item['Associations'].get('ApplicationEnvironmentID')
+            new_assoc = self.envIDsub.get(old_assoc)
+            if new_assoc:
+                item['Associations']['ApplicationEnvironmentID'] = new_assoc
+            if IID != newIID:   # We have a new item ID (someday IPF will publish new IDs)
+                self.hanIDsub[IID] = newIID
+                item['ID'] = newIID
+                myList[newIID] = item
+                del myList[IID]
+
+        # Now replaces Associations to substituted ApplicationHandle IDs
+        myList = self.new['ApplicationEnvironment']
+        for IID, item in myList.items():
+            # old_assn = item['Associations']['ApplicationHandleID']
+            # if old_assn:
+            #     if isinstance(old_assn, list):
+            #         item['Associations']['ApplicationHandleID'] = [self.hanIDsub.get(i, i) for i in old_assn]
+            #     elif old_assn in self.hanIDsub:
+            #         item['Associations']['ApplicationHandleID'] = self.hanIDsub[old_assn]
+            old_assoc = item['Associations'].get('ApplicationHandleID')
+            if isinstance(old_assoc, list):
+                new_assoc = [self.hanIDsub.get(i, i) for i in old_assoc]
+            else:
+                new_assoc = self.hanIDsub.get(old_assoc)
+            if new_assoc:
+                item['Associations']['ApplicationHandleID'] = new_assoc
+
+        done = True # A debugging breakpoint
+
     def ProcessApplication(self):
         ########################################################################
         me = 'ApplicationEnvironment'
         # Load current database entries
         for item in ApplicationEnvironment.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -177,10 +247,10 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
 #       Temporary, perhaps permanent, warn of these types of errors but continue, 2016-10-20 JP
-                logg2.warning('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)))
+                logg2.warning(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}")
 #                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
 #                                          status=status.HTTP_400_BAD_REQUEST)
 
@@ -189,7 +259,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ApplicationHandle.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         maxval = ApplicationHandle._meta.get_field('Value').max_length
         # Add/update entries
@@ -210,7 +280,7 @@ class glue2_new_document():
                     other_json.pop(k, None)
                 self.tag_from_application(other_json)
                 if len(self.new[me][ID]['Value']) > maxval:     # Value too long, log ERROR and truncate
-                    logg2.error('Truncating ApplicationHandle.Value (ID=%s)' % self.new[me][ID]['ID'])
+                    logg2.error(f"Truncating ApplicationHandle.Value (ID={self.new[me][ID]['ID']})")
                     hval = self.new[me][ID]['Value'][:maxval]
                 else:
                     hval = self.new[me][ID]['Value']
@@ -228,10 +298,10 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
 #       Temporary, perhaps permanent, warn of these types of errors but continue, 2016-10-20 JP
-                logg2.warning('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)))
+                logg2.warning(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}")
 #                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
 #                                          status=status.HTTP_400_BAD_REQUEST)
 
@@ -246,10 +316,10 @@ class glue2_new_document():
                 continue
             try:
                 ApplicationEnvironment.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
 #       Temporary, perhaps permanent, warn of these types of errors but continue, 2016-10-20 JP
-                logg2.warning('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)))
+                logg2.warning(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}")
 #                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
 #                                          status=status.HTTP_400_BAD_REQUEST)
 
@@ -260,10 +330,10 @@ class glue2_new_document():
                 continue
             try:
                 ApplicationEnvironment.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
 #       Temporary, perhaps permanent, warn of these types of errors but continue, 2016-10-20 JP
-                logg2.warning('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)))
+                logg2.warning(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}")
 #               raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
 #                                          status=status.HTTP_400_BAD_REQUEST)
 
@@ -272,7 +342,7 @@ class glue2_new_document():
 ###############################################################################################
     def LoadNewAbstractService(self, model, obj):
         if type(obj) is not list:
-            logg2.error('New AbstractService(%s) doesn\'t contain a list' % model)
+            logg2.error(f'New AbstractService({model}) doesn\'t contain a list')
 #            raise ValidationError('New AbstractService(%s) doesn\'t contain a list' % model)
             return
         for item in obj:
@@ -287,7 +357,7 @@ class glue2_new_document():
         # Load current database entries
         for item in AbstractService.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # 2017-06-02 by JP: Track the source to only update/delete entries from that source
         if len(self.new[me]) >= 1:
@@ -322,16 +392,16 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('{} updating {} (ID={}): {}'.format(type(e).__name__, me, self.new[me][ID]['ID'], str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         ########################################################################
         me = 'Endpoint'
         # Load current database entries
         for item in Endpoint.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -369,9 +439,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # 2017-06-02 by JP: For now have a Source not affect records from the other Source
@@ -383,9 +453,9 @@ class glue2_new_document():
                continue
             try:
                 Endpoint.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # 2017-06-02 by JP: For now have a Source not affect records from the other Source
@@ -402,9 +472,9 @@ class glue2_new_document():
                 continue        # So that one source doesn't affect the other
             try:
                 AbstractService.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         ########################################################################
@@ -412,7 +482,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ComputingManager.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -433,9 +503,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
@@ -444,9 +514,9 @@ class glue2_new_document():
                 continue
             try:
                 ComputingManager.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         ########################################################################
@@ -454,7 +524,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ExecutionEnvironment.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
 
         # Add/update entries
         for ID in self.new[me]:
@@ -475,9 +545,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
@@ -486,9 +556,9 @@ class glue2_new_document():
                 continue
             try:
                 ExecutionEnvironment.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         ########################################################################
@@ -499,7 +569,7 @@ class glue2_new_document():
 #        for item in Location.objects.filter(ResourceID=self.resourceid):
 #            self.cur[me][item.ID] = item
 #        self.stats['%s.Current' % me] = len(self.cur[me])
-        self.stats['%s.Current' % me] = 0
+        self.stats[f'{me}.Current'] = 0
 
         # Add/update entries
         for ID in self.new[me]:
@@ -521,9 +591,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # Can't delete old entries
@@ -542,7 +612,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ComputingShare.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -563,9 +633,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], str(e)), \
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
@@ -574,9 +644,9 @@ class glue2_new_document():
                 continue
             try:
                 ComputingShare.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
         ########################################################################
@@ -595,7 +665,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ComputingActivity.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -604,7 +674,7 @@ class glue2_new_document():
                 continue                                        # Don't update database since is has the latest
 
             if self.activity_is_cached(ID, self.new[me][ID]):
-                self.stats['%s.ToCache' % me] += 1
+                self.stats[f'{me}.ToCache'] += 1
                 continue
             
             try:
@@ -621,13 +691,12 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
                 
                 self.activity_to_cache(ID, self.new[me][ID])
             
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], \
-                                        str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
         for ID in self.cur[me]:
@@ -635,9 +704,9 @@ class glue2_new_document():
                 continue
             try:
                 ComputingActivity.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
     def ProcessComputingQueue(self):
@@ -646,11 +715,11 @@ class glue2_new_document():
         
         old = ComputingQueue.objects.filter(ResourceID=self.resourceid)
         if old:
-            self.stats['%s.Current' % me] = 1
+            self.stats[f'{me}.Current'] = 1
         else:
-            self.stats['%s.Current' % me] = 0
+            self.stats[f'{me}.Current'] = 0
         try:
-            ID='urn:glue2:ComputingQueue:{}'.format(self.resourceid)
+            ID=f'urn:glue2:ComputingQueue:{self.resourceid}'
             other_json = self.new[me].copy()
             self.tag_from_application(other_json)
             model, created = ComputingQueue.objects.update_or_create(
@@ -663,9 +732,9 @@ class glue2_new_document():
                                     'EntityJSON': other_json
                                 })
             model.save()
-            self.stats['%s.Updates' % me] += 1
+            self.stats[f'{me}.Updates'] += 1
         except (DataError, IntegrityError) as e:
-            raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+            raise ProcessingException(f'{type(e).__name__} updating {me} (ID={ID}): {e!s}', \
                                       status=status.HTTP_400_BAD_REQUEST)
 
 ###############################################################################################
@@ -677,7 +746,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ComputingManagerAcceleratorInfo.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -686,7 +755,7 @@ class glue2_new_document():
                 continue                                        # Don't update database since is has the latest
 
             if self.activity_is_cached(ID, self.new[me][ID]):
-                self.stats['%s.ToCache' % me] += 1
+                self.stats[f'{me}.ToCache'] += 1
                 continue
             
             try:
@@ -703,10 +772,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], \
-                                        str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
         for ID in self.cur[me]:
@@ -714,9 +782,9 @@ class glue2_new_document():
                 continue
             try:
                 ComputingManagerAcceleratorInfo.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
 ###############################################################################################
@@ -728,7 +796,7 @@ class glue2_new_document():
         # Load current database entries
         for item in ComputingShareAcceleratorInfo.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -737,7 +805,7 @@ class glue2_new_document():
                 continue                                        # Don't update database since is has the latest
 
             if self.activity_is_cached(ID, self.new[me][ID]):
-                self.stats['%s.ToCache' % me] += 1
+                self.stats[f'{me}.ToCache'] += 1
                 continue
             
             try:
@@ -754,10 +822,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], \
-                                        str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
         for ID in self.cur[me]:
@@ -765,9 +832,9 @@ class glue2_new_document():
                 continue
             try:
                 ComputingShareAcceleratorInfo.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
 ###############################################################################################
@@ -779,7 +846,7 @@ class glue2_new_document():
         # Load current database entries
         for item in AcceleratorEnvironment.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
         
         # Add/update entries
         for ID in self.new[me]:
@@ -788,7 +855,7 @@ class glue2_new_document():
                 continue                                        # Don't update database since is has the latest
 
             if self.activity_is_cached(ID, self.new[me][ID]):
-                self.stats['%s.ToCache' % me] += 1
+                self.stats[f'{me}.ToCache'] += 1
                 continue
             
             try:
@@ -806,10 +873,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], \
-                                        str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
         for ID in self.cur[me]:
@@ -817,9 +883,9 @@ class glue2_new_document():
                 continue
             try:
                 AcceleratorEnvironment.objects.filter(ID=ID).delete()
-                self.stats['%s.Deletes' % me] += 1
+                self.stats[f'{me}.Deletes'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s deleting %s (ID=%s): %s' % (type(e).__name__, me, ID, str(e)), \
+                raise ProcessingException(f'{type(e).__name__} deleting {me} (ID={ID}): {e!s}', \
                                           status=status.HTTP_400_BAD_REQUEST)
 
 ###############################################################################################
@@ -832,7 +898,7 @@ class glue2_new_document():
 ### We are overwriting everything and should now have older items
         for item in PublisherInfo.objects.filter(ResourceID=self.resourceid):
             self.cur[me][item.ID] = item
-        self.stats['%s.Current' % me] = len(self.cur[me])
+        self.stats[f'{me}.Current'] = len(self.cur[me])
 
         # Add/update entries
         for ID in self.new[me]:
@@ -876,10 +942,9 @@ class glue2_new_document():
                                     })
                 model.save()
                 self.new[me][ID]['model'] = model
-                self.stats['%s.Updates' % me] += 1
+                self.stats[f'{me}.Updates'] += 1
             except (DataError, IntegrityError) as e:
-                raise ProcessingException('%s updating %s (ID=%s): %s' % (type(e).__name__, me, self.new[me][ID]['ID'], \
-                                        str(e)), status=status.HTTP_400_BAD_REQUEST)
+                raise ProcessingException(f"{type(e).__name__} updating {me} (ID={self.new[me][ID]['ID']}): {e!s}", status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old entries
 #        for ID in self.cur[me]:
@@ -966,14 +1031,15 @@ class glue2_new_document():
 
     def process(self, data):
         if type(data) is not dict:
-            raise ProcessingException('Expecting a JSON dictionary (DocType={}, ResourceID={}, ReceivedTime={})'.format(self.doctype, self.resourceid, self.receivedtime), status=status.HTTP_400_BAD_REQUEST)
+            raise ProcessingException(f'Expecting a JSON dictionary (DocType={self.doctype}, ResourceID={self.resourceid}, ReceivedTime={self.receivedtime})', status=status.HTTP_400_BAD_REQUEST)
         start = datetime.utcnow()
         for key in data:
             if key in self.input_handlers:
                 self.input_handlers[key](self, key, data[key])
             else:
-                logg2.warning('Element "{}" not recognized (DocType={}, ResourceID={}, ReceivedTime={})'.format(key, self.doctype, self.resourceid, str(self.receivedtime)))
+                logg2.warning(f'Element "{key}" not recognized (DocType={self.doctype}, ResourceID={self.resourceid}, ReceivedTime={self.receivedtime!s})')
         if StatsHadApplication(self.stats):
+            self.ScrubApplication()
             self.ProcessApplication()
         elif StatsHadCompute(self.stats):
             self.ProcessCompute()
@@ -998,13 +1064,13 @@ class glue2_process_raw_ipf():
         if doctype == 'glue2.computing_activity':   # Skip prefix "jobid.owner" and only use the ResourceID
             x = resourceid.find('.')                # Up to first 'period' contains jobid
             y = resourceid.find('.', x+1)           # Up to second 'period' contains owner
-            pa_id = '{}:{}'.format(doctype, resourceid[y+1:])
+            pa_id = f'{doctype}:{resourceid[y+1:]}'
         else:
-            pa_id = '{}:{}'.format(doctype, resourceid)
+            pa_id = f'{doctype}:{resourceid}'
         pa = ProcessingActivity(self.application, self.function, pa_id, doctype, resourceid)
 
         if doctype not in ['glue2.applications', 'glue2.compute', 'glue2.computing_activities']:
-            msg = 'Ignoring DocType (DocType={}, ResourceID={})'.format(doctype, resourceid)
+            msg = f'Ignoring DocType (DocType={doctype}, ResourceID={resourceid})'
             logg2.info(msg)
             pa.FinishActivity('0', msg)
             return (False, msg)
@@ -1015,7 +1081,7 @@ class glue2_process_raw_ipf():
             try:
                 jsondata = json.loads(rawdata)
             except:
-                msg = 'Failed JSON parse (DocType={}, ResourceID={}, size={})'.format(doctype, resourceid, len(rawdata))
+                msg = f'Failed JSON parse (DocType={doctype}, ResourceID={resourceid}, size={len(rawdata)})'
                 logg2.error(msg)
                 pa.FinishActivity('1', msg)
                 return (False, msg)
@@ -1033,18 +1099,18 @@ class glue2_process_raw_ipf():
         try:
             model = EntityHistory(DocumentType=doctype, ResourceID=resourceid, ReceivedTime=ts, EntityJSON=jsondata)
             model.save()
-            logg2.debug('New GLUE2 EntityHistory.ID={} (DocType={}, ResourceID={})'.format(model.ID, model.DocumentType, model.ResourceID))
+            logg2.debug(f'New GLUE2 EntityHistory.ID={model.ID} (DocType={model.DocumentType}, ResourceID={model.ResourceID})')
             self.EntityHistory_ID = model.ID
         except (ValidationError) as e:
-            msg = 'Exception on GLUE2 EntityHistory (DocType={}, ResourceID={}): {}'.format(model.DocumentType, model.ResourceID, e.error_list)
+            msg = f'Exception on GLUE2 EntityHistory (DocType={model.DocumentType}, ResourceID={model.ResourceID}): {e.error_list}'
             pa.FinishActivity(False, msg)
             return (False, msg)
         except (DataError, IntegrityError) as e:
-            msg = 'Exception on GLUE2 EntityHistory (DocType={}, ResourceID={}): {}'.format(model.DocumentType, model.ResourceID, e.error_list)
+            msg = f'Exception on GLUE2 EntityHistory (DocType={model.DocumentType}, ResourceID={model.ResourceID}): {e.error_list}'
             pa.FinishActivity(False, msg)
             return (False, msg)
 
-        g2doc = glue2_new_document(doctype, resourceid, ts, 'EntityHistory.ID=%s' % model.ID, self.application, HistoryID=self.EntityHistory_ID)
+        g2doc = glue2_new_document(doctype, resourceid, ts, f'EntityHistory.ID={model.ID}', self.application, HistoryID=self.EntityHistory_ID)
         try:
             response = g2doc.process(jsondata)
         except (ValidationError, ProcessingException) as e:
@@ -1053,7 +1119,7 @@ class glue2_process_raw_ipf():
         pa.FinishActivity(True, response, PublishedTimestamp=PublishedTimestamp)
 
         if doctype == 'glue2.compute' and g2doc.ServiceSource == 'services':
-            pa_id2 = '{}:{}'.format('glue2.services', resourceid)
+            pa_id2 = f'glue2.services:{resourceid}'
             pa2 = ProcessingActivity(self.application, self.function, pa_id2, 'glue2.services', resourceid)
             pa2.FinishActivity(True, response)
         return (True, response)
