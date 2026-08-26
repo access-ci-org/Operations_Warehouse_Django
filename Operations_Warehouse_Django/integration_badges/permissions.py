@@ -107,64 +107,50 @@ class IsBadgeMaintainer(IsStaffRole):
         self.rolename = 'badge.maintainer'
 
 
-class IsBadgesStaff(permissions.BasePermission):
+class IsIntegrationStaff(permissions.BasePermission):
     """This authorizes authenticated users who hold _any_ role in the Integration Badges model""
 
     def has_permission(self, request, view):
-        badge_staff_roles = ["implementer", "coordinator", "concierge", "roadmap.maintiner", "badge.maintainer"]
+        badge_staff_roles = ["implementer", "coordinator", "concierge", "roadmap.maintainer", "badge.maintainer"]
         if request.user.is_authenticated:
             #print(f'User {request.user.username} is authenticated')
             #print(f'User permissions {request.user.get_all_permissions()}')
             allperms=user.get_all_permissions()
             matching_perms = [r for r in badge_staff_roles if any(word in r for word in allperms)]
+            if matching_perms:
+                return True
+            else:
+                return False
             
-            #request.user.has_perm('cider.'+self.rolename+'_'+info_groupid)
         else:
             return False
-
-        info_resourceid = request.parser_context["kwargs"]['info_resourceid']
-        resource = CiderInfrastructure.objects.get(info_resourceid=info_resourceid)
-        info_resourceid = resource.info_resourceid
-        try:
-            cidergroup = CiderGroups.objects.filter(info_resourceids__contains=[info_resourceid]).first()
-        except Exception:
-            return False
-        if not cidergroup:
-            raise (ResourceIDError(
-                       f"{info_resourceid} not found in any CiderGroup"))
-            return False
-        else:
-            info_groupid = cidergroup.info_groupid
-        # Do we want different perms here for read only?
-        # Read permissions are allowed to any request.
-        #if request.method in ['GET', 'HEAD', 'OPTIONS']:
-        #if request.method in ['HEAD', 'OPTIONS']:
-        #    return True
-
-        # Write permissions are only allowed to the owner.
-        if request.user.is_authenticated:
-            #print(f'User {request.user.username} is authenticated')
 
 
 class IsAccessStaff(IsStaffRole):
-    """This authorizes authenticated users who belong to the group:"""
-    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    """This authorizes authenticated users who hold the 'all.staff_access-ci.org' permission"""
+    """This permission is attached to all staff groups (project, RP, integration badges)"""
     def __init__(self, rolename=''):
         super().__init__(rolename)
         self.rolename = 'all.staff_access-ci.org'
 
 
 class IsAccessProjectStaff(IsStaffRole):
-    """This authorizes authenticated users who belong to the group:"""
-    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    """This authorizes authenticated users who hold the 'project.staff_access-ci.org' permission"""
+    """This permission is attached to the five ACCESS project staff groups:"""
+    """urn:group:access-ci.org:aco.access-ci.org:staff"""
+    """urn:group:access-ci.org:allocations.access-ci.org:staff"""
+    """urn:group:access-ci.org:support.access-ci.org:staff"""
+    """urn:group:access-ci.org:metrics.access-ci.org:staff"""
+    """urn:group:access-ci.org:operations.access-ci.org:staff"""
     def __init__(self, rolename=''):
         super().__init__(rolename)
         self.rolename = 'project.staff_access-ci.org'
 
 
 class IsAccessRPStaff(IsStaffRole):
-    """This authorizes authenticated users who belong to the group:"""
-    """urn:group:access-ci.org:operations.access-ci.org:concierge (for verifying badges)"""
+    """This authorizes authenticated users who hold the 'rp.staff_access-ci.org' permission"""
+    """This permission is attached to all of the ACCESS RP staff groups by resource group, in the form:"""
+    """urn:group:access-ci.org:'+info_groupid+':'+staff"""
     def __init__(self, rolename=''):
         super().__init__(rolename)
         self.rolename = 'rp.staff_access-ci.org'
