@@ -1,3 +1,6 @@
+v3.81.0 2026-08-26 Dinuka
+ - Adding the missing `required` and `sequence_no` fields to `resource_roadmap_badge_tasks` endpoint response (CTT-1082)
+
 v3.80 2026-08-14 JP
  - CTT-974 Fix incorrect html templage, add id pk to detail html templates
  - CTT-974 Cleanup warehouse_state/views handling of arguments and parameters
