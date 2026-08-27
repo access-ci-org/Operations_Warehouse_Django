@@ -115,7 +115,7 @@ for project in ["aco", "allocations", "support", "metrics", "operations"]:
         cname=f"staff_{project}.access-ci.org"
 
         permission, perm_status = Permission.objects.update_or_create(codename=cname, defaults={'name':sname, 'content_type':content_type})
-        newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:'+{project}+'.access-ci.org:staff')
+        newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:'+project+'.access-ci.org:staff')
         try:
             newgroup.permissions.get(codename=cname, content_type=content_type)
         except Exception as e:
