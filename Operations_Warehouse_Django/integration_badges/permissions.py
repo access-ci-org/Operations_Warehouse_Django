@@ -108,7 +108,7 @@ class IsBadgeMaintainer(IsStaffRole):
 
 
 class IsIntegrationStaff(permissions.BasePermission):
-    """This authorizes authenticated users who hold _any_ role in the Integration Badges model""
+    """This authorizes authenticated users who hold _any_ role in the Integration Badges model"""
 
     def has_permission(self, request, view):
         badge_staff_roles = ["implementer", "coordinator", "concierge", "roadmap.maintainer", "badge.maintainer"]
