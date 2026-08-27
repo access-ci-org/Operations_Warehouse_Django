@@ -150,7 +150,7 @@ class IsAccessProjectStaff(IsStaffRole):
 class IsAccessRPStaff(IsStaffRole):
     """This authorizes authenticated users who hold the 'rp.staff_access-ci.org' permission"""
     """This permission is attached to all of the ACCESS RP staff groups by resource group, in the form:"""
-    """urn:group:access-ci.org:'+info_groupid+':'+staff"""
+    """urn:group:access-ci.org:<info_groupid>:staff"""
     def __init__(self, rolename=''):
         super().__init__(rolename)
         self.rolename = 'rp.staff_access-ci.org'
