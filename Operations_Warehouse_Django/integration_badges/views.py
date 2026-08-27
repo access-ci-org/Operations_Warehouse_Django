@@ -27,7 +27,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from .models import Resource_Badge_Workflow
-from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
+from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, IsAccessStaff, ReadOnly
 
 log = logging.getLogger(f'access-ci.{__name__}')
 
@@ -689,6 +689,7 @@ class Resource_Contacts_v1(GenericAPIView):
     '''
     ACCESS Active Resource Contacts
     '''
+    permission_classes = (IsAccessStaff,)
     #    permission_classes = (IsAuthenticatedOrReadOnly,)
     # permission_classes = (IsAuthenticated,)
     # authentication classes override the defaults, so we need to list them all
