@@ -1,3 +1,8 @@
+v3.82 2026-08-24 JP
+ - CTT-390 New ScrubApplication function to cleanup ApplicationEnnvironment and ApplicationHandle entries
+ - CTT-390 New ScrubApplication function substitutes IDs with limited length digest based values
+ - Convert format() and % string formatting to new and more efficient f-strings
+
 v3.81.0 2026-08-26 Dinuka
  - Adding the missing `required` and `sequence_no` fields to `resource_roadmap_badge_tasks` endpoint response (CTT-1082)
 
