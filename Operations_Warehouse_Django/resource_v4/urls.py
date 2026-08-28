@@ -16,5 +16,6 @@ urlpatterns = [
     path(r'v4/resource/id/<path:id>/', Resource_Detail.as_view(), name='resource-detail'),
     path(r'v4/resource_search/', Resource_Search.as_view(), name='resource-search'),
     path(r'v4/resource_esearch/', Resource_ESearch.as_view(), name='resource-esearch'),
+    path(r'v4/resource_gsearch/', Resource_GSearch.as_view(), name='resource-gsearch'),
     path(r'v4/relations_cache/', Relations_Cache.as_view(), name='relations-cache'),
 ]
