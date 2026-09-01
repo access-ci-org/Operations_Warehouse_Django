@@ -1,3 +1,12 @@
+v3.?? 2026-09-01 JP
+ - Fix several warehouse_state template based page bugs
+ - Improve warehouse_state template based page formatting
+ - Improve warehouse_state template based list page column sorting functionality
+ - New warehouse_state publisher_info detail html page with formatted json field rendering
+ - Fix glue2 templates directory path
+ - Fix glue2 entity_history view bugs
+ - New glue2 entity_history detail html page with formatted json field rendering
+
 v3.82 2026-08-24 JP
  - CTT-390 New ScrubApplication function to cleanup ApplicationEnnvironment and ApplicationHandle entries
  - CTT-390 New ScrubApplication function substitutes IDs with limited length digest based values
