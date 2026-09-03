@@ -65,16 +65,18 @@ for role in ["implementer", "coordinator","staff"]:
             newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:'+obj.info_groupid+':'+role)
             try:
                 newgroup.permissions.get(codename=cname, content_type=content_type)
+                newgroup.permissions.get(codename="all.staff_access-ci.org", content_type=content_type)
+                newgroup.permissions.get(codename="rp.staff_access-ci.org", content_type=content_type)
             except Exception as e:
                 print(f"problem getting permissions from group: {e}")
                 print(f"group in question is:{newgroup}")
                 print(f"permission in question is:{cname}")
                 newgroup.permissions.add(permission)
+                newgroup.permissions.add(all_access_staff_permission)
+                newgroup.permissions.add(rp_access_staff_permission)
                 # If this is the staff role, we need to add
                 # all staff and RP staff permissions to the group
-                if role=="staff":
-                    newgroup.permissions.add(all_access_staff_permission)
-                    newgroup.permissions.add(rp_access_staff_permission)
+                #if role=="staff":
 
             #if not newgroup.permissions.contains(permission):
             #    newgroup.permissions.add(permission)
@@ -95,11 +97,13 @@ for role in ["concierge","badge.maintainer", "roadmap.maintainer"]:
         newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:operations.access-ci.org:'+role)
         try:
             newgroup.permissions.get(codename=role, content_type=content_type)
+            newgroup.permissions.get(codename="all.staff_access-ci.org", content_type=content_type)
         except Exception as e:
             print(f"problem getting permissions from group: {e}")
             print(f"group in question is:{newgroup}")
             print(f"permission in question is:{cname}")
             newgroup.permissions.add(permission)
+            newgroup.permissions.add(all_access_staff_permission)
 
         #if not newgroup.permissions.contains(permission):
         #    newgroup.permissions.add(permission)
@@ -118,6 +122,8 @@ for project in ["aco", "allocations", "support", "metrics", "operations"]:
         newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:'+project+'.access-ci.org:staff')
         try:
             newgroup.permissions.get(codename=cname, content_type=content_type)
+            newgroup.permissions.get(codename="all.staff_access-ci.org", content_type=content_type)
+            newgroup.permissions.get(codename="project.staff_access-ci.org", content_type=content_type)
         except Exception as e:
             print(f"problem getting permissions from group: {e}")
             print(f"group in question is:{newgroup}")
