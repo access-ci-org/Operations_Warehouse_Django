@@ -5,34 +5,47 @@
 <h1 align="center">Aggregated Metric List</h1>
 <p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
 
-<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+<table  class="text-nowrap" style="margin-left:2px" border=1 cellspacing=0 cellpadding=10>
     <tr>
-        <th><a href="?format=html&sort=About">About</a></th>
-        <th><a href="?format=html&sort=MetricName">Metric</a></th>
-        <th><a href="?format=html&sort=SummaryType">Summary Type</a></th>
-        <th><a href="?format=html&sort=SummaryDate">Summary Date</a></th>
-        <th>Count</th>
-        <th>Sum</th>
-        <th>Min</th>
-        <th>Avg</th>
-        <th>Max</th>
-        <th>Error Count</th>
-        <th>Detail</th>
+        <th style="width: 300px"><a href="?format=html&sort={% if sort_by == 'About' %}-About{% else %}About{% endif %}">
+            About
+            {% if sort_by == 'About' %} ▲{% elif sort_by == '-About' %} ▼{% endif %}
+        </a></th>
+        <th style="width: 300px">
+            Metric</th>
+        <th style="width: 50px">Agg Type</th>
+        <th style="width: 100px" class="text-center"><a href="?format=html&sort={% if sort_by == 'AggregationDate' %}-AggregationDate{% else %}AggregationDate{% endif %}">
+            Date
+            {% if sort_by == 'AggregationDate' %} ▲{% elif sort_by == '-AggregationDate' %} ▼{% endif %}
+        </a></th>
+        <th style="width: 75px" class="text-end">Count</th>
+        <th style="width: 75px" class="text-end">Sum</th>
+        <th style="width: 75px" class="text-end">Min</th>
+        <th style="width: 75px" class="text-end">Avg</th>
+        <th style="width: 75px" class="text-end">Max</th>
+        <th style="width: 75px" class="text-end">Errors</th>
+        <th style="width: 50px" class="text-center">Detail</th>
+        <th></th>
     </tr>
 
     {% for record in record_list %}
     <tr>
         <td>{{ record.About }}</td>
         <td>{{ record.MetricName }}</td>
-        <td>{{ record.SummaryType }}</td>
-        <td>{{ record.SummaryDate }}</td>
-        <td align="center">{{ record.MetricCount }}</td>
-        <td align="center">{{ record.MetricValueSum }}</td>
-        <td align="center">{{ record.MetricMinValue }}</td>
-        <td align="center">{{ record.MetricAvgValue }}</td>
-        <td align="center">{{ record.MetricMaxValue }}</td>
-        <td align="center">{{ record.ErrorCount }}</td>
-        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
+        <td class="text-center">{{ record.AggregationType }}</td>
+        <td class="text-center">{{ record.AggregationDate }}</td>
+        <td class="text-end">{{ record.MetricCount }}</td>
+        <td class="text-end">{{ record.MetricValueSum }}</td>
+        <td class="text-end">{{ record.MetricMinValue }}</td>
+        {% if record.MetricMinValue == record.MetricMaxValue %}
+            <td class="text-end">{{ record.MetricAvgValue | floatformat:1 }}</td>
+        {% else %}
+            <td class="text-end text-danger">{{ record.MetricAvgValue | floatformat:1 }}</td>
+        {% endif %}
+        <td class="text-end">{{ record.MetricMaxValue }}</td>
+        <td class="text-end">{{ record.ErrorCount }}</td>
+        <td class="text-center"><a href="{{ record.DetailURL }}?format=html">View</a></td>
+        <td></td>
     </tr>
     {% endfor %}
 </table>

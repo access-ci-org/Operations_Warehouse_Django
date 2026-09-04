@@ -7,10 +7,19 @@
 
 <table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
     <tr>
-        <th><a href="?format=html&sort=ResourceID">ResourceID</a></th>
-        <th><a href="?format=html&sort=Type">Type</a></th>
-        <th><a href="?format=html&sort=Version">Version</a></th>
-        <th><a href="?format=html&sort=CreationTime">Creation Time</a></th>
+        <th><a href="?format=html&sort={% if sort_by == 'ResourceID' %}-ResourceID{% else %}ResourceID{% endif %}">
+            ResourceID
+            {% if sort_by == 'ResourceID' %} ▲{% elif sort_by == '-ResourceID' %} ▼{% endif %}
+        </a></th>
+        <th>Type</th>
+        <th><a href="?format=html&sort={% if sort_by == 'Version' %}-Version{% else %}Version{% endif %}">
+            Version
+            {% if sort_by == 'Version' %} ▲{% elif sort_by == '-Version' %} ▼{% endif %}
+        </a></th>
+        <th><a href="?format=html&sort={% if sort_by == 'CreationTime' %}-CreationTime{% else %}CreationTime{% endif %}">
+            Creation Time
+            {% if sort_by == 'CreationTime' %} ▲{% elif sort_by == '-CreationTime' %} ▼{% endif %}
+        </a></th>
         <th>Global ID (detail)</th>
     </tr>
     

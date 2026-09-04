@@ -1,3 +1,14 @@
+v3.84.0 2026-09-04 JP
+ - Fix several warehouse_state template based page bugs
+ - Improve warehouse_state template based page formatting
+ - Improve warehouse_state template based list page column sorting functionality
+ - New warehouse_state publisher_info detail html page with formatted json field rendering
+ - Fix glue2 templates directory path
+ - Fix glue2 entity_history view bugs
+ - New glue2 entity_history detail html page with formatted json field rendering
+ - Consolidate into web/templatetags/json_filters.py instead of in multiple apps which generates a Django backend warning
+ - Apply prety_json to warehouse_state/details.html
+
 v3.83.0 2026-09-04 Eric
  - CTT-972 CTT-973  Integration Badges resource_contacts and CiDeR contacts now use new IsAccessStaff permission class. New all.staff, project.staff, rp.staff permissions, and the groups to support them
 
