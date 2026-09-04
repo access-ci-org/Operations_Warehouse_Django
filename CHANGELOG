@@ -1,3 +1,6 @@
+v3.83.0 2026-09-04 Eric
+ - CTT-972 CTT-973  Integration Badges resource_contacts and CiDeR contacts now use new IsAccessStaff permission class. New all.staff, project.staff, rp.staff permissions, and the groups to support them
+
 v3.82 2026-08-24 JP
  - CTT-390 New ScrubApplication function to cleanup ApplicationEnnvironment and ApplicationHandle entries
  - CTT-390 New ScrubApplication function substitutes IDs with limited length digest based values
