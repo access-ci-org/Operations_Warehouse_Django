@@ -30,7 +30,7 @@
         <td class="text-end">{{ record.MetricValue }}</td>
         <td class="text-end">{{ record.ProcessingError }}</td>
         <td class="text-center">{{ record.ProcessingTimestamp }}</td>
-        <td class="text-center"><a href="{{ record.DetailURL }}?format=html">View</a></td>
+        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
     </tr>
     {% endfor %}
 </table>

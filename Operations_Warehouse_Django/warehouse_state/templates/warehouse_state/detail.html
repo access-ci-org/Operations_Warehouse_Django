@@ -1,4 +1,5 @@
 {% extends "base_detail.html" %}
+{% load json_filters %}
 {% block title %}Processing Status{% endblock %}
 {% block content %}
 
@@ -19,9 +20,9 @@
         <td> {{ record.Topic }}</th>
     </tr>
     
-    <tr>
+    <tr class="align-top">
         <th>Message</th>
-        <td>{{ record.ProcessingMessage }}</th>
+        <td><pre>{{ record.ProcessingMessage|pretty_json }}</pre></th>
     </tr>
     
     <tr>
