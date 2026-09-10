@@ -5,28 +5,41 @@
 <h1 align="center">Processing Status List</h1>
 <p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
 
-<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+<table class="text-nowrap" style="margin-left:2px" border=1 cellspacing=0 cellpadding=10>
     <tr>
-        <th><a href="?format=html&sort=Topic">Topic</a></th>
-        <th><a href="?format=html&sort=About">About</a></th>
-        <th><a href="?format=html&sort=ProcessingApplication">Application</a></th>
-        <th><a href="?format=html&sort=ProcessingCode">Code</a></th>
-        <th><a href="?format=html&sort=ProcessingMessage">Message</a></th>
-        <th><a href="?format=html&sort=ProcessingEnd">Processed at</a></th>
-        <th>Detail</th>
-        <th>History</th>
+        <th style="width: 300px"><a href="?format=html&sort={% if sort_by == 'About' %}-About{% else %}About{% endif %}">
+            About
+            {% if sort_by == 'About' %} ▲{% elif sort_by == '-About' %} ▼{% endif %}
+        </a></th>
+        <th style="width: 300px"><a href="?format=html&sort={% if sort_by == 'Topic' %}-Topic{% else %}Topic{% endif %}">
+            Topic
+            {% if sort_by == 'Topic' %} ▲{% elif sort_by == '-Topic' %} ▼{% endif %}
+        </a></th>
+        <th style="width: 200px" class="text-center"><a href="?format=html&sort={% if sort_by == 'ProcessingEnd' %}-ProcessingEnd{% else %}ProcessingEnd{% endif %}">
+            Processed at
+            {% if sort_by == 'ProcessingEnd' %} ▲{% elif sort_by == '-ProcessingEnd' %} ▼{% endif %}          
+        </a></th>
+        <th style="width: 50px" class="text-center">Code</th>
+        <th style="width: 50px" class="text-center">Message</th>
+
+        <th style="width: 50px" class="text-center">Detail</th>
+        <th style="width: 50px" class="text-center">History</th>
+        <th style="width: 200px"><a href="?format=html&sort={% if sort_by == 'ProcessingApplication' %}-ProcessingApplication{% else %}ProcessingApplication{% endif %}">
+            Application
+            {% if sort_by == 'ProcessingApplication' %} ▲{% elif sort_by == '-ProcessingApplication' %} ▼{% endif %}
+        </a></th>
     </tr>
     
     {% for record in record_list %}
     <tr>
-        <td>{{ record.Topic }}</td>
         <td>{{ record.About }}</td>
+        <td>{{ record.Topic }}</td>
+        <td class="text-center">{{ record.ProcessingEnd }}</td>
+        <td class="text-center">{{ record.ProcessingCode }}</td>
+        <td class="text-center"><b><div title="{{ record.ProcessingMessage }}">See</div></b></td>
+        <td class="text-center"><a href="{{ record.DetailURL }}?format=html">View</a></td>
+        <td class="text-center"><a href="{{ record.HistoryURL }}?format=html">View</a></td>
         <td>{{ record.ProcessingApplication }}</td>
-        <td align="center">{{ record.ProcessingCode }}</td>
-        <td align="center"><b><div title="{{ record.ProcessingMessage }}">See</div></b></td>
-        <td>{{ record.ProcessingEnd }}</td>
-        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
-        <td><a href="{{ record.HistoryURL }}?format=json">View</a></td>
     </tr>
     {% endfor %}
 {% endblock %}

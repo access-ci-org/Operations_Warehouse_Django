@@ -1,0 +1,38 @@
+{% extends "base_detail.html" %}
+{% load json_filters %}
+{% block title %}Entity History{% endblock %}
+{% block content %}
+
+<h1 align="center">Entity History</h1>
+
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+    {% for record in record_list %}
+<table class="text-nowrap" style="margin-left:2px;margin-right:2px" border=1 cellspacing=0 cellpadding=10>
+    <tr>
+        <th style="width: 200px">ResourceID</th>
+        <td> {{ record.ResourceID }}</th>
+    </tr>
+    
+    <tr>
+        <th>DocumentType</th>
+        <td>{{ record.DocumentType }}</td>
+    </tr>
+    
+    <tr>
+        <th>ReceivedTime</th>
+        <td>{{ record.ReceivedTime |date:'Y-m-d H:i:s e' }}</td>
+    </tr>
+    
+    <tr>
+        <th>ID</th>
+        <td>{{ record.ID }}</td>
+    </tr>
+      
+    <tr class="align-top">
+        <th>EntityJSON</th>
+        <td><pre>{{ record.EntityJSON|pretty_json }}</pre></td>
+    </tr>
+</table>
+    {% endfor %}
+{% endblock %}

@@ -1012,14 +1012,24 @@ class EntityHistory_DbDetail(APIView):
         GLUE2 received entity history
     '''
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (JSONRenderer,TemplateHTMLRenderer,)
     serializer_class = EntityHistory_Serializer
-    def get(self, request, id, format=None):
-        try:
-            object = EntityHistory.objects.get(pk=id)
-        except EntityHistory.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    def get(self, request, format=None, **kwargs):
+        id = kwargs.get('id')
+        if id:
+            try:
+                object = EntityHistory.objects.get(pk=id)
+            except EntityHistory.DoesNotExist:
+                raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='Specified id not found')
+        else:
+            raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='ID not specified')
+        if request.accepted_renderer.format == 'html':
+            return MyAPIResponse(
+                {'record_list': [object]},
+                template_name='glue2/history_detail.html',
+            )        
         serializer = EntityHistory_Serializer(object)
-        return Response(serializer.data)
+        return MyAPIResponse({'record_list': [serializer.data]})
 
 ##############
 # Software information comes from ApplicationHandle and the related ApplicationEnvironment
