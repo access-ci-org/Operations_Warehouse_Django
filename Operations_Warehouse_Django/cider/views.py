@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from cilogon_tokenauth.auth import CITokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from integration_badges.permissions import IsAccessStaff
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -39,8 +40,9 @@ class CiderInfrastructure_v1_ACCESSContacts(GenericAPIView):
     '''
     ACCESS Active Resource Contacts
     '''
-#    permission_classes = (IsAuthenticatedOrReadOnly,)
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsAuthenticatedOrReadOnly,)
+    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAccessStaff,)
     # authentication classes override the defaults, so we need to list them all
     authentication_classes = (BasicAuthentication, CITokenAuthentication, SessionAuthentication,)
     # renderer_classes = (TemplateHTMLRenderer, JSONRenderer)

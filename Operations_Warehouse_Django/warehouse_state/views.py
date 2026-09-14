@@ -40,13 +40,20 @@ class ProcessingStatus_DbList(ListAPIView):
                 objects = ProcessingStatus.objects.all()
             except ProcessingStatus.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='No objects found')
+
         sort_by = request.GET.get('sort')
-        if sort_by:
-            objects_sorted = objects.order_by(sort_by)
-        else:
+        try: # Primary and secondary sort
+            if sort_by.endswith('ProcessingEnd'):
+                objects_sorted = objects.order_by(sort_by, 'About')
+            elif sort_by:   # All others
+                objects_sorted = objects.order_by(sort_by, '-ProcessingEnd')
+            else:
+                objects_sorted = objects
+        except:
             objects_sorted = objects
+
         serializer = ProcessingStatus_DetailURL_DbSerializer(objects_sorted, context={'request': request}, many=True)
-        return MyAPIResponse({'record_list': serializer.data}, template_name='warehouse_state/list.html')
+        return MyAPIResponse({'record_list': serializer.data, 'sort_by': sort_by}, template_name='warehouse_state/list.html')
 
 class ProcessingMetric_DbList(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -80,9 +87,12 @@ class ProcessingMetric_DbList(ListAPIView):
             except ProcessingMetric.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='No objects found')
 
+        sort_by = request.GET.get('sort','-ProcessingTimestamp')
         try:
-            sort_by = request.GET.get('sort')
-            objects_sorted = objects.order_by(sort_by)
+            if sort_by.endswith('About'):
+                objects_sorted = objects.order_by(sort_by, '-ProcessingTimestamp')
+            else:
+                objects_sorted = objects.order_by(sort_by)
         except:
             objects_sorted = objects
 
@@ -92,7 +102,7 @@ class ProcessingMetric_DbList(ListAPIView):
             many=True,
         )
         return MyAPIResponse(
-            {'record_list': serializer.data},
+            {'record_list': serializer.data, 'sort_by': sort_by},
             template_name='warehouse_state/processingmetric_list.html',
         )
 
@@ -145,9 +155,14 @@ class AggregatedMetric_DbList(ListAPIView):
             except MetricAggregation.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='No objects found')
 
-        try:
-            sort_by = request.GET.get('sort')
-            objects_sorted = objects.order_by(sort_by)
+        sort_by = request.GET.get('sort','-AggregationDate')
+        try: # Primary and secondary sort
+            if sort_by.endswith('AggregationDate'):
+                objects_sorted = objects.order_by(sort_by, 'About')
+            elif sort_by.endswith('About'):
+                objects_sorted = objects.order_by(sort_by, '-AggregationDate')
+            else:
+                objects_sorted = objects.order_by(sort_by)
         except:
             objects_sorted = objects
 
@@ -157,7 +172,7 @@ class AggregatedMetric_DbList(ListAPIView):
             many=True,
         )
         return MyAPIResponse(
-            {'record_list': serializer.data},
+            {'record_list': serializer.data, 'sort_by': sort_by},
             template_name='warehouse_state/aggregatedmetric_list.html',
         )
 
@@ -248,13 +263,23 @@ class PublisherInfo_DbList(ListAPIView):
                 objects = PublisherInfo.objects.all()
             except PublisherInfo.DoesNotExist:
                 raise MyAPIException(code=status.HTTP_404_NOT_FOUND, detail='No objects found')
-        try:
-            sort_by = request.GET.get('sort')
-            objects_sorted = objects.order_by(sort_by)
+                sort_by = request.GET.get('sort','-ProcessingTimestamp')
+
+        sort_by = request.GET.get('sort','-CreationTime')
+        try: # Primary and secondary sort
+            if sort_by.endswith('CreationTime'):
+                objects_sorted = objects.order_by(sort_by, 'ResourceID')
+            elif sort_by.endswith('ResourceID'):
+                objects_sorted = objects.order_by(sort_by, '-CreationTime')
+            elif sort_by.endswith('Version'):
+                objects_sorted = objects.order_by(sort_by, '-CreationTime')
+            else:
+                objects_sorted = objects.order_by(sort_by)
         except:
             objects_sorted = objects
+
         serializer = PublisherInfo_DetailURL_DbSerializer(objects_sorted, context={'request': request}, many=True)
-        return MyAPIResponse({'record_list': serializer.data}, template_name='warehouse_state/publisher_list.html')
+        return MyAPIResponse({'record_list': serializer.data, 'sort_by': sort_by}, template_name='warehouse_state/publisher_list.html')
 
 class PublisherInfo_Detail(GenericAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)

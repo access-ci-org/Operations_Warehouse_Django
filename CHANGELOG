@@ -1,3 +1,25 @@
+v3.84.0 2026-09-04 JP
+ - Fix several warehouse_state template based page bugs
+ - Improve warehouse_state template based page formatting
+ - Improve warehouse_state template based list page column sorting functionality
+ - New warehouse_state publisher_info detail html page with formatted json field rendering
+ - Fix glue2 templates directory path
+ - Fix glue2 entity_history view bugs
+ - New glue2 entity_history detail html page with formatted json field rendering
+ - Consolidate into web/templatetags/json_filters.py instead of in multiple apps which generates a Django backend warning
+ - Apply prety_json to warehouse_state/details.html
+
+v3.83.0 2026-09-04 Eric
+ - CTT-972 CTT-973  Integration Badges resource_contacts and CiDeR contacts now use new IsAccessStaff permission class. New all.staff, project.staff, rp.staff permissions, and the groups to support them
+
+v3.82 2026-08-24 JP
+ - CTT-390 New ScrubApplication function to cleanup ApplicationEnnvironment and ApplicationHandle entries
+ - CTT-390 New ScrubApplication function substitutes IDs with limited length digest based values
+ - Convert format() and % string formatting to new and more efficient f-strings
+
+v3.81.0 2026-08-26 Dinuka
+ - Adding the missing `required` and `sequence_no` fields to `resource_roadmap_badge_tasks` endpoint response (CTT-1082)
+
 v3.80 2026-08-14 JP
  - CTT-974 Fix incorrect html templage, add id pk to detail html templates
  - CTT-974 Cleanup warehouse_state/views handling of arguments and parameters

@@ -27,7 +27,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from .models import Resource_Badge_Workflow
-from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, ReadOnly
+from .permissions import IsRoadmapMaintainer, IsBadgeMaintainer, IsCoordinator, IsImplementer, IsConcierge, IsAccessStaff, ReadOnly
 
 log = logging.getLogger(f'access-ci.{__name__}')
 
@@ -689,6 +689,7 @@ class Resource_Contacts_v1(GenericAPIView):
     '''
     ACCESS Active Resource Contacts
     '''
+    permission_classes = (IsAccessStaff,)
     #    permission_classes = (IsAuthenticatedOrReadOnly,)
     # permission_classes = (IsAuthenticated,)
     # authentication classes override the defaults, so we need to list them all
@@ -1880,13 +1881,15 @@ class Resource_Roadmap_Badge_Tasks_Status_v1(GenericAPIView):
             status=Subquery(task_workflow_status_subquery.values('status')[:1]),
             status_updated_at=Subquery(task_workflow_status_subquery.values('status_updated_at')[:1]),
             status_updated_by=Subquery(task_workflow_status_subquery.values('status_updated_by')[:1]),
-            comment=Subquery(task_workflow_status_subquery.values('comment')[:1])
+            comment=Subquery(task_workflow_status_subquery.values('comment')[:1]),
+            required=F('badge__badge_tasks__required'),
+            sequence_no=F('badge__badge_tasks__sequence_no')
         )
 
         if badge_task_workflow_status is not None:
             result = result.filter(status=badge_task_workflow_status)
 
-        result = result.order_by("-status_updated_at", "info_resourceid", "roadmap_id", "badge_id", "task_id")
+        result = result.order_by("info_resourceid", "roadmap_id", "badge_id", "sequence_no")
 
         return MyAPIResponse({"results": result.values()})
 
