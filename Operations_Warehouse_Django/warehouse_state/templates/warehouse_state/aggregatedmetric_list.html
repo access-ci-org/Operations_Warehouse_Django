@@ -1,0 +1,40 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}Aggregated Metric List{% endblock %}
+{% block content %}
+
+<h1 align="center">Aggregated Metric List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=About">About</a></th>
+        <th><a href="?format=html&sort=MetricName">Metric</a></th>
+        <th><a href="?format=html&sort=SummaryType">Summary Type</a></th>
+        <th><a href="?format=html&sort=SummaryDate">Summary Date</a></th>
+        <th>Count</th>
+        <th>Sum</th>
+        <th>Min</th>
+        <th>Avg</th>
+        <th>Max</th>
+        <th>Error Count</th>
+        <th>Detail</th>
+    </tr>
+
+    {% for record in record_list %}
+    <tr>
+        <td>{{ record.About }}</td>
+        <td>{{ record.MetricName }}</td>
+        <td>{{ record.SummaryType }}</td>
+        <td>{{ record.SummaryDate }}</td>
+        <td align="center">{{ record.MetricCount }}</td>
+        <td align="center">{{ record.MetricValueSum }}</td>
+        <td align="center">{{ record.MetricMinValue }}</td>
+        <td align="center">{{ record.MetricAvgValue }}</td>
+        <td align="center">{{ record.MetricMaxValue }}</td>
+        <td align="center">{{ record.ErrorCount }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

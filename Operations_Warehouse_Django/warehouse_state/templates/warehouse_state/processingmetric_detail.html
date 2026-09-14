@@ -1,0 +1,19 @@
+{% extends "base_detail.html" %}
+{% block title %}Processing Metric{% endblock %}
+{% block content %}
+
+<h1 align="center">Processing Metric</h1>
+
+{% for record in record_list %}
+<table id="data" width="98%" style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr><th>About</th><td>{{ record.About }}</td></tr>
+    <tr><th>ProcessingID</th><td>{{ record.ProcessingID }}</td></tr>
+    <tr><th>ProcessingTimestamp</th><td>{{ record.ProcessingTimestamp }}</td></tr>
+    <tr><th>ProcessingError</th><td>{{ record.ProcessingError }}</td></tr>
+    <tr><th>MetricName</th><td>{{ record.MetricName }}</td></tr>
+    <tr><th>MetricValue</th><td>{{ record.MetricValue }}</td></tr>
+    <tr><th>id</th><td>{{ record.id }}</td></tr>
+</table>
+{% endfor %}
+
+{% endblock %}

@@ -36,7 +36,7 @@ from django.apps import apps
 
 # logging for debugging
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f'access-ci.{__name__}')
 
 @method_decorator(cache_page(60 * 5), name='get')
 class GroupBadgeStatusView(TemplateView):

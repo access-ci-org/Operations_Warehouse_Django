@@ -1,6 +1,6 @@
 [project]
 name = "Operations_Warehouse_Django"
-version = "3.72.0"
+version = "3.78.0"
 description = "ACCESS Operations (CONECT) Warehouse Django API Interface"
 readme = "README.md"
 requires-python = "==3.12.*"
@@ -25,6 +25,6 @@ dependencies = [
     "pyyaml",
     "requests",
     "requests-oauth2client",
-    "access-django-user-admin==1.5.2",
+    "access-django-user-admin==1.6.2",
     "cilogon-tokenauth==0.4.*",
 ]

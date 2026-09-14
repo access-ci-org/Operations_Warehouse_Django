@@ -1,0 +1,32 @@
+{% extends "web/base_nav_none.html" %}
+{% block title %}Processing Metric List{% endblock %}
+{% block content %}
+
+<h1 align="center">Processing Metric List</h1>
+<p><h3>As of: {% now 'Y-m-d H:i e' %}</h3></p>
+
+<table style="margin-left:2px" border=1 cellspacing=0 cellpadding=3>
+    <tr>
+        <th><a href="?format=html&sort=About">About</a></th>
+        <th><a href="?format=html&sort=ProcessingID">ProcessingID</a></th>
+        <th><a href="?format=html&sort=ProcessingTimestamp">Timestamp</a></th>
+        <th><a href="?format=html&sort=MetricName">Metric</a></th>
+        <th><a href="?format=html&sort=MetricValue">Value</a></th>
+        <th>Error</th>
+        <th>Detail</th>
+    </tr>
+
+    {% for record in record_list %}
+    <tr>
+        <td>{{ record.About }}</td>
+        <td>{{ record.ProcessingID }}</td>
+        <td>{{ record.ProcessingTimestamp }}</td>
+        <td>{{ record.MetricName }}</td>
+        <td align="center">{{ record.MetricValue }}</td>
+        <td>{{ record.ProcessingError }}</td>
+        <td><a href="{{ record.DetailURL }}?format=html">View</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

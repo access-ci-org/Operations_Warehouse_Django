@@ -62,3 +62,55 @@ class PublisherInfo_DetailURL_DbSerializer(serializers.ModelSerializer):
         model = PublisherInfo
         fields = copy.copy([f.name for f in PublisherInfo._meta.get_fields(include_parents=False)])
         fields.append('DetailURL')
+
+
+class ProcessingMetric_DbSerializer(serializers.ModelSerializer):
+    ProcessingTimestamp = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S %Z')
+
+    class Meta:
+        model = ProcessingMetric
+        fields = copy.copy([f.name for f in ProcessingMetric._meta.get_fields(include_parents=False)])
+
+
+class ProcessingMetric_DetailURL_DbSerializer(serializers.ModelSerializer):
+    ProcessingTimestamp = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S %Z')
+    DetailURL = serializers.SerializerMethodField()
+
+    def get_DetailURL(self, metric: ProcessingMetric) -> str:
+        http_request = self.context.get('request')
+        if not http_request:
+            return ''
+        return http_request.build_absolute_uri(
+            iri_to_uri(reverse('processingmetric-detail', kwargs={'id': metric.id}))
+        )
+
+    class Meta:
+        model = ProcessingMetric
+        fields = copy.copy([f.name for f in ProcessingMetric._meta.get_fields(include_parents=False)])
+        fields.append('DetailURL')
+
+
+class MetricAggregation_DbSerializer(serializers.ModelSerializer):
+    AggregationDate = serializers.DateField(format='%Y-%m-%d')
+
+    class Meta:
+        model = MetricAggregation
+        fields = copy.copy([f.name for f in MetricAggregation._meta.get_fields(include_parents=False)])
+
+
+class MetricAggregation_DetailURL_DbSerializer(serializers.ModelSerializer):
+    AggregationDate = serializers.DateField(format='%Y-%m-%d')
+    DetailURL = serializers.SerializerMethodField()
+
+    def get_DetailURL(self, summary: MetricAggregation) -> str:
+        http_request = self.context.get('request')
+        if not http_request:
+            return ''
+        return http_request.build_absolute_uri(
+            iri_to_uri(reverse('aggregatedmetric-detail', kwargs={'id': summary.id}))
+        )
+
+    class Meta:
+        model = MetricAggregation
+        fields = copy.copy([f.name for f in MetricAggregation._meta.get_fields(include_parents=False)])
+        fields.append('DetailURL')

@@ -16,7 +16,17 @@ class PublisherInfo_Admin(admin.ModelAdmin):
     list_display = ('ResourceID', 'Type', 'Hostname', 'ID')
     list_display_links = ['ID']
 
+class ProcessingMetric_Admin(admin.ModelAdmin):
+    list_display = ('MetricName', 'MetricValue', 'About', 'ProcessingTimestamp', 'id')
+    list_display_links = ['id']
+
+class MetricAggregation_Admin(admin.ModelAdmin):
+    list_display = ('MetricName', 'About', 'AggregationType', 'AggregationDate', 'ErrorCount', 'id')
+    list_display_links = ['id']
+
 # Register your models here.
 admin.site.register(ProcessingStatus, ProcessingStatus_Admin)
 admin.site.register(ProcessingError, ProcessingError_Admin)
 admin.site.register(PublisherInfo, PublisherInfo_Admin)
+admin.site.register(ProcessingMetric, ProcessingMetric_Admin)
+admin.site.register(MetricAggregation, MetricAggregation_Admin)

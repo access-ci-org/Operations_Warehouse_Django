@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 import logging
-mylogger = logging.getLogger('warehouse.logger')
+mylogger = logging.getLogger(f'access-ci.{__name__}')
 
 class ProcessingException(Exception):
     def __init__(self, response, status):

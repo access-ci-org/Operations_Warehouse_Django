@@ -9,7 +9,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from allauth.socialaccount.signals import pre_social_login
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f'access-ci.{__name__}')
 
 @receiver(user_logged_in)
 def set_username(request, user, **kwargs):
