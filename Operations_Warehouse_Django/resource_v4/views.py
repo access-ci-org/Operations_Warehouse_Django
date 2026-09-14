@@ -1,3 +1,4 @@
+import json
 from django.db.models import Count
 from django.conf import settings as django_settings
 from django.core.paginator import Paginator
@@ -897,7 +898,7 @@ class Resource_GSearch(APIView):
     serializer_class = None
 
     def __init__(self, *args, **kwargs):
-        self.allowed_params = ['q', 'filter', 'fields', 'sort_by', 'limit', 'offset']
+        self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort']
         self.app = globus_sdk.ClientApp(
             "ACCESS-CI Operations Warehouse Globus Service Client",
             client_id=settings.GLOBUS_CLIENT_ID,
@@ -907,23 +908,47 @@ class Resource_GSearch(APIView):
         self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
         super().__init__(*args, **kwargs)
 
+    # Parameters that the Globus Search API expects as JSON structures, not plain strings
+    JSON_PARAMS = {'sort', 'filters', 'facets'}
+
+    @extend_schema(parameters=[
+            OpenApiParameter('q', str, OpenApiParameter.QUERY,
+                description='Search query string (default: *)'),
+            OpenApiParameter('limit', int, OpenApiParameter.QUERY,
+                description='Maximum number of results to return'),
+            OpenApiParameter('offset', int, OpenApiParameter.QUERY,
+                description='Offset into the result set for pagination'),
+            OpenApiParameter('filters', str, OpenApiParameter.QUERY,
+                description='Globus Search filter expression (JSON array)'),
+            OpenApiParameter('facets', str, OpenApiParameter.QUERY,
+                description='Globus Search facet specification (JSON array)'),
+            OpenApiParameter('sort', str, OpenApiParameter.QUERY,
+                description='Sort specification (JSON array, e.g. [{"field_name":"title","order":"asc"}])'),
+        ])
     def get(self, request, *args, **kwargs):
         # Perform a quick query on the Globus search endpoint
-        cleaned_params = {}
-        if "q" not in request.query_params.lists():
-            cleaned_params["q"] = "*"
+        cleaned_params = {"q": "*"}
 
         for query_param in request.query_params.lists():
-            if query_param[0] not in self.allowed_params:
+            name = query_param[0]
+            if name not in self.allowed_params:
                 return Response(
-                    {"error": f"Invalid query parameter: {query_param[0]}"},
+                    {"error": f"Invalid query parameter: {name}"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            cleaned_params[query_param[0]] = request.query_params[query_param[0]]
+            value = request.query_params[name]
+            if name in self.JSON_PARAMS:
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    return Response(
+                        {"error": f"Parameter '{name}' must be valid JSON"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            cleaned_params[name] = value
 
         if request.data:
-            post_params = request.data
-            cleaned_params = {**cleaned_params, **post_params}
+            cleaned_params = {**cleaned_params, **request.data}
         search_query = globus_sdk.SearchQueryV1(**cleaned_params)
         search = self.search_client.post_search(
             self.search_endpoint,
