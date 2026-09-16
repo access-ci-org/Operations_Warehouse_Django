@@ -1,3 +1,4 @@
+import json
 from django.db.models import Count
 from django.conf import settings as django_settings
 from django.core.paginator import Paginator
@@ -9,15 +10,21 @@ from django.utils import timezone
 from django.utils.encoding import uri_to_iri
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
+from cider.models import *
+from glue2.models import *
+from django.conf import settings
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+import globus_sdk
 
 import datetime
 from datetime import datetime, timedelta
@@ -883,3 +890,68 @@ class Relations_Cache(GenericAPIView):
         count = ResourceV4Index.Cache_Lookup_Relations()
         response_obj = {'cached': count, 'seconds': (datetime.now(timezone.utc) - start_utc).total_seconds()}
         return MyAPIResponse(response_obj)
+
+
+class Resource_GSearch(APIView):
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = None
+
+    def __init__(self, *args, **kwargs):
+        self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort']
+        self.app = globus_sdk.ClientApp(
+            "ACCESS-CI Operations Warehouse Globus Service Client",
+            client_id=settings.GLOBUS_CLIENT_ID,
+            client_secret=settings.GLOBUS_CLIENT_SECRET
+        )
+        self.search_client = globus_sdk.SearchClient(app=self.app)
+        self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
+        super().__init__(*args, **kwargs)
+
+    # Parameters that the Globus Search API expects as JSON structures, not plain strings
+    JSON_PARAMS = {'sort', 'filters', 'facets'}
+
+    @extend_schema(parameters=[
+            OpenApiParameter('q', str, OpenApiParameter.QUERY,
+                description='Search query string (default: *)'),
+            OpenApiParameter('limit', int, OpenApiParameter.QUERY,
+                description='Maximum number of results to return'),
+            OpenApiParameter('offset', int, OpenApiParameter.QUERY,
+                description='Offset into the result set for pagination'),
+            OpenApiParameter('filters', str, OpenApiParameter.QUERY,
+                description='Globus Search filter expression (JSON array)'),
+            OpenApiParameter('facets', str, OpenApiParameter.QUERY,
+                description='Globus Search facet specification (JSON array)'),
+            OpenApiParameter('sort', str, OpenApiParameter.QUERY,
+                description='Sort specification (JSON array, e.g. [{"field_name":"title","order":"asc"}])'),
+        ])
+    def get(self, request, *args, **kwargs):
+        # Perform a quick query on the Globus search endpoint
+        cleaned_params = {"q": "*"}
+
+        for query_param in request.query_params.lists():
+            name = query_param[0]
+            if name not in self.allowed_params:
+                return Response(
+                    {"error": f"Invalid query parameter: {name}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            value = request.query_params[name]
+            if name in self.JSON_PARAMS:
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    return Response(
+                        {"error": f"Parameter '{name}' must be valid JSON"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            cleaned_params[name] = value
+
+        if request.data:
+            cleaned_params = {**cleaned_params, **request.data}
+        search_query = globus_sdk.SearchQueryV1(**cleaned_params)
+        search = self.search_client.post_search(
+            self.search_endpoint,
+            search_query
+        )
+        return Response(search.data, content_type="application/json")
