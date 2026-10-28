@@ -208,6 +208,7 @@ if SETTINGS_MODE == 'SERVER':
     LOGIN_URL = '/accounts/cilogon/login/'
     LOGIN_REDIRECT_URL = '/'
     SOCIALACCOUNT_QUERY_EMAIL = True
+    SOCIALACCOUNT_LOGIN_ON_GET = True
 
     INSTALLED_APPS += (
         'corsheaders',
