@@ -19,10 +19,12 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from access_django_user_admin import views
-from .views import Debug_Dump
+from .views import Debug_Dump, auto_login_view
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/docs/') ),
+    # This intercepts the standard allauth login path and redirects immediately
+    path('accounts/autologin/', auto_login_view, name='account_login'),
     path('accounts/', include('allauth.urls') ),
     path('admin/', admin.site.urls),
     path('docs/', include('web.urls') ),
