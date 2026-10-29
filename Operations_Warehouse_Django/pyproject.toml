@@ -27,5 +27,5 @@ dependencies = [
     "requests-oauth2client",
     "access-django-user-admin==1.6.2",
     "cilogon-tokenauth==0.4.*",
-    "ACCESS-CI-django-sso-middleware @ git+https://github.com/access-ci-org/ACCESS-CI-django-sso-middleware.git",
+    "ACCESS-CI-django-sso-middleware @ git+https://github.com/access-ci-org/ACCESS-CI-django-sso-middleware.git@v0.1.0",
 ]
