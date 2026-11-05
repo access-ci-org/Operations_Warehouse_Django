@@ -1,3 +1,6 @@
+v3.84.1 2026-11-05 EBB
+ - Add configuration for ACCESS-CI SSO
+
 v3.84.0 2026-09-04 JP
  - Fix several warehouse_state template based page bugs
  - Improve warehouse_state template based page formatting
