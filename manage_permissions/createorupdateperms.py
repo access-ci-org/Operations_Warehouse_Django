@@ -59,14 +59,20 @@ for role in ["implementer", "coordinator","staff"]:
         try:
             cname = role+'_'+str(obj.info_groupid)
             sname = str.capitalize(role)+' for ' + str(obj.info_groupid)
+            staffname = 'staff'+'_'+str(obj.info_groupid)
+            staffsname = 'Staff'+' for ' + str(obj.info_groupid)
 
             permission, perm_status = Permission.objects.update_or_create(codename=cname, defaults={'name':sname, 'content_type':content_type})
+            staffpermission, perm_status = Permission.objects.update_or_create(codename=staffname, defaults={'name':staffsname, 'content_type':content_type})
             #permission = Permission.objects.update_or_create(codename=role+'_'+str(obj.info_groupid), name='Implementer for ' + str(obj.info_groupid), content_typer=:content_type, defaults={'codename':role+'_'+str(obj.info_groupid), 'name':'Implementer for ' + str(obj.info_groupid), 'content_type':content_type})
             newgroup, status = Group.objects.update_or_create(name='urn:group:access-ci.org:'+obj.info_groupid+':'+role)
             try:
                 newgroup.permissions.get(codename=cname, content_type=content_type)
                 newgroup.permissions.get(codename="all.staff_access-ci.org", content_type=content_type)
                 newgroup.permissions.get(codename="rp.staff_access-ci.org", content_type=content_type)
+                # Always checking for staff permission, as both implementer
+                # and coordinator will get staff permission
+                newgroup.permissions.get(codename=staffname, content_type=content_type)
             except Exception as e:
                 print(f"problem getting permissions from group: {e}")
                 print(f"group in question is:{newgroup}")
@@ -74,9 +80,9 @@ for role in ["implementer", "coordinator","staff"]:
                 newgroup.permissions.add(permission)
                 newgroup.permissions.add(all_access_staff_permission)
                 newgroup.permissions.add(rp_access_staff_permission)
-                # If this is the staff role, we need to add
-                # all staff and RP staff permissions to the group
-                #if role=="staff":
+                # Always adding staff permission, as both implementer and
+                # coordinator need it, and adding it twice is fine.
+                newgroup.permissions.add(staffpermission)
 
             #if not newgroup.permissions.contains(permission):
             #    newgroup.permissions.add(permission)
