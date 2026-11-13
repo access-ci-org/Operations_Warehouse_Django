@@ -896,9 +896,11 @@ class Resource_GSearch(APIView):
     authentication_classes = []
     permission_classes = []
     serializer_class = None
+    # Always render JSON, even for browsers sending Accept: text/html
+    renderer_classes = [JSONRenderer]
 
     def __init__(self, *args, **kwargs):
-        self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort']
+        self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort', 'format']
         self.app = globus_sdk.ClientApp(
             "ACCESS-CI Operations Warehouse Globus Service Client",
             client_id=settings.GLOBUS_CLIENT_ID,
@@ -924,6 +926,8 @@ class Resource_GSearch(APIView):
                 description='Globus Search facet specification (JSON array)'),
             OpenApiParameter('sort', str, OpenApiParameter.QUERY,
                 description='Sort specification (JSON array, e.g. [{"field_name":"title","order":"asc"}])'),
+            OpenApiParameter('format', str, OpenApiParameter.QUERY, enum=['json'],
+                description='Response format (only "json" is supported)'),
         ])
     def get(self, request, *args, **kwargs):
         # Perform a quick query on the Globus search endpoint
@@ -936,6 +940,9 @@ class Resource_GSearch(APIView):
                     {"error": f"Invalid query parameter: {name}"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            if name == 'format':
+                # Consumed by DRF content negotiation; not a Globus Search parameter
+                continue
             value = request.query_params[name]
             if name in self.JSON_PARAMS:
                 try:
@@ -950,8 +957,21 @@ class Resource_GSearch(APIView):
         if request.data:
             cleaned_params = {**cleaned_params, **request.data}
         search_query = globus_sdk.SearchQueryV1(**cleaned_params)
-        search = self.search_client.post_search(
-            self.search_endpoint,
-            search_query
-        )
-        return Response(search.data, content_type="application/json")
+        try:
+            search = self.search_client.post_search(
+                self.search_endpoint,
+                search_query
+            )
+        except globus_sdk.GlobusAPIError as e:
+            logg2.error(f"Globus Search API error: {e.http_status} {e.code}: {e.message}")
+            return Response(
+                {"error": e.message, "code": e.code},
+                status=e.http_status
+            )
+        except globus_sdk.GlobusError as e:
+            logg2.error(f"Globus Search error: {e}")
+            return Response(
+                {"error": "Error communicating with Globus Search"},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        return Response(search.data)
