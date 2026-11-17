@@ -893,8 +893,7 @@ class Relations_Cache(GenericAPIView):
 
 
 class Resource_GSearch(APIView):
-    authentication_classes = []
-    permission_classes = []
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = None
     # Always render JSON, even for browsers sending Accept: text/html
     renderer_classes = [JSONRenderer]
