@@ -897,6 +897,8 @@ class Resource_GSearch(APIView):
     serializer_class = None
     # Always render JSON, even for browsers sending Accept: text/html
     renderer_classes = [JSONRenderer]
+    # Only accept requests with 'Content-Type: application/json'
+    parser_classes = [JSONParser]
 
     def __init__(self, *args, **kwargs):
         self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort', 'format']
