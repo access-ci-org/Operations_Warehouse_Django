@@ -9,15 +9,22 @@ from django.utils import timezone
 from django.utils.encoding import uri_to_iri
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.parsers import JSONParser
 
 from .models import *
 from .serializers import *
+from cider.models import *
+from glue2.models import *
+from django.conf import settings
 from warehouse_tools.exceptions import MyAPIException
 from warehouse_tools.responses import MyAPIResponse, CustomPagePagination
+import globus_sdk
 
 import datetime
 from datetime import datetime, timedelta
@@ -883,3 +890,106 @@ class Relations_Cache(GenericAPIView):
         count = ResourceV4Index.Cache_Lookup_Relations()
         response_obj = {'cached': count, 'seconds': (datetime.now(timezone.utc) - start_utc).total_seconds()}
         return MyAPIResponse(response_obj)
+
+
+class Resource_GSearch(APIView):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = None
+    # Always render JSON, even for browsers sending Accept: text/html
+    renderer_classes = [JSONRenderer]
+    # Only accept requests with 'Content-Type: application/json'
+    parser_classes = [JSONParser]
+
+    def __init__(self, *args, **kwargs):
+        self.allowed_params = ['q', 'limit', 'offset', 'facets', 'sort', 'format']
+        self.app = globus_sdk.ClientApp(
+            "ACCESS-CI Operations Warehouse Globus Service Client",
+            client_id=settings.GLOBUS_CLIENT_ID,
+            client_secret=settings.GLOBUS_CLIENT_SECRET
+        )
+        self.search_client = globus_sdk.SearchClient(app=self.app)
+        self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
+        super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def _parse_sort(value):
+        """Convert 'field[:asc|desc],...' into Globus Search sort JSON."""
+        result = []
+        for item in value.split(','):
+            item = item.strip()
+            if not item:
+                continue
+            field, _, order = item.partition(':')
+            field, order = field.strip(), (order.strip().lower() or 'asc')
+            if not field or order not in ('asc', 'desc'):
+                raise ValueError(
+                    "Parameter 'sort' must be a comma-separated list of "
+                    "field[:asc|desc], e.g. sort=title:asc,type:desc")
+            result.append({"field_name": field, "order": order})
+        return result
+
+    @staticmethod
+    def _parse_facets(value):
+        """Convert 'field,...' into Globus Search terms-facet JSON."""
+        fields = [f.strip() for f in value.split(',') if f.strip()]
+        return [{"name": f, "type": "terms", "field_name": f} for f in fields]
+
+    @extend_schema(parameters=[
+            OpenApiParameter('q', str, OpenApiParameter.QUERY,
+                description='Search query string (default: *)'),
+            OpenApiParameter('limit', int, OpenApiParameter.QUERY,
+                description='Maximum number of results to return'),
+            OpenApiParameter('offset', int, OpenApiParameter.QUERY,
+                description='Offset into the result set for pagination'),
+            OpenApiParameter('facets', str, OpenApiParameter.QUERY,
+                description='Comma-separated list of fields to facet on (terms facets), e.g. type,organization'),
+            OpenApiParameter('sort', str, OpenApiParameter.QUERY,
+                description='Comma-separated list of field[:asc|desc] (default asc), e.g. title:asc,type:desc'),
+            OpenApiParameter('format', str, OpenApiParameter.QUERY, enum=['json'],
+                description='Response format (only "json" is supported)'),
+        ])
+    def get(self, request, *args, **kwargs):
+        # Perform a quick query on the Globus search endpoint
+        cleaned_params = {"q": "*"}
+
+        for query_param in request.query_params.lists():
+            name = query_param[0]
+            if name not in self.allowed_params:
+                return Response(
+                    {"error": f"Invalid query parameter: {name}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if name == 'format':
+                # Consumed by DRF content negotiation; not a Globus Search parameter
+                continue
+            value = request.query_params[name]
+            if name == 'sort':
+                try:
+                    value = self._parse_sort(value)
+                except ValueError as e:
+                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            elif name == 'facets':
+                value = self._parse_facets(value)
+            cleaned_params[name] = value
+
+        if request.data:
+            cleaned_params = {**cleaned_params, **request.data}
+        search_query = globus_sdk.SearchQueryV1(**cleaned_params)
+        try:
+            search = self.search_client.post_search(
+                self.search_endpoint,
+                search_query
+            )
+        except globus_sdk.GlobusAPIError as e:
+            logg2.error(f"Globus Search API error: {e.http_status} {e.code}: {e.message}")
+            return Response(
+                {"error": e.message, "code": e.code},
+                status=e.http_status
+            )
+        except globus_sdk.GlobusError as e:
+            logg2.error(f"Globus Search error: {e}")
+            return Response(
+                {"error": "Error communicating with Globus Search"},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        return Response(search.data)

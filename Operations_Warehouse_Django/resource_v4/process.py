@@ -1,6 +1,8 @@
 from .documents import ResourceV4Index
 
+
 class ResourceV4Process():
+
     def index(self, relations=None):
         newRels = []
         if relations:
@@ -26,7 +28,7 @@ class ResourceV4Process():
                 EndDateTime = self.EndDateTime
             )
         obj.save()
-        return obj.to_dict(include_meta = True)
+        return obj.to_dict(include_meta=True)
 
     def delete(self):
         obj = ResourceV4Index.get(self.ID).delete()
