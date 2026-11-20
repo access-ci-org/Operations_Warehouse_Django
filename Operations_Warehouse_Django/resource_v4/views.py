@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import JSONParser
 
 from .models import *
 from .serializers import *
@@ -892,11 +893,12 @@ class Relations_Cache(GenericAPIView):
 
 
 class Resource_GSearch(APIView):
-    authentication_classes = []
-    permission_classes = []
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = None
     # Always render JSON, even for browsers sending Accept: text/html
     renderer_classes = [JSONRenderer]
+    # Only accept requests with 'Content-Type: application/json'
+    parser_classes = [JSONParser]
 
     def __init__(self, *args, **kwargs):
         self.allowed_params = ['q', 'limit', 'offset', 'facets', 'sort', 'format']
