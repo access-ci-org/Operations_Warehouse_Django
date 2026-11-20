@@ -1,5 +1,8 @@
 v3.85.0 2026-09-14 sturocy
  - Fixing issues as per https://access-ci.atlassian.net/browse/CTT-713?focusedCommentId=182314
+ - Resource_GSearch: sort is now a comma-separated list of field[:asc|desc] and facets a comma-separated list of fields (terms facets); both are converted to Globus Search JSON
+ - Resource_GSearch: removed the filters query parameter (full Globus JSON still accepted in a POST body)
+ - Add Resource_GSearch tests
 
 v3.84.1 2026-11-05 EBB
  - Add configuration for ACCESS-CI SSO

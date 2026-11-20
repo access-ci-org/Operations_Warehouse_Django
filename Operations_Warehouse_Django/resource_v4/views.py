@@ -1,4 +1,3 @@
-import json
 from django.db.models import Count
 from django.conf import settings as django_settings
 from django.core.paginator import Paginator
@@ -900,7 +899,7 @@ class Resource_GSearch(APIView):
     renderer_classes = [JSONRenderer]
 
     def __init__(self, *args, **kwargs):
-        self.allowed_params = ['q', 'limit', 'offset', 'filters', 'facets', 'sort', 'format']
+        self.allowed_params = ['q', 'limit', 'offset', 'facets', 'sort', 'format']
         self.app = globus_sdk.ClientApp(
             "ACCESS-CI Operations Warehouse Globus Service Client",
             client_id=settings.GLOBUS_CLIENT_ID,
@@ -910,8 +909,28 @@ class Resource_GSearch(APIView):
         self.search_endpoint = settings.GLOBUS_SEARCH_INDEX_ID
         super().__init__(*args, **kwargs)
 
-    # Parameters that the Globus Search API expects as JSON structures, not plain strings
-    JSON_PARAMS = {'sort', 'filters', 'facets'}
+    @staticmethod
+    def _parse_sort(value):
+        """Convert 'field[:asc|desc],...' into Globus Search sort JSON."""
+        result = []
+        for item in value.split(','):
+            item = item.strip()
+            if not item:
+                continue
+            field, _, order = item.partition(':')
+            field, order = field.strip(), (order.strip().lower() or 'asc')
+            if not field or order not in ('asc', 'desc'):
+                raise ValueError(
+                    "Parameter 'sort' must be a comma-separated list of "
+                    "field[:asc|desc], e.g. sort=title:asc,type:desc")
+            result.append({"field_name": field, "order": order})
+        return result
+
+    @staticmethod
+    def _parse_facets(value):
+        """Convert 'field,...' into Globus Search terms-facet JSON."""
+        fields = [f.strip() for f in value.split(',') if f.strip()]
+        return [{"name": f, "type": "terms", "field_name": f} for f in fields]
 
     @extend_schema(parameters=[
             OpenApiParameter('q', str, OpenApiParameter.QUERY,
@@ -920,12 +939,10 @@ class Resource_GSearch(APIView):
                 description='Maximum number of results to return'),
             OpenApiParameter('offset', int, OpenApiParameter.QUERY,
                 description='Offset into the result set for pagination'),
-            OpenApiParameter('filters', str, OpenApiParameter.QUERY,
-                description='Globus Search filter expression (JSON array)'),
             OpenApiParameter('facets', str, OpenApiParameter.QUERY,
-                description='Globus Search facet specification (JSON array)'),
+                description='Comma-separated list of fields to facet on (terms facets), e.g. type,organization'),
             OpenApiParameter('sort', str, OpenApiParameter.QUERY,
-                description='Sort specification (JSON array, e.g. [{"field_name":"title","order":"asc"}])'),
+                description='Comma-separated list of field[:asc|desc] (default asc), e.g. title:asc,type:desc'),
             OpenApiParameter('format', str, OpenApiParameter.QUERY, enum=['json'],
                 description='Response format (only "json" is supported)'),
         ])
@@ -944,14 +961,13 @@ class Resource_GSearch(APIView):
                 # Consumed by DRF content negotiation; not a Globus Search parameter
                 continue
             value = request.query_params[name]
-            if name in self.JSON_PARAMS:
+            if name == 'sort':
                 try:
-                    value = json.loads(value)
-                except json.JSONDecodeError:
-                    return Response(
-                        {"error": f"Parameter '{name}' must be valid JSON"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    value = self._parse_sort(value)
+                except ValueError as e:
+                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            elif name == 'facets':
+                value = self._parse_facets(value)
             cleaned_params[name] = value
 
         if request.data:
