@@ -358,7 +358,7 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
     organization_url = serializers.SerializerMethodField()
     organization_logo_url = serializers.SerializerMethodField()
     user_guide_url = serializers.SerializerMethodField()
-    roadmaps = serializers.SerializerMethodField()
+    roadmaps = Resource_Roadmap_Serializer(many=True)
     resource_integration_status = serializers.CharField()
     badge_status_summary = serializers.JSONField()
 
@@ -404,14 +404,6 @@ class Resource_Full_Serializer(serializers.ModelSerializer):
             return obj.other_attributes['user_guide_url']
         except:
             return None
-
-    def get_roadmaps(self, obj) -> Dict[str, Any]:
-        try:
-            my_roadmaps = Resource_Roadmap.objects.filter(info_resourceid__exact=obj.info_resourceid)
-            serializer = Resource_Roadmap_Serializer(my_roadmaps, many=True)
-        except:
-            return None
-        return serializer.data
 
 
 class Resource_Badge_Plan_Serializer(serializers.ModelSerializer):

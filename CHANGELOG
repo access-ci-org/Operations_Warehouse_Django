@@ -1,3 +1,6 @@
+v3.85.0 2026-11-24 Dinuka
+ - Fixing the `resource_integration_status` to validate the roadmap enrollments (CTT-1151)
+
 v3.84.1 2026-11-05 EBB
  - Add configuration for ACCESS-CI SSO
 
