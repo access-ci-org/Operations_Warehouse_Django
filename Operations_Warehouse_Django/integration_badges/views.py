@@ -675,6 +675,9 @@ class Resource_Full_v1(GenericAPIView):
             if info_resourceid in badge_status_summary_grouped_by_resource:
                 badge_status_summary = badge_status_summary_grouped_by_resource[info_resourceid]
 
+            roadmaps = Resource_Roadmap.objects.filter(info_resourceid__exact=info_resourceid)
+
+            setattr(resource, "roadmaps", roadmaps)
             setattr(resource, "badge_status_summary", badge_status_summary)
             setattr(resource, "resource_integration_status", get_resource_integration_status(resource, badge_status_summary))
 
@@ -1497,12 +1500,14 @@ def get_badge_status_summary_grouped_by_resource(organization_ids=None, info_res
 
 def get_resource_integration_status(resource, badge_status_summary):
     try:
-        if badge_status_summary is None:
+        if resource.roadmaps is None or len(resource.roadmaps) == 0:
             return ResourceIntegrationStatus.NEW
         elif resource.latest_status in [ResourceStatus.ANNOUNCED, ResourceStatus.PRE_PRODUCTION]:
             return ResourceIntegrationStatus.IN_PROGRESS
         elif resource.latest_status == ResourceStatus.PRODUCTION:
-            if (sum([badge_status_summary["required"][BadgeWorkflowStatus.VERIFIED],
+            if badge_status_summary is None:
+                return ResourceIntegrationStatus.PRODUCTION
+            elif (sum([badge_status_summary["required"][BadgeWorkflowStatus.VERIFIED],
                     badge_status_summary["required"][BadgeWorkflowStatus.EXEMPTED]])
                     == badge_status_summary["required"]["total"]):
                 return ResourceIntegrationStatus.PRODUCTION
